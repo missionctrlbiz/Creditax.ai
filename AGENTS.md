@@ -212,25 +212,39 @@ npx trigger.dev
 
 ## Implementation Priority
 
-### Phase 0 (Current) — Foundation
+> **⚠️ MVP REFACTOR (June 12, 2026):** This branch (`mvp-refactor`) has been restructured for MVP-focused development. The Developer Portal is deferred. See `research/Frontend-Infrastructure.md` for full MVP scope.
 
-- [x] Git repo initialized
-- [x] Research complete
-- [ ] Dev environment configured
-- [ ] Supabase project created
-- [ ] Trigger.dev project created
+### MVP Phase 1 — Core Product (NOW BUILDING)
 
-### Phase 1 (Week 3-5) — Core API
+**Goal:** Ship working RAG-powered tax Q&A with daily token limits and Stripe payments.
 
-- API key generation + validation
-- Tax calculation endpoint
-- Rate limiting
+**Priority Order:**
+1. `/` + `/pricing` — Landing page + pricing
+2. `/login` + `/signup` — Magic link auth
+3. `/dashboard/chat` — **CORE FEATURE** LLM RAG chat
+4. `/dashboard` — Consumer dashboard
+5. `/admin/kb` — Knowledge base editor
 
-### Phase 2 (Week 6-8) — RAG
+**Stack:** Next.js + Supabase + Trigger.dev + Kimchi.dev + Stripe
 
-- Document ingestion pipeline
-- Vector store setup
-- Chat endpoint
+### MVP Phase 2 — Consumer Polish (After Core)
+
+- Document upload
+- Tax filing wizard
+- Credit score view
+- Reports
+
+### MVP Phase 3 — Marketplace + Tax Pro (After Consumer)
+
+- Public marketplace listing
+- Tax pro application flow
+- Admin marketplace approvals
+
+### Deferred (Post-MVP)
+
+- [ ] Developer Portal (API Explorer, Quickstart, Reference, SDKs, Sandbox, Webhooks)
+- [ ] B2B Tax Pro full portal (client management, bulk calculations)
+- [ ] Multimodal RAG (PDF, images, video support)
 
 ### Phase 3 (Week 9-12) — Document Processing
 
@@ -303,10 +317,18 @@ Changelog goes at the bottom of the document, after the main content, before any
 
 ---
 
-*Document Version: 1.2*
+*Document Version: 1.3*
 *Last Updated: June 12, 2026*
 
 ## Changelog
+
+### v1.3 (June 12, 2026)
+- **MVP REFACTOR**: Restructured Implementation Priority for MVP focus
+- Marked Developer Portal as "Coming Soon" (not in MVP scope)
+- Simplified phases: Phase 1 (Core), Phase 2 (Consumer), Phase 3 (Marketplace)
+- Added note about `mvp-refactor` branch
+- Reduced scope from 57 screens to ~20 for MVP
+- Added Multimodal RAG as future enhancement (Phase 4+)
 
 ### v1.2 (June 12, 2026)
 - Added Mapbox to tech stack (geocoding, maps, 100k free requests/month)

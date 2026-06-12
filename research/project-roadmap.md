@@ -397,16 +397,61 @@ Enterprise: Custom
 
 ---
 
-## Monthly Breakdown
+## MVP Refactor — Simplified Scope
+
+> **⚠️ Updated June 12, 2026:** The original 6-month roadmap has been restructured for MVP focus.
+>
+> **Key Change:** Developer Portal (API Explorer, SDKs, Sandbox) deferred to post-MVP. Focus on building consumer RAG product first.
+
+### MVP Build Phases
+
+```
+Phase 1 (Weeks 1-4): Core Product
+├── Landing page + Pricing page
+├── Magic link authentication (Supabase Auth)
+├── RAG chat interface (/dashboard/chat)
+├── Knowledge base editor (/admin/kb)
+├── Stripe payment integration
+└── Daily token limit system
+
+Phase 2 (Weeks 5-8): Consumer Polish
+├── Document upload + processing
+├── Tax filing wizard
+├── Credit score view
+├── Reports generation
+└── Settings page
+
+Phase 3 (Weeks 9-12): Marketplace Launch
+├── Tax professional application flow
+├── Admin approval queue
+├── Public marketplace listing
+└── Basic pro profile pages
+
+Phase 4+ (Post-MVP): Expansion
+├── Developer Portal (API Explorer, SDKs, Sandbox)
+├── B2B Tax Pro full portal
+├── Multimodal RAG (PDF, images, video)
+├── Advanced credit features
+└── Team/company accounts
+```
+
+### Pricing Model (MVP)
+
+| Tier | Price | Limits | Features |
+|------|-------|--------|----------|
+| **Free** | $0 | 50 queries/day | Basic RAG chat, Markdown KB |
+| **Pro** | $19/mo | 500 queries/day | All features, priority support |
+| **Enterprise** | Custom | Unlimited | API access, dedicated support |
+
+### Monthly Breakdown (MVP Focus)
 
 | Month | Focus | Key Deliverables |
 |-------|-------|------------------|
-| **Month 1** | Foundation | Brand, API skeleton, API key system, first endpoint |
-| **Month 2** | AI/RAG | RAG pipeline, tax Q&A, webhook system |
-| **Month 3** | Document Pipeline | Upload → Extract → Report, background jobs |
-| **Month 4** | Credit + IaC | Credit scoring, Terraform full setup, monitoring |
-| **Month 5** | B2B Platform + Marketplace | Developer dashboard, sandbox, tax pro signup flow |
-| **Month 6** | Launch + Marketplace RAG | Public launch, RAG marketplace search, first revenue |
+| **Month 1** | Core Infrastructure | Auth, Supabase setup, Landing, RAG chat |
+| **Month 2** | Payments + Limits | Stripe, token limits, Pro tier |
+| **Month 3** | Documents + Credit | Upload, processing, credit score |
+| **Month 4** | Marketplace | Tax pro onboarding, admin, public listing |
+| **Month 5+** | Developer Portal | API Explorer, SDKs, Sandbox, Webhooks |
 
 ---
 
@@ -476,11 +521,15 @@ Enterprise: Custom
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | June 12, 2026 | **MVP REFACTOR**: Complete restructure for MVP focus |
+|       | | Deferred Developer Portal to post-MVP (Phase 4+) |
+|       | | Simplified to 3 build phases: Core, Consumer, Marketplace |
+|       | | Updated Monthly Breakdown with MVP priorities |
+|       | | Added MVP Pricing Model table |
 | 1.1 | June 12, 2026 | Added Phase 5.5: Tax Professional Marketplace (Week 19-22) |
-|       | | Added CAC verification via Mono Lookup API (no official CAC API exists) |
+|       | | Added CAC verification via Mono Lookup API |
 |       | | Added Mapbox geocoding + proximity search |
-|       | | Added RAG dual-index for marketplace (tax docs + pro profiles) |
-|       | | Updated Month 5-6 breakdown to include marketplace features |
+|       | | Added RAG dual-index for marketplace |
 | 1.0 | June 11, 2026 | Initial roadmap |
 
 ---

@@ -971,6 +971,87 @@ export const onboardTaxProfessional = workflow(
 
 ---
 
+### 3.8 Multimodal RAG (Phase 4+ Enhancement)
+
+> **Vision:** Upgrade the RAG pipeline to handle multiple content types beyond Markdown.
+
+**Current State (MVP):** Markdown-only knowledge base with text embeddings.
+
+**Planned Enhancement:**
+
+| Format | Processing | Embedding |
+|--------|------------|-----------|
+| **Markdown** (current) | Parse text | Standard text embedding |
+| **PDF** (future) | Extract text via pdf-parse | Standard text embedding |
+| **Images** (future) | OCR via Tesseract + GPT-4o vision | Vision embeddings |
+| **Video** (future) | Transcribe via Whisper API | Standard text embedding |
+
+**Architecture for Multimodal RAG:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     INPUT PROCESSING                            │
+│                                                                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │ Markdown │  │   PDF    │  │  Image   │  │  Video   │        │
+│  │  (text)  │  │ (text)   │  │ (OCR)    │  │ (audio)  │        │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
+│       │             │             │             │               │
+│       └─────────────┴─────────────┴─────────────┘               │
+│                           │                                     │
+│                           ▼                                     │
+│              ┌────────────────────────┐                         │
+│              │   Content Extraction   │                         │
+│              │   + Metadata Parsing   │                         │
+│              └────────────────────────┘                         │
+│                           │                                     │
+│                           ▼                                     │
+│              ┌────────────────────────┐                         │
+│              │  Chunking Strategy     │                         │
+│              │  (by content type)     │                         │
+│              └────────────────────────┘                         │
+│                           │                                     │
+│                           ▼                                     │
+│              ┌────────────────────────┐                         │
+│              │   Embedding Model      │                         │
+│              │  Vertex AI / OpenAI    │                         │
+│              └────────────────────────┘                         │
+│                           │                                     │
+│                           ▼                                     │
+│              ┌────────────────────────┐                         │
+│              │   Vector Storage       │                         │
+│              │   (Supabase pgvector)  │                         │
+│              └────────────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Implementation Priority:**
+
+| Phase | Format | Priority | Notes |
+|-------|--------|----------|-------|
+| MVP | Markdown | P0 | Current state |
+| Phase 4+ | PDF | P1 | Legal documents, FIRS publications |
+| Phase 4+ | Images | P2 | Receipts, invoices with visual data |
+| Phase 4+ | Video | P3 | Tax tutorials, FIRS webinars |
+
+**Libraries for Multimodal:**
+
+```typescript
+// PDF parsing
+import pdfParse from 'pdf-parse';
+
+// Image OCR
+import Tesseract from 'tesseract.js';
+
+// Video transcription
+import OpenAI from 'openai';
+const whisper = new OpenAI.Audio({ apiKey: process.env.OPENAI_API_KEY });
+
+// For now, use Kimchi.dev with vision capability (when available)
+```
+
+---
+
 ## 4. Knowledge Base Database
 
 ### 4.1 Document Categories
@@ -2022,11 +2103,20 @@ Week 23-24:
 
 ---
 
-*Document Version: 1.3*
+*Document Version: 1.4*
 *Last Updated: June 12, 2026*
 *Next Review: Weekly during implementation*
 
 ## Changelog
+
+### v1.4 (June 12, 2026)
+- **MVP REFACTOR:** Deferred Developer Portal to post-MVP
+  - API Explorer, SDKs, Sandbox, Webhooks marked "Phase 4+"
+  - Focus now on consumer RAG product first
+- **Multimodal RAG (Future):** Added vision for enhanced RAG pipeline
+  - Phase 1: Markdown only (current)
+  - Phase 4+: Add PDF, image (OCR), video (transcription) support
+  - Updated Section 3.8 with multimodal architecture
 
 ### v1.3 (June 12, 2026)
 - **Knowledge Base:** Adopted **Markdown/GitBook-style** approach for MVP

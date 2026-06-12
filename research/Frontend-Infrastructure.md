@@ -1226,67 +1226,95 @@ font-family: 'JetBrains Mono', 'Fira Code', monospace;
 
 ## Implementation Priority
 
-### Phase 1 (MVP) — Must Have
+> **⚠️ DEVELOPMENT NOTE (June 12, 2026):** The Developer Portal (Section F) is **deprioritized** for MVP. These pages will display "Coming Soon" or link to waitlist signup. This reduces initial scope significantly, allowing focus on core RAG product.
 
-**B2C Consumer:**
-- [ ] `/` — Landing page
-- [ ] `/login` — Magic link login
-- [ ] `/signup` — Magic link signup
-- [ ] `/dashboard` — User dashboard
-- [ ] `/dashboard/tax-filing` — Tax Q&A + calculations
-- [ ] `/dashboard/upload` — Document upload
-- [ ] `/status` — Infrastructure status
+### MVP Phase 1 — Core Product (Build First)
 
-**Admin:**
-- [ ] `/admin/kb` — Knowledge base editor
-- [ ] `/admin/marketplace` — Marketplace approval queue
+**Goal:** Ship a working RAG-powered tax Q&A product with daily token limits and Stripe payments.
 
-### Phase 2 — Important
+| # | Screen | Route | Priority | Notes |
+|---|--------|-------|----------|-------|
+| 1 | Landing Page | `/` | P0 | Hero + Features + CTA |
+| 2 | Pricing Page | `/pricing` | P0 | Free tier + paid tiers |
+| 3 | Login | `/login` | P0 | Magic link auth |
+| 4 | Signup | `/signup` | P0 | Magic link auth |
+| 5 | Consumer Dashboard | `/dashboard` | P0 | Post-login home |
+| 6 | RAG Chat | `/dashboard/chat` | P0 | **CORE FEATURE** - LLM RAG Q&A |
+| 7 | Document Upload | `/dashboard/upload` | P1 | For context in RAG |
+| 8 | Admin KB Editor | `/admin/kb` | P0 | Admin manages knowledge base |
 
-**B2C Consumer:**
-- [ ] `/dashboard/credit` — Credit health score view
-- [ ] `/dashboard/documents` — Document management
-- [ ] `/dashboard/reports` — Report generation
-- [ ] `/dashboard/usage` — Usage analytics
-- [ ] `/dashboard/settings` — Account settings
+**Core Features in MVP:**
+- Magic link authentication (Supabase Auth)
+- LLM RAG chat with daily token limits
+- Markdown knowledge base (admin-editable)
+- Stripe payment integration (free tier + paid)
+- Basic landing page with pricing
 
-**B2B Tax Professional:**
-- [ ] `/pro` — Tax pro dashboard
-- [ ] `/pro/clients` — Client management
-- [ ] `/pro/verify` — TIN/BVN verification
+---
 
-**Admin:**
-- [ ] `/admin/users` — User management
-- [ ] `/admin/audit` — Audit log
-- [ ] `/admin/professionals` — Tax pro management
+### MVP Phase 2 — Consumer Polish (Build After Core)
 
-**Developer Portal:**
-- [ ] `/developers` — API docs portal
-- [ ] `/developers/quickstart` — Integration guide
-- [ ] `/pricing` — Pricing page
+**Goal:** Complete the consumer experience with document processing and credit score.
 
-### Phase 3 — Nice to Have
+| # | Screen | Route | Priority | Notes |
+|---|--------|-------|----------|-------|
+| 9 | Tax Filing Wizard | `/dashboard/tax-filing` | P1 | Guided tax filing flow |
+| 10 | My Documents | `/dashboard/documents` | P1 | Document management |
+| 11 | Credit Score | `/dashboard/credit` | P1 | Tax-history-based credit |
+| 12 | Reports | `/dashboard/reports` | P2 | Generate tax summaries |
+| 13 | Settings | `/dashboard/settings` | P1 | Account settings |
+| 14 | System Status | `/status` | P1 | Infrastructure transparency |
 
-**B2B Tax Professional:**
-- [ ] `/pro/documents` — Client document portal
-- [ ] `/pro/calculations` — Bulk tax calculations
-- [ ] `/pro/reports` — Client report generation
-- [ ] `/pro/apply` — Marketplace application flow
+---
 
-**Marketplace:**
-- [ ] `/marketplace` — Public marketplace listing
-- [ ] `/marketplace/[slug]` — Professional profile pages
-- [ ] `/pro/settings` — Pro profile/branding settings
+### MVP Phase 3 — Marketplace + Tax Pro (Build After Consumer)
 
-**Admin:**
-- [ ] `/admin/departments` — Department management
-- [ ] `/admin/facilities` — Facility status observation
+**Goal:** Onboard tax professionals and build the marketplace.
 
-**B2C Enhancements:**
-- [ ] Push notification reminders
-- [ ] Multi-language support (Yoruba, Hausa, Igbo)
-- [ ] Gamification (badges, streaks)
-- [ ] Credit simulator
+| # | Screen | Route | Priority | Notes |
+|---|--------|-------|----------|-------|
+| 15 | Marketplace Listing | `/marketplace` | P1 | Public listing (no map yet) |
+| 16 | Pro Profile | `/marketplace/[slug]` | P2 | Individual profiles |
+| 17 | Pro Application | `/pro/apply` | P1 | Multi-step onboarding |
+| 18 | Pro Dashboard | `/pro` | P2 | Tax pro home |
+| 19 | Client Management | `/pro/clients` | P2 | Pro manages clients |
+| 20 | Marketplace Approvals | `/admin/marketplace` | P1 | Admin approves pros |
+
+---
+
+### Developer Portal — COMING SOON
+
+> **Deferring Developer Portal (Section F) until after MVP launch.**
+>
+> The 6 screens below will show "Coming Soon" or link to developer waitlist:
+
+| # | Screen | Route | Status |
+|---|--------|-------|--------|
+| F01 | API Explorer | `/developers` | 🔜 Coming Soon |
+| F02 | Quickstart | `/developers/quickstart` | 🔜 Coming Soon |
+| F03 | API Reference | `/developers/reference` | 🔜 Coming Soon |
+| F04 | SDKs | `/developers/sdks` | 🔜 Coming Soon |
+| F05 | Sandbox | `/developers/sandbox` | 🔜 Coming Soon |
+| F06 | Webhooks | `/developers/webhooks` | 🔜 Coming Soon |
+
+**Rationale:** We build the consumer product first, prove value, then expand to developers.
+
+---
+
+### Multimodal RAG Enhancement (Future)
+
+> **Planned upgrade to RAG pipeline for Phase 4+**
+
+Current: Markdown-only knowledge base
+Planned: Multimodal RAG supporting:
+- [ ] Markdown (current)
+- [ ] PDF documents
+- [ ] Images (with OCR)
+- [ ] Video (with transcription) — if feasible
+
+---
+
+## Reference Companies Researched
 
 ---
 
@@ -1304,5 +1332,27 @@ font-family: 'JetBrains Mono', 'Fira Code', monospace;
 
 ---
 
-*Document Version: 1.1*
+*Document Version: 1.2*
 *Last Updated: June 12, 2026*
+
+## Changelog
+
+### v1.2 (June 12, 2026)
+- Major scope reduction for MVP focus
+- Marked Developer Portal (Section F) as "Coming Soon" — not in MVP
+- Reorganized Implementation Priority into 3 MVP phases:
+  - Phase 1: Core Product (RAG chat, auth, landing, pricing)
+  - Phase 2: Consumer Polish (filing, documents, credit, settings)
+  - Phase 3: Marketplace + Tax Pro (public listing, pro onboarding)
+- Added Multimodal RAG enhancement note (Phase 4+)
+- Reduced from 57 screens to ~20 for MVP
+
+### v1.1 (June 12, 2026)
+- Added B2C Consumer pages (tax filing, document upload, credit score)
+- Added B2B Tax Professional Portal (verify, dashboard, client management)
+- Added Tax Professional Marketplace
+- Added Partner API onboarding flow
+- Expanded auth flows for multi-user types
+
+### v1.0 (June 12, 2026)
+- Initial creation
