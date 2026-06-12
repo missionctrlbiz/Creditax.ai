@@ -1,441 +1,479 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
+import { Download, TrendingUp, Clock, Zap, FileText, MessageCircle, CreditCard } from 'lucide-react';
 
-type Period = '7d' | '30d' | '90d' | 'custom';
+interface DailyUsage {
+  date: string;
+  count: number;
+}
 
-export default function UsagePage() {
-  const [period, setPeriod] = useState<Period>('30d');
-  const [chartView, setChartView] = useState<'hourly' | 'daily' | 'weekly'>('daily');
+interface FeatureUsage {
+  feature: string;
+  tokens: number;
+  icon: React.ElementType;
+}
 
-  const stats = [
-    {
-      label: 'API Calls (June)',
-      value: '45,231',
-      change: '+12%',
-      changeType: 'positive',
-      hasSparkline: true,
-    },
-    {
-      label: 'Monthly Limit',
-      value: '45%',
-      subValue: '45,231 / 100,000 calls',
-      hasQuotaRing: true,
-    },
-    {
-      label: 'Avg Response Time',
-      value: '142ms',
-      subValue: 'p99: 387ms',
-      change: '↓ 18ms',
-      changeType: 'positive',
-    },
-    {
-      label: 'Success Rate',
-      value: '99.6%',
-      subValue: '180 errors in 45,231 calls',
-      hasAlert: true,
-    },
-  ];
+interface HistoryEntry {
+  date: string;
+  time: string;
+  tokens: number;
+  feature: string;
+  cost: number;
+}
 
-  const endpoints = [
-    { endpoint: 'POST /v2/tax/calculate', calls: 15234, percent: 34, latency: '142ms', errorRate: '0.2%' },
-    { endpoint: 'GET /v2/tax/brackets', calls: 12456, percent: 27, latency: '89ms', errorRate: '0.0%' },
-    { endpoint: 'GET /v2/credit/score', calls: 10234, percent: 23, latency: '203ms', errorRate: '0.4%' },
-    { endpoint: 'POST /v2/rag/chat', calls: 7307, percent: 16, latency: '387ms', errorRate: '1.2%', isAlert: true },
-    { endpoint: 'POST /v2/documents/ocr', calls: 892, percent: 0, latency: '892ms', errorRate: '2.1%', isAlert: true },
-  ];
+const MOCK_TODAY = {
+  used: 34,
+  limit: 50,
+  resetsAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+};
 
-  // Mock chart data - static for consistency
-  const chartData = [
-    { day: 1, total: 1523, success: 1519, errors: 4 },
-    { day: 2, total: 1647, success: 1643, errors: 4 },
-    { day: 3, total: 1489, success: 1485, errors: 4 },
-    { day: 4, total: 1721, success: 1718, errors: 3 },
-    { day: 5, total: 1598, success: 1594, errors: 4 },
-    { day: 6, total: 1847, success: 1843, errors: 4 },
-    { day: 7, total: 1654, success: 1650, errors: 4 },
-    { day: 8, total: 1512, success: 1509, errors: 3 },
-    { day: 9, total: 1789, success: 1785, errors: 4 },
-    { day: 10, total: 1847, success: 1843, errors: 4 },
-    { day: 11, total: 1698, success: 1694, errors: 4 },
-    { day: 12, total: 1556, success: 1552, errors: 4 },
-    { day: 13, total: 1623, success: 1619, errors: 4 },
-    { day: 14, total: 1712, success: 1708, errors: 4 },
-    { day: 15, total: 1845, success: 1841, errors: 4 },
-    { day: 16, total: 1734, success: 1730, errors: 4 },
-    { day: 17, total: 1598, success: 1594, errors: 4 },
-    { day: 18, total: 1678, success: 1674, errors: 4 },
-    { day: 19, total: 1823, success: 1819, errors: 4 },
-    { day: 20, total: 1756, success: 1752, errors: 4 },
-    { day: 21, total: 1689, success: 1685, errors: 4 },
-    { day: 22, total: 1598, success: 1594, errors: 4 },
-    { day: 23, total: 1723, success: 1719, errors: 4 },
-    { day: 24, total: 1847, success: 1843, errors: 4 },
-    { day: 25, total: 1765, success: 1761, errors: 4 },
-    { day: 26, total: 1687, success: 1683, errors: 4 },
-    { day: 27, total: 1598, success: 1594, errors: 4 },
-    { day: 28, total: 1734, success: 1730, errors: 4 },
-    { day: 29, total: 1823, success: 1819, errors: 4 },
-    { day: 30, total: 1756, success: 1752, errors: 4 },
-  ];
+const MOCK_MONTHLY: DailyUsage[] = [
+  { date: 'Jun 1', count: 12 },
+  { date: 'Jun 2', count: 8 },
+  { date: 'Jun 3', count: 15 },
+  { date: 'Jun 4', count: 22 },
+  { date: 'Jun 5', count: 18 },
+  { date: 'Jun 6', count: 6 },
+  { date: 'Jun 7', count: 9 },
+  { date: 'Jun 8', count: 14 },
+  { date: 'Jun 9', count: 19 },
+  { date: 'Jun 10', count: 11 },
+  { date: 'Jun 11', count: 25 },
+  { date: 'Jun 12', count: 34 },
+];
 
-  const maxTotal = Math.max(...chartData.map((d) => d.total));
+const MOCK_FEATURES: FeatureUsage[] = [
+  { feature: 'RAG Chat', tokens: 180, icon: MessageCircle },
+  { feature: 'Document Processing', tokens: 54, icon: FileText },
+  { feature: 'Credit Score', tokens: 0, icon: CreditCard },
+];
+
+const MOCK_HISTORY: HistoryEntry[] = [
+  { date: 'Jun 12', time: '14:32', tokens: 12, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 12', time: '12:18', tokens: 8, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 11', time: '16:45', tokens: 15, feature: 'Document Processing', cost: 0 },
+  { date: 'Jun 11', time: '10:22', tokens: 10, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 10', time: '09:15', tokens: 5, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 9', time: '14:30', tokens: 8, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 9', time: '11:20', tokens: 11, feature: 'Document Processing', cost: 0 },
+  { date: 'Jun 8', time: '15:40', tokens: 6, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 7', time: '10:05', tokens: 9, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 6', time: '16:22', tokens: 6, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 5', time: '13:18', tokens: 18, feature: 'Document Processing', cost: 0 },
+  { date: 'Jun 4', time: '09:30', tokens: 14, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 3', time: '14:15', tokens: 15, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 2', time: '11:45', tokens: 8, feature: 'RAG Chat', cost: 0 },
+  { date: 'Jun 1', time: '10:20', tokens: 12, feature: 'RAG Chat', cost: 0 },
+];
+
+function getUsageColor(percentage: number): string {
+  if (percentage < 50) return '#32E875';
+  if (percentage < 80) return '#F59E0B';
+  return '#EF4444';
+}
+
+function formatResetsIn(isoTimestamp: string): string {
+  const resetsAt = new Date(isoTimestamp);
+  const now = new Date();
+  const diffMs = resetsAt.getTime() - now.getTime();
+  const hours = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+  const minutes = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)));
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function UsageProgressCard() {
+  const percentage = Math.round((MOCK_TODAY.used / MOCK_TODAY.limit) * 100);
+  const color = getUsageColor(percentage);
+  const resetsIn = formatResetsIn(MOCK_TODAY.resetsAt);
 
   return (
-    <div className="p-8 md:p-10">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-sans tracking-tight text-text-primary mb-1">
-            Usage & Analytics
-          </h1>
-          <p className="text-text-secondary text-sm">
-            Monitor your API usage and performance metrics
-          </p>
+    <Card className="p-6">
+      <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted mb-4">
+        Today's Usage
+      </div>
+
+      <div className="flex items-center gap-6">
+        <div className="flex-1">
+          <div className="relative h-4 rounded-full bg-[var(--color-surface-inset)] overflow-hidden mb-3">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percentage}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+          </div>
+
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-3xl font-bold text-text-primary font-mono">
+              {MOCK_TODAY.used}
+            </span>
+            <span className="text-text-muted">of {MOCK_TODAY.limit} tokens</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-text-muted">Resets in</span>
+            <Clock className="w-4 h-4 text-text-muted" />
+            <span className="text-text-primary font-medium font-mono">{resetsIn}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Period Pills */}
-          <div className="flex gap-1 bg-surface-overlay rounded-[10px] p-1 border border-border-default">
-            {(['7d', '30d', '90d', 'custom'] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`
-                  px-4 py-2 rounded-[8px] text-sm font-medium transition-all cursor-pointer
-                  ${
-                    period === p
-                      ? 'bg-brand-primary text-text-inverse'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }
-                `}
-              >
-                {p === '7d' ? '7 days' : p === '30d' ? '30 days' : p === '90d' ? '90 days' : 'Custom ▾'}
-              </button>
-            ))}
+        <div className="relative w-20 h-20">
+          <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              fill="none"
+              stroke="var(--color-surface-inset)"
+              strokeWidth="6"
+            />
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              fill="none"
+              stroke={color}
+              strokeWidth="6"
+              strokeDasharray={`${(percentage / 100) * 213.6} 213.6`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-lg font-bold text-text-primary">{percentage}%</span>
           </div>
         </div>
       </div>
+    </Card>
+  );
+}
 
-      {/* Billing Info */}
-      <div className="flex items-center justify-between mb-8 p-4 rounded-card bg-surface-overlay border border-border-default">
-        <span className="text-text-secondary text-sm">Next billing: July 1, 2025</span>
-        <Button variant="primary" size="sm">
-          Upgrade Plan →
+function PlanCard() {
+  return (
+    <Card className="p-6">
+      <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted mb-4">
+        Your Plan
+      </div>
+
+      <div className="flex items-center gap-3 mb-4">
+        <Badge variant="brand">Free</Badge>
+        <span className="text-text-primary font-semibold">50 tokens/day</span>
+      </div>
+
+      <p className="text-text-muted text-sm mb-4">
+        Collect tax docs and build history to unlock higher limits
+      </p>
+
+      <Button variant="primary" size="sm" fullWidth>
+        Upgrade
+      </Button>
+    </Card>
+  );
+}
+
+function MonthlyChart() {
+  const maxCount = Math.max(...MOCK_MONTHLY.map((d) => d.count));
+
+  return (
+    <Card className="p-6">
+      <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted mb-6">
+        Token Usage This Month
+      </div>
+
+      <div className="h-[200px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={MOCK_MONTHLY} barCategoryGap="20%">
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+              interval={2}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+              width={30}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'var(--color-surface-overlay)',
+                border: '1px solid var(--color-border-default)',
+                borderRadius: '8px',
+                fontSize: '12px',
+              }}
+              cursor={{ fill: 'var(--color-surface-inset)', opacity: 0.3 }}
+            />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              {MOCK_MONTHLY.map((entry, index) => (
+                <Cell key={index} fill="#0D7377" />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-border-default flex items-center justify-between">
+        <span className="text-text-muted text-xs">Total this month:</span>
+        <span className="text-text-primary font-semibold font-mono">
+          {MOCK_MONTHLY.reduce((sum, d) => sum + d.count, 0)} tokens
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function FeatureBreakdown() {
+  const total = MOCK_FEATURES.reduce((sum, f) => sum + f.tokens, 0);
+
+  return (
+    <Card className="p-6">
+      <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted mb-6">
+        Usage by Feature
+      </div>
+
+      <div className="space-y-4">
+        {MOCK_FEATURES.map((feature) => {
+          const percentage = total > 0 ? Math.round((feature.tokens / total) * 100) : 0;
+          const Icon = feature.icon;
+
+          return (
+            <div key={feature.feature} className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-lg bg-surface-inset flex items-center justify-center flex-shrink-0">
+                <Icon className="w-4 h-4 text-brand-primary" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-text-primary text-sm font-medium">{feature.feature}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-muted text-xs font-mono">{feature.tokens}</span>
+                    <span className="text-text-muted text-xs">({percentage}%)</span>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full bg-surface-inset overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-brand-primary transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function UsageHistoryTable() {
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const totalPages = Math.ceil(MOCK_HISTORY.length / pageSize);
+  const paginatedData = MOCK_HISTORY.slice((page - 1) * pageSize, page * pageSize);
+
+  const exportCSV = () => {
+    const headers = ['Date', 'Time', 'Tokens', 'Feature', 'Cost'];
+    const rows = MOCK_HISTORY.map((h) => [h.date, h.time, h.tokens, h.feature, `$${h.cost.toFixed(2)}`]);
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'usage-history.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted">
+          Token History
+        </div>
+        <Button variant="ghost" size="sm" onClick={exportCSV}>
+          <Download className="w-4 h-4 mr-1" />
+          Export CSV
         </Button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="p-6"
-          >
-            <div className="text-text-muted text-[11px] font-semibold tracking-wider uppercase mb-3">
-              {stat.label}
-            </div>
-
-            {stat.hasQuotaRing ? (
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16">
-                  <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      fill="none"
-                      stroke="var(--color-surface-inset)"
-                      strokeWidth="6"
-                    />
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      fill="none"
-                      stroke="url(#quotaGradient)"
-                      strokeWidth="6"
-                      strokeDasharray={`${0.45 * 2 * Math.PI * 28} ${2 * Math.PI * 28}`}
-                      strokeLinecap="round"
-                    />
-                    <defs>
-                      <linearGradient id="quotaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="var(--color-brand-primary)" />
-                        <stop offset="100%" stopColor="var(--color-brand-action)" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-bold text-text-primary">{stat.value}</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-text-primary text-sm font-medium">{stat.subValue}</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-3xl font-bold text-text-primary">{stat.value}</span>
-                  {stat.change && (
-                    <span
-                      className={`text-sm font-medium ${
-                        stat.changeType === 'positive' ? 'text-success' : 'text-error'
-                      }`}
-                    >
-                      {stat.change}
-                    </span>
-                  )}
-                </div>
-                {stat.subValue && (
-                  <p className="text-text-muted text-xs">{stat.subValue}</p>
-                )}
-                {stat.hasAlert && (
-                  <p className="text-[var(--color-warning-text)] text-xs mt-1">
-                    Most common: 429 Rate Limit
-                  </p>
-                )}
-              </>
-            )}
-          </motion.div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted border-b border-border-default">
+              <th className="pb-3 pr-4">Date</th>
+              <th className="pb-3 pr-4">Time</th>
+              <th className="pb-3 pr-4">Tokens</th>
+              <th className="pb-3 pr-4">Feature</th>
+              <th className="pb-3">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedData.map((entry, index) => (
+              <motion.tr
+                key={`${entry.date}-${entry.time}-${index}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="border-b border-border-subtle last:border-0"
+              >
+                <td className="py-3 pr-4 text-text-primary text-sm font-mono">{entry.date}</td>
+                <td className="py-3 pr-4 text-text-muted text-sm font-mono">{entry.time}</td>
+                <td className="py-3 pr-4 text-text-primary text-sm font-mono">{entry.tokens}</td>
+                <td className="py-3 pr-4 text-text-secondary text-sm">{entry.feature}</td>
+                <td className="py-3 text-text-muted text-sm font-mono">${entry.cost.toFixed(2)}</td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Main Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-text-primary font-semibold">API Calls Over Time</h3>
-            <div className="flex gap-1 bg-surface-inset rounded-[10px] p-1">
-              {(['hourly', 'daily', 'weekly'] as const).map((view) => (
-                <button
-                  key={view}
-                  onClick={() => setChartView(view)}
-                  className={`
-                    px-3 py-1.5 rounded-[8px] text-xs font-medium transition-all cursor-pointer
-                    ${
-                      chartView === view
-                        ? 'bg-brand-primary text-text-inverse'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }
-                  `}
-                >
-                  {view.charAt(0).toUpperCase() + view.slice(1)}
-                </button>
-              ))}
-            </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border-default">
+          <span className="text-text-muted text-xs">
+            Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, MOCK_HISTORY.length)} of {MOCK_HISTORY.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-text-muted text-xs font-mono">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
           </div>
+        </div>
+      )}
+    </Card>
+  );
+}
 
-          {/* Chart */}
-          <div className="h-[300px] relative">
-            {/* Y-axis labels */}
-            <div className="absolute left-0 top-0 bottom-8 w-12 flex flex-col justify-between text-xs text-text-muted font-mono">
-              <span>{maxTotal.toLocaleString()}</span>
-              <span>{(maxTotal * 0.75).toLocaleString()}</span>
-              <span>{(maxTotal * 0.5).toLocaleString()}</span>
-              <span>{(maxTotal * 0.25).toLocaleString()}</span>
-              <span>0</span>
-            </div>
+export default function UsagePage() {
+  const [chartView, setChartView] = useState<'daily' | 'weekly'>('daily');
 
-            {/* Chart Area */}
-            <div className="ml-14 h-full flex items-end gap-1">
-              {chartData.map((data, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  {/* Stacked bars */}
-                  <div className="w-full flex flex-col gap-px">
-                    {/* Errors bar (red, at bottom) */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(data.errors / maxTotal) * 100}%` }}
-                      transition={{ duration: 0.5, delay: i * 0.02 }}
-                      className="bg-[var(--color-error)] rounded-t-sm min-h-[2px]"
-                    />
-                    {/* Success bar (green) */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${((data.success - data.errors) / maxTotal) * 100}%` }}
-                      transition={{ duration: 0.5, delay: i * 0.02 }}
-                      className="bg-gradient-to-t from-brand-primary to-brand-action rounded-t-sm min-h-[2px]"
-                    />
-                  </div>
-                  {/* X-axis label (show every 5th) */}
-                  {i % 5 === 0 && (
-                    <span className="text-[10px] text-text-muted mt-2">Jun {data.day}</span>
-                  )}
+  return (
+    <div className="p-6 md:p-8 space-y-6">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
+            Usage
+          </h1>
+          <p className="text-text-muted text-sm mt-1">
+            Track your token consumption and limits
+          </p>
+        </div>
+
+        <div className="flex gap-1 bg-surface-inset rounded-lg p-1">
+          <button
+            onClick={() => setChartView('daily')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              chartView === 'daily'
+                ? 'bg-brand-primary text-text-inverse'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            Daily
+          </button>
+          <button
+            onClick={() => setChartView('weekly')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              chartView === 'weekly'
+                ? 'bg-brand-primary text-text-inverse'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            Weekly
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <UsageProgressCard />
+        </div>
+        <div>
+          <PlanCard />
+        </div>
+      </div>
+
+      <MonthlyChart />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <FeatureBreakdown />
+        <Card className="p-6">
+          <div className="text-[11px] font-semibold tracking-wider uppercase text-text-muted mb-4">
+            Quick Stats
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-action-bg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-brand-action" />
                 </div>
-              ))}
+                <div>
+                  <div className="text-text-primary font-medium">Total Tokens Used</div>
+                  <div className="text-text-muted text-xs">This billing cycle</div>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-text-primary font-mono">234</span>
             </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border-default">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-brand-primary to-brand-action" />
-              <span className="text-text-muted text-xs">Total Calls</span>
+            <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-primary-bg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-brand-primary" />
+                </div>
+                <div>
+                  <div className="text-text-primary font-medium">Avg. Daily Usage</div>
+                  <div className="text-text-muted text-xs">Last 30 days</div>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-text-primary font-mono">19</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm bg-brand-action" />
-              <span className="text-text-muted text-xs">Successful</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm bg-[var(--color-error)]" />
-              <span className="text-text-muted text-xs">Errors</span>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-surface-inset flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-text-muted" />
+                </div>
+                <div>
+                  <div className="text-text-primary font-medium">Days Until Reset</div>
+                  <div className="text-text-muted text-xs">Billing cycle</div>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-text-primary font-mono">19</span>
             </div>
           </div>
         </Card>
-      </motion.div>
-
-      {/* Bottom Section: Endpoint Table + Quota Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
-        {/* Endpoint Breakdown Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card className="p-6">
-            <h3 className="text-text-primary font-semibold mb-4">Usage by Endpoint</h3>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-text-muted text-[11px] font-semibold uppercase tracking-wider border-b border-border-default">
-                    <th className="pb-3 pr-4">Endpoint</th>
-                    <th className="pb-3 pr-4">Calls</th>
-                    <th className="pb-3 pr-4 w-32">% of Total</th>
-                    <th className="pb-3 pr-4">Avg Latency</th>
-                    <th className="pb-3">Error Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {endpoints.map((ep, index) => (
-                    <motion.tr
-                      key={ep.endpoint}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 + index * 0.05 }}
-                      className="border-b border-border-default last:border-0"
-                    >
-                      <td className="py-4 pr-4">
-                        <span className="text-text-primary text-sm font-mono">{ep.endpoint}</span>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <span className="text-text-secondary text-sm">{ep.calls.toLocaleString()}</span>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 rounded-full bg-surface-inset overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                ep.isAlert
-                                  ? 'bg-[var(--color-warning)]'
-                                  : 'bg-gradient-to-r from-brand-primary to-brand-action'
-                              }`}
-                              style={{ width: `${ep.percent}%` }}
-                            />
-                          </div>
-                          <span className="text-text-muted text-xs w-8">{ep.percent}%</span>
-                        </div>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <span
-                          className={`text-sm ${
-                            ep.isAlert ? 'text-[var(--color-warning-text)]' : 'text-text-secondary'
-                          }`}
-                        >
-                          {ep.latency}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        <span
-                          className={`text-sm ${
-                            ep.isAlert ? 'text-[var(--color-warning-text)]' : 'text-text-secondary'
-                          }`}
-                        >
-                          {ep.errorRate}
-                        </span>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Quota Card + Upgrade */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="space-y-6"
-        >
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Badge variant="brand">Pro</Badge>
-              <span className="text-text-primary font-semibold">Current Plan</span>
-            </div>
-
-            {/* Usage Bar */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-text-secondary">45,231 / 100,000 calls</span>
-                <span className="text-text-primary font-medium">45%</span>
-              </div>
-              <div className="h-3 rounded-full bg-surface-inset overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '45%' }}
-                  transition={{ duration: 0.8, delay: 0.7 }}
-                  className="h-full rounded-full bg-gradient-to-r from-brand-primary to-brand-action"
-                />
-              </div>
-            </div>
-
-            <p className="text-text-muted text-sm mb-4">
-              54,769 calls remaining · Resets in 19 days
-            </p>
-
-            {/* Features */}
-            <div className="space-y-2 pt-4 border-t border-border-default">
-              <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <span className="text-success">✓</span>
-                100,000 API calls/month
-              </div>
-              <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <span className="text-success">✓</span>
-                Full RAG chat access
-              </div>
-              <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <span className="text-success">✓</span>
-                Credit score API
-              </div>
-            </div>
-          </Card>
-
-          {/* Upgrade Prompt */}
-          <Card className="p-6 border border-brand-action/30">
-            <h3 className="text-text-primary font-semibold mb-2">Upgrade to Enterprise</h3>
-            <p className="text-text-muted text-sm mb-4">
-              Get unlimited API calls, dedicated infrastructure, and custom rate limits.
-            </p>
-            <Button variant="primary" fullWidth>
-              Talk to Sales →
-            </Button>
-          </Card>
-        </motion.div>
       </div>
+
+      <UsageHistoryTable />
     </div>
   );
 }

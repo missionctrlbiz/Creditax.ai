@@ -1,10 +1,12 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import {
   MapPin,
   Star,
@@ -14,233 +16,264 @@ import {
   Globe,
   Clock,
   CheckCircle,
-  ChevronDown,
   ChevronUp,
+  ChevronDown,
+  Share2,
+  Bookmark,
+  ArrowLeft,
   ExternalLink,
-  Calendar,
-  FileText,
-  Users,
-  TrendingUp,
 } from 'lucide-react';
-import { Header } from '@/components/shared/Header';
-import { Footer } from '@/components/shared/Footer';
-import { useState } from 'react';
-import Link from 'next/link';
 
-const proData = {
-  name: 'Adaeze Consulting Ltd',
-  badges: ['CAC Registered', 'FIRS Certified', 'Creditax Verified'],
-  location: 'Lagos Island, Lagos',
-  distance: '2.3 km from you',
-  rating: 4.9,
-  reviewCount: 127,
-  memberSince: 'March 2022',
-  responseTime: 'Usually responds in 2hrs',
-  address: '15 Adeola Odeku St, Victoria Island, Lagos',
-  phone: '+234 801 234 5678',
-  email: 'contact@adaezeconsulting.ng',
-  whatsapp: '+234 801 234 5678',
-  website: 'https://adaezeconsulting.ng',
-  stats: ['127 reviews', '3 yrs exp', '98% on-time'],
-  about: `Adaeze Consulting Ltd is a premier tax and financial advisory firm specializing in serving Nigerian SMEs and startups. With over 8 years of combined experience, our team of chartered accountants and tax professionals has helped hundreds of businesses navigate the complexities of Nigerian tax law.
+interface TaxProfessional {
+  id: string;
+  slug: string;
+  businessName: string;
+  description: string;
+  services: string[];
+  priceMin: number;
+  priceMax: number;
+  city: string;
+  state: string;
+  phone: string;
+  email: string;
+  whatsapp: string;
+  website: string;
+  rating: number;
+  reviewCount: number;
+  verified: boolean;
+  cacVerified: boolean;
+  firsRegistered: boolean;
+  memberSince: string;
+}
 
-We specialize in corporate income tax, VAT compliance, payroll processing, and tax audit support. Our deep understanding of FIRS regulations and commitment to staying current with regulatory changes ensures our clients remain compliant while optimizing their tax positions.
+interface Service {
+  name: string;
+  turnaround: string;
+  price: string;
+}
 
-Our client-first approach means we take the time to understand your business and provide tailored solutions that actually work for your specific situation.`,
-  services: [
-    { name: 'Income Tax Filing', turnaround: '3–5 days', price: '₦25,000' },
-    { name: 'VAT Returns (Monthly)', turnaround: '1–2 days', price: '₦15,000' },
-    { name: 'Corporate Income Tax', turnaround: '7–10 days', price: '₦45,000' },
-    { name: 'Payroll Processing', turnaround: '2–3 days', price: '₦20,000/mo' },
-    { name: 'Tax Audit Support', turnaround: 'As needed', price: '₦75,000' },
-  ],
-  reviews: [
-    {
-      name: 'Emeka J.',
-      rating: 5,
-      date: 'Jun 2025',
-      text: 'Adaeze Consulting transformed our tax filing process. Professional, responsive, and thorough. Highly recommended for any Lagos-based business.',
-    },
-    {
-      name: 'Chidinma O.',
-      rating: 5,
-      date: 'May 2025',
-      text: 'They handled our VAT returns seamlessly and identified savings we didn\'t know existed. The team is incredibly knowledgeable about FIRS regulations.',
-    },
-    {
-      name: 'Tunde B.',
-      rating: 4,
-      date: 'Apr 2025',
-      text: 'Great service overall. Quick turnaround on our CIT filing. Would have given 5 stars but communication could be faster during peak periods.',
-    },
-  ],
-};
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
+const mockReviews = [
+  {
+    name: 'Chinedu A.',
+    location: 'Lagos',
+    rating: 5,
+    date: '2 weeks ago',
+    text: 'Akinwale made my tax filing so easy. Professional service and very responsive to questions.',
   },
-};
+  {
+    name: 'Blessing O.',
+    location: 'Abuja',
+    rating: 5,
+    date: '1 month ago',
+    text: 'Exceptional expertise in VAT filing. Helped me recover significant overpayments.',
+  },
+  {
+    name: 'Emeka N.',
+    location: 'Port Harcourt',
+    rating: 4,
+    date: '2 months ago',
+    text: 'Great service overall. Quick turnaround and very thorough with the documentation.',
+  },
+];
 
 export default function ProProfilePage() {
-  const [activeTab, setActiveTab] = useState<'about' | 'services' | 'reviews'>('about');
+  const params = useParams();
+  const proId = params.proId as string;
+  const [professional, setProfessional] = useState<TaxProfessional | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showFullAbout, setShowFullAbout] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const fetchProfessional = async () => {
+      try {
+        const res = await fetch(`/api/v1/marketplace?search=${proId}`);
+        const data = await res.json();
+        if (data.professionals?.length > 0) {
+          const pro = data.professionals.find(
+            (p: TaxProfessional) => p.slug === proId || p.id === proId
+          );
+          setProfessional(pro || data.professionals[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch professional:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (proId) {
+      fetchProfessional();
+    }
+  }, [proId]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: professional?.businessName,
+          url,
+        });
+      } catch (err) {
+        navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard!');
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const formatPrice = (price: number): string => {
+    return `₦${price.toLocaleString()}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-surface-base">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-brand-action border-t-transparent rounded-full animate-spin" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!professional) {
+    return (
+      <div className="flex flex-col min-h-screen bg-surface-base">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
+          <div className="text-6xl">🔍</div>
+          <h1 className="text-2xl font-bold text-text-primary">Professional Not Found</h1>
+          <p className="text-text-secondary">The tax professional you&apos;re looking for doesn&apos;t exist.</p>
+          <Button variant="brand" onClick={() => (window.location.href = '/marketplace')}>
+            Back to Marketplace
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const services: Service[] = [
+    { name: 'Personal Income Tax', turnaround: '3 days', price: formatPrice(professional.priceMin) },
+    { name: 'Business Tax Filing', turnaround: '5 days', price: formatPrice(Math.round(professional.priceMin * 3)) },
+    { name: 'VAT Return', turnaround: '2 days', price: formatPrice(Math.round(professional.priceMin * 1.5)) },
+    { name: 'Tax Audit Support', turnaround: '7 days', price: formatPrice(professional.priceMax) },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-base pb-20">
+    <div className="flex flex-col min-h-screen bg-surface-base">
       <Header />
-      {/* Profile Header */}
-      <section className="bg-[#0D1117] py-8 px-6 border-b border-border-subtle">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="flex flex-col lg:flex-row gap-6 items-start"
-          >
-            {/* Avatar */}
-            <motion.div variants={fadeInUp}>
-              <div className="w-20 h-20 rounded-full bg-brand-action-bg border-2 border-brand-action flex items-center justify-center text-brand-action text-2xl font-bold">
-                {proData.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-            </motion.div>
 
-            {/* Info */}
-            <motion.div variants={fadeInUp} className="flex-1">
-              <h1 className="text-2xl font-bold text-text-primary mb-2">{proData.name}</h1>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {proData.badges.map((badge) => (
-                  <Badge key={badge} variant="success" className="text-xs">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    {badge}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-brand-action" />
-                  {proData.location} · {proData.distance}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-warning fill-current" />
-                  {proData.rating} ({proData.reviewCount} reviews)
-                </span>
-                <span>Member since {proData.memberSince}</span>
-              </div>
-            </motion.div>
-
-            {/* CTA */}
-            <motion.div variants={fadeInUp} className="text-right">
-              <Button variant="primary" size="xl">
-                Request Consultation
-              </Button>
-              <p className="text-xs text-text-muted mt-2 flex items-center justify-end gap-1">
-                <Clock className="w-3 h-3" />
-                {proData.responseTime}
-              </p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Tabs */}
-      <section className="px-6 py-4 border-b border-border-subtle sticky top-[64px] bg-surface-base z-30">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex gap-6">
-            {(['about', 'services', 'reviews'] as const).map((tab) => (
+      <main className="flex-1 pb-24">
+        <section className="bg-[var(--color-surface-deep)] py-8 px-6 border-b border-border-subtle">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-4 mb-6">
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-sm font-medium border-b-2 transition-all capitalize ${
-                  activeTab === tab
-                    ? 'border-brand-action text-brand-action'
-                    : 'border-transparent text-text-muted hover:text-text-primary'
-                }`}
+                onClick={() => (window.location.href = '/marketplace')}
+                className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
               >
-                {tab}
+                <ArrowLeft className="w-4 h-4" />
+                Back to Search
               </button>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* Content */}
-      <section className="px-6 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column - Contact & Map */}
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Contact Card */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Contact</h3>
-                <div className="space-y-3">
-                  <Button variant="secondary" size="md" fullWidth>
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call Now
-                  </Button>
-                  <Button variant="secondary" size="md" fullWidth>
-                    <Mail className="w-4 h-4 mr-2" />
-                    Send Email
-                  </Button>
-                  <Button variant="primary" size="md" fullWidth>
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    WhatsApp
-                  </Button>
-                  <Button variant="ghost" size="md" fullWidth>
-                    <Globe className="w-4 h-4 mr-2" />
-                    Visit Website
-                  </Button>
-                </div>
-              </Card>
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+              <div className="w-20 h-20 rounded-full bg-brand-action-bg border-2 border-brand-action flex items-center justify-center text-brand-action text-2xl font-bold flex-shrink-0">
+                {professional.businessName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)}
+              </div>
 
-              {/* Mini Map */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Location</h3>
-                <div className="bg-surface-deep rounded-card h-40 flex items-center justify-center mb-3">
-                  <div className="text-center">
-                    <div className="text-4xl mb-2">📍</div>
-                    <p className="text-xs text-text-muted">Victoria Island, Lagos</p>
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold text-text-primary mb-2">
+                      {professional.businessName}
+                    </h1>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {professional.cacVerified && (
+                        <Badge variant="success" className="text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          CAC Verified
+                        </Badge>
+                      )}
+                      {professional.firsRegistered && (
+                        <Badge variant="success" className="text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          FIRS Registered
+                        </Badge>
+                      )}
+                      <Badge variant="brand" className="text-xs">
+                        Member since {professional.memberSince}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4 text-brand-action" />
+                        {professional.city}, {professional.state}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-[var(--color-warning)] fill-current" />
+                        {professional.rating} ({professional.reviewCount} reviews)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleShare}
+                      className="p-2 rounded-full bg-surface-overlay border border-border-strong text-text-secondary hover:text-text-primary transition-colors"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setIsBookmarked(!isBookmarked)}
+                      className={`p-2 rounded-full border transition-colors ${
+                        isBookmarked
+                          ? 'bg-brand-action-bg border-brand-action text-brand-action'
+                          : 'bg-surface-overlay border-border-strong text-text-secondary hover:text-text-primary'
+                      }`}
+                    >
+                      <Bookmark className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
-                <p className="text-sm text-text-secondary">{proData.address}</p>
-              </Card>
-
-              {/* Stats */}
-              <div className="flex flex-wrap gap-2">
-                {proData.stats.map((stat) => (
-                  <Badge key={stat} variant="brand">
-                    {stat}
-                  </Badge>
-                ))}
               </div>
-            </motion.div>
+            </div>
+          </div>
+        </section>
 
-            {/* Center Column - Main Content */}
-            <motion.div
-              className="lg:col-span-1"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              {activeTab === 'about' && (
+        <section className="px-6 py-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
                 <Card className="p-6">
-                  <h3 className="text-lg font-semibold text-text-primary mb-4">About</h3>
-                  <p className={`text-text-secondary text-sm leading-relaxed ${!showFullAbout && 'line-clamp-6'}`}>
-                    {proData.about}
+                  <h2 className="text-lg font-semibold text-text-primary mb-4">Location</h2>
+                  <div className="bg-surface-deep rounded-card h-48 flex items-center justify-center mb-4">
+                    <div className="text-center">
+                      <div className="text-5xl mb-2">📍</div>
+                      <p className="text-text-muted text-sm">{professional.city}, {professional.state}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <h2 className="text-lg font-semibold text-text-primary mb-4">About</h2>
+                  <p
+                    className={`text-text-secondary text-sm leading-relaxed ${
+                      !showFullAbout && 'line-clamp-6'
+                    }`}
+                  >
+                    {professional.description}
                   </p>
-                  {proData.about.length > 200 && (
+                  {professional.description.length > 200 && (
                     <button
                       onClick={() => setShowFullAbout(!showFullAbout)}
                       className="mt-2 text-brand-action text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
@@ -259,125 +292,201 @@ export default function ProProfilePage() {
                     </button>
                   )}
                 </Card>
-              )}
 
-              {activeTab === 'services' && (
                 <Card className="p-6">
-                  <h3 className="text-lg font-semibold text-text-primary mb-4">Services & Pricing</h3>
-                  <div className="space-y-3">
-                    {proData.services.map((service, index) => (
+                  <h2 className="text-lg font-semibold text-text-primary mb-4">
+                    Services & Pricing
+                  </h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border-subtle">
+                          <th className="text-left text-text-muted text-xs font-semibold uppercase tracking-wider pb-3">
+                            Service
+                          </th>
+                          <th className="text-left text-text-muted text-xs font-semibold uppercase tracking-wider pb-3">
+                            Turnaround
+                          </th>
+                          <th className="text-right text-text-muted text-xs font-semibold uppercase tracking-wider pb-3">
+                            Price
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {services.map((service, index) => (
+                          <tr
+                            key={index}
+                            className="border-b border-border-subtle last:border-0"
+                          >
+                            <td className="py-4 text-text-primary font-medium text-sm">
+                              {service.name}
+                            </td>
+                            <td className="py-4 text-text-muted text-sm flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {service.turnaround}
+                            </td>
+                            <td className="py-4 text-brand-action font-semibold text-sm text-right">
+                              {service.price}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <h2 className="text-lg font-semibold text-text-primary mb-4">
+                    Reviews ({professional.reviewCount})
+                  </h2>
+                  <div className="space-y-4">
+                    {mockReviews.map((review, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0"
+                        className="pb-4 border-b border-border-subtle last:border-0 last:pb-0"
                       >
-                        <div>
-                          <p className="text-text-primary font-medium text-sm">{service.name}</p>
-                          <p className="text-text-muted text-xs flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {service.turnaround}
-                          </p>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-brand-primary-bg flex items-center justify-center text-brand-primary font-bold text-sm">
+                              {review.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </div>
+                            <div>
+                              <p className="text-text-primary font-medium text-sm">
+                                {review.name}
+                              </p>
+                              <p className="text-text-muted text-xs">{review.location}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating
+                                    ? 'text-[var(--color-warning)] fill-current'
+                                    : 'text-text-muted'
+                                }`}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        <p className="text-brand-action font-semibold">{service.price}</p>
+                        <p className="text-text-secondary text-sm">{review.text}</p>
+                        <p className="text-text-muted text-xs mt-2">{review.date}</p>
                       </div>
                     ))}
                   </div>
                 </Card>
-              )}
+              </div>
 
-              {activeTab === 'reviews' && (
-                <div className="space-y-4">
-                  {proData.reviews.map((review, index) => (
-                    <Card key={index} className="p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-brand-primary-bg flex items-center justify-center text-brand-primary font-bold text-sm">
-                            {review.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div>
-                            <p className="text-text-primary font-medium text-sm">{review.name}</p>
-                            <p className="text-text-muted text-xs">{review.date}</p>
-                          </div>
+              <div className="space-y-6">
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">Contact</h3>
+                  <div className="space-y-3">
+                    <a href={`tel:${professional.phone}`}>
+                      <Button variant="secondary" size="md" fullWidth>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Now
+                      </Button>
+                    </a>
+                    <a href={`mailto:${professional.email}`}>
+                      <Button variant="secondary" size="md" fullWidth>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Email
+                      </Button>
+                    </a>
+                    <a
+                      href={`https://wa.me/${professional.whatsapp.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="primary" size="md" fullWidth>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        WhatsApp
+                      </Button>
+                    </a>
+                    {professional.website && (
+                      <a
+                        href={professional.website.startsWith('http') ? professional.website : `https://${professional.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="ghost" size="md" fullWidth>
+                          <Globe className="w-4 h-4 mr-2" />
+                          Visit Website
+                          <ExternalLink className="w-3 h-3 ml-1" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className="p-6 bg-surface-deep">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">
+                    Why Choose {professional.businessName.split(' ')[0]}?
+                  </h3>
+                  <div className="space-y-4">
+                    {professional.cacVerified && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-4 h-4 text-brand-action" />
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < review.rating ? 'text-warning fill-current' : 'text-text-muted'}`}
-                            />
-                          ))}
+                        <div>
+                          <p className="text-text-primary text-sm font-medium">CAC Registered</p>
+                          <p className="text-text-muted text-xs">Officially registered business</p>
                         </div>
                       </div>
-                      <p className="text-text-secondary text-sm">{review.text}</p>
-                    </Card>
-                  ))}
-                  <button className="text-brand-action text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
-                    See all {proData.reviewCount} reviews
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Right Column - Extra Info */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card className="p-6 bg-surface-deep">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Why Choose {proData.name}?</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-brand-action" />
-                    </div>
-                    <div>
-                      <p className="text-text-primary text-sm font-medium">FIRS-Certified Team</p>
-                      <p className="text-text-muted text-xs">All filings reviewed by chartered tax professionals</p>
+                    )}
+                    {professional.firsRegistered && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-4 h-4 text-brand-action" />
+                        </div>
+                        <div>
+                          <p className="text-text-primary text-sm font-medium">FIRS Registered</p>
+                          <p className="text-text-muted text-xs">Authorized tax practitioner</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
+                        <Star className="w-4 h-4 text-brand-action" />
+                      </div>
+                      <div>
+                        <p className="text-text-primary text-sm font-medium">
+                          {professional.rating} Rating
+                        </p>
+                        <p className="text-text-muted text-xs">
+                          {professional.reviewCount} verified reviews
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-4 h-4 text-brand-action" />
-                    </div>
-                    <div>
-                      <p className="text-text-primary text-sm font-medium">98% On-Time Delivery</p>
-                      <p className="text-text-muted text-xs">Your deadlines are our priority</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-action-bg flex items-center justify-center flex-shrink-0">
-                      <Users className="w-4 h-4 text-brand-action" />
-                    </div>
-                    <div>
-                      <p className="text-text-primary text-sm font-medium">127 Happy Clients</p>
-                      <p className="text-text-muted text-xs">Trusted by businesses across Lagos</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+                </Card>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Sticky Bottom CTA Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-surface-overlay border-t border-border-strong p-4 z-50">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <p className="text-text-primary font-semibold">{proData.name}</p>
-            <p className="text-brand-action text-sm">From ₦15,000/filing</p>
+            <p className="text-text-primary font-semibold">{professional.businessName}</p>
+            <p className="text-brand-action text-sm">
+              From {formatPrice(professional.priceMin)}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="primary" size="lg">
               Request Consultation
             </Button>
-            <Button variant="ghost" size="lg">
-              Message
-            </Button>
           </div>
         </div>
       </div>
+
       <Footer />
     </div>
   );

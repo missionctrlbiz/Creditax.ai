@@ -2,13 +2,15 @@ import { cn } from '@/lib/utils';
 import { forwardRef } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: boolean;
+  error?: string | boolean;
   label?: string;
   hint?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, error, label, hint, id, ...props }, ref) => {
+    const hasError = typeof error === 'string' ? !!error : error;
+
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
@@ -32,21 +34,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
              focus:ring-offset-0
              focus:border-brand-primary
              disabled:opacity-40 disabled:cursor-not-allowed`,
-            error
+            hasError
               ? 'border-[var(--color-error)] focus:ring-[var(--color-error-bg)]'
               : 'border-border-strong',
             className
           )}
           {...props}
         />
-        {hint && (
-          <span className={cn(
-            'text-xs block',
-            error ? 'text-[var(--color-error-text)]' : 'text-text-muted'
-          )}>
-            {hint}
-          </span>
-        )}
+        {hint && typeof error === 'string' ? (
+          <span className="text-xs text-error-text">{error}</span>
+        ) : hint ? (
+          <span className="text-xs text-text-muted">{hint}</span>
+        ) : null}
       </div>
     );
   }

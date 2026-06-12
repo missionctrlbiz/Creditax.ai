@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const syne = Syne({
@@ -36,7 +37,9 @@ export default function RootLayout({
     >
       <body className="min-h-screen">
         <ThemeProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

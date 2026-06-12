@@ -4,18 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
+import { LayoutDashboard, BookOpen, Store, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 
 const navItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/professionals', label: 'Professionals', badge: '3', badgeVariant: 'warning' as const, icon: '🎓' },
-  { href: '/admin/knowledge-base', label: 'Knowledge Base', icon: '📚' },
-  { href: '/admin/audit', label: 'Audit Log', icon: '📋' },
-  { href: '/admin/marketplace', label: 'Marketplace', icon: '🏪' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/kb', label: 'Knowledge Base', icon: BookOpen },
+  { href: '/admin/marketplace', label: 'Marketplace', icon: Store },
+  { href: '/admin/users', label: 'Users', icon: Users },
 ];
 
 export default function AdminLayout({
@@ -75,7 +72,7 @@ export default function AdminLayout({
                       }
                     `}
                   >
-                    <span className="text-base flex-shrink-0">{item.icon}</span>
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
                     <AnimatePresence>
                       {!sidebarCollapsed && (
                         <motion.div
@@ -85,11 +82,6 @@ export default function AdminLayout({
                           className="flex items-center justify-between flex-1 min-w-0"
                         >
                           <span className="truncate">{item.label}</span>
-                          {item.badge && (
-                            <Badge variant={item.badgeVariant} className="text-[10px] px-1.5">
-                              {item.badge}
-                            </Badge>
-                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

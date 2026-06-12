@@ -1,291 +1,453 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
-import { Search, MapPin, Star, ChevronDown, ExternalLink, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Search, MapPin, Star, Filter, X, Navigation } from 'lucide-react';
 import Link from 'next/link';
 
-const professionals = [
-  {
-    id: 'adaeze-consulting',
-    name: 'Adaeze Consulting Ltd',
-    verified: true,
-    rating: 4.9,
-    reviews: 127,
-    distance: '2.3 km',
-    services: ['Income Tax', 'VAT', 'Payroll'],
-    price: 'From ₦15,000/filing',
-    featured: true,
-  },
-  {
-    id: 'lagos-tax-partners',
-    name: 'Lagos Tax Partners',
-    verified: true,
-    rating: 4.8,
-    reviews: 89,
-    distance: '5.1 km',
-    services: ['CIT', 'Transfer Pricing', 'Audit'],
-    price: 'From ₦45,000/filing',
-    featured: false,
-  },
-  {
-    id: 'quicktax-nigeria',
-    name: 'QuickTax Nigeria',
-    verified: true,
-    rating: 4.6,
-    reviews: 203,
-    distance: '1.8 km',
-    services: ['VAT', 'PAYE', 'WHT'],
-    price: 'From ₦8,000/filing',
-    featured: false,
-  },
-  {
-    id: 'emeka-associates',
-    name: 'Emeka & Associates',
-    verified: true,
-    rating: 4.7,
-    reviews: 56,
-    distance: '8.4 km',
-    services: ['CIT', 'Income Tax'],
-    price: 'From ₦25,000/filing',
-    featured: false,
-  },
+interface TaxProfessional {
+  id: string;
+  slug: string;
+  businessName: string;
+  description: string;
+  services: string[];
+  priceDisplay: string;
+  city: string;
+  state: string;
+  rating: number;
+  reviewCount: number;
+  verified: boolean;
+  distanceDisplay?: string;
+}
+
+const SERVICE_TYPES = [
+  'Personal Income Tax',
+  'Business Tax',
+  'VAT Filing',
+  'Audit Support',
+  'Tax Planning',
+  'Bookkeeping',
 ];
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
+const LOCATIONS = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano', 'Enugu'];
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('Lagos, Nigeria');
-  const [verifiedOnly, setVerifiedOnly] = useState(true);
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [professionals, setProfessionals] = useState<TaxProfessional[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [selectedService, setSelectedService] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [minRating, setMinRating] = useState(0);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [nearMe, setNearMe] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const fetchProfessionals = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set('search', searchQuery);
+      if (selectedService) params.set('service', selectedService);
+      if (selectedLocation) params.set('location', selectedLocation);
+      if (minRating > 0) params.set('minRating', minRating.toString());
+      if (verifiedOnly) params.set('verified', 'true');
+      if (nearMe && userLocation) {
+        params.set('nearMe', 'true');
+        params.set('lat', userLocation.lat.toString());
+        params.set('lng', userLocation.lng.toString());
+      }
+
+      const res = await fetch(`/api/v1/marketplace?${params.toString()}`);
+      const data = await res.json();
+      setProfessionals(data.professionals || []);
+      setTotal(data.total || 0);
+    } catch (error) {
+      console.error('Failed to fetch professionals:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfessionals();
+  }, [selectedService, selectedLocation, minRating, verifiedOnly, nearMe, userLocation]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchProfessionals();
+  };
+
+  const handleNearMe = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setNearMe(true);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          alert('Unable to get your location. Please enable location services.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
+
+  const handleServiceClick = (service: string) => {
+    setSelectedService(selectedService === service ? '' : service);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-base">
       <Header />
-      {/* Search Header */}
-      <section className="bg-[#0D1117] py-6 px-6 sticky top-0 z-40 border-b border-border-subtle">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Find a trusted tax professional in Nigeria..."
-                className="w-full h-14 pl-12 pr-32 rounded-card bg-surface-raised border border-border-strong text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-brand-primary transition-all"
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-brand-action text-sm">
-                <MapPin className="w-4 h-4" />
-                <span>{selectedLocation}</span>
+
+      <main className="flex-1">
+        <section className="relative bg-gradient-to-b from-[var(--color-surface-deep)] to-surface-base pt-16 pb-12 px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+              Find a Trusted Tax Professional
+            </h1>
+            <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+              Verified experts ready to help with your taxes, audits & compliance
+            </p>
+
+            <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+              <div className="flex items-center bg-surface-overlay rounded-card border border-border-strong overflow-hidden shadow-card">
+                <Search className="absolute left-4 w-5 h-5 text-text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="I need help with VAT filing in Lagos"
+                  className="w-full h-14 pl-12 pr-32 bg-transparent text-text-primary placeholder:text-text-placeholder focus:outline-none"
+                />
+                <Button type="submit" variant="brand" size="md" className="absolute right-2">
+                  Search
+                </Button>
+              </div>
+            </form>
+
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <Button variant="secondary" size="md" onClick={handleNearMe}>
+                <Navigation className="w-4 h-4" />
+                Use my location
+              </Button>
+              <Button variant="ghost" size="md" onClick={() => setShowFilters(!showFilters)}>
+                <Filter className="w-4 h-4" />
+                Filters
+                {showFilters && <X className="w-4 h-4 ml-1" />}
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-8 border-b border-border-subtle">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-text-muted text-sm">
+                <span className="text-brand-action font-semibold">{total}</span> professionals found
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-6">
+              {SERVICE_TYPES.map((service) => (
+                <button
+                  key={service}
+                  onClick={() => handleServiceClick(service)}
+                  className={`px-4 py-2 rounded-pill text-sm font-medium transition-all ${
+                    selectedService === service
+                      ? 'bg-brand-action text-[var(--color-text-inverse)] border border-brand-action'
+                      : 'bg-surface-overlay border border-border-strong text-text-secondary hover:border-border-brand hover:text-text-primary'
+                  }`}
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
+
+            {showFilters && (
+              <Card className="p-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div>
+                    <label className="block text-text-muted text-xs font-semibold uppercase tracking-wider mb-2">
+                      Location
+                    </label>
+                    <select
+                      value={selectedLocation}
+                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      className="w-full h-10 px-3 rounded-input bg-surface-raised border border-border-strong text-text-primary text-sm focus:outline-none focus:border-brand-primary"
+                    >
+                      <option value="">All Locations</option>
+                      {LOCATIONS.map((loc) => (
+                        <option key={loc} value={loc}>
+                          {loc}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-muted text-xs font-semibold uppercase tracking-wider mb-2">
+                      Rating
+                    </label>
+                    <select
+                      value={minRating}
+                      onChange={(e) => setMinRating(parseFloat(e.target.value))}
+                      className="w-full h-10 px-3 rounded-input bg-surface-raised border border-border-strong text-text-primary text-sm focus:outline-none focus:border-brand-primary"
+                    >
+                      <option value="0">Any Rating</option>
+                      <option value="4">4+ Stars</option>
+                      <option value="4.5">4.5+ Stars</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-muted text-xs font-semibold uppercase tracking-wider mb-2">
+                      Verification
+                    </label>
+                    <div className="flex items-center h-10">
+                      <button
+                        onClick={() => setVerifiedOnly(!verifiedOnly)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-pill border text-sm transition-all ${
+                          verifiedOnly
+                            ? 'bg-brand-action-bg border-brand-action text-brand-action'
+                            : 'bg-surface-overlay border-border-strong text-text-secondary'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Verified only
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-muted text-xs font-semibold uppercase tracking-wider mb-2">
+                      Near Me
+                    </label>
+                    <div className="flex items-center h-10">
+                      <button
+                        onClick={handleNearMe}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-pill border text-sm transition-all ${
+                          nearMe
+                            ? 'bg-brand-action-bg border-brand-action text-brand-action'
+                            : 'bg-surface-overlay border-border-strong text-text-secondary'
+                        }`}
+                      >
+                        <MapPin className="w-4 h-4" />
+                        {nearMe ? 'Location On' : 'Near me'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {(selectedLocation || minRating > 0 || verifiedOnly) && (
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border-subtle">
+                    <span className="text-text-muted text-sm">Active filters:</span>
+                    {selectedLocation && (
+                      <Badge variant="brand" className="gap-1">
+                        {selectedLocation}
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => setSelectedLocation('')}
+                        />
+                      </Badge>
+                    )}
+                    {minRating > 0 && (
+                      <Badge variant="brand" className="gap-1">
+                        {minRating}+ Stars
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => setMinRating(0)}
+                        />
+                      </Badge>
+                    )}
+                    {verifiedOnly && (
+                      <Badge variant="success" className="gap-1">
+                        Verified
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => setVerifiedOnly(false)}
+                        />
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        </section>
+
+        <section className="px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="lg:w-[45%]">
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="w-8 h-8 border-2 border-brand-action border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : professionals.length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <div className="text-4xl mb-4">🔍</div>
+                      <p className="text-text-secondary">No professionals found matching your criteria.</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedService('');
+                          setSelectedLocation('');
+                          setMinRating(0);
+                          setVerifiedOnly(false);
+                          setNearMe(false);
+                        }}
+                      >
+                        Clear filters
+                      </Button>
+                    </Card>
+                  ) : (
+                    professionals.map((pro, index) => (
+                      <Link key={pro.id} href={`/marketplace/${pro.slug}`}>
+                        <Card
+                          className={`p-5 cursor-pointer transition-all duration-200 hover:border-border-brand ${
+                            pro.verified ? 'border-border-brand bg-brand-primary-bg/10' : ''
+                          }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <div className="flex gap-4">
+                            <div
+                              className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${
+                                pro.verified
+                                  ? 'bg-brand-action-bg text-brand-action border-2 border-brand-action'
+                                  : 'bg-surface-deep text-text-secondary border-2 border-border-strong'
+                              }`}
+                            >
+                              {pro.businessName
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .slice(0, 2)}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-text-primary font-semibold truncate">
+                                  {pro.businessName}
+                                </h3>
+                                {pro.verified && (
+                                  <svg
+                                    className="w-4 h-4 text-brand-action flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-3 text-sm mb-2">
+                                <span className="flex items-center gap-1 text-[var(--color-warning)]">
+                                  <Star className="w-4 h-4 fill-current" />
+                                  {pro.rating}
+                                </span>
+                                <span className="text-text-muted">({pro.reviewCount} reviews)</span>
+                                {pro.distanceDisplay && (
+                                  <>
+                                    <span className="text-text-muted">·</span>
+                                    <span className="text-text-muted flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      {pro.distanceDisplay}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {pro.services.slice(0, 3).map((service) => (
+                                  <Badge key={service} variant="brand" className="text-[10px]">
+                                    {service}
+                                  </Badge>
+                                ))}
+                              </div>
+
+                              <p className="text-brand-action font-semibold text-sm">
+                                {pro.priceDisplay}
+                              </p>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="lg:w-[55%]">
+                <Card className="h-[500px] bg-surface-deep relative overflow-hidden sticky top-24">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">🗺️</div>
+                      <p className="text-text-muted mb-2">Interactive Map</p>
+                      <p className="text-xs text-text-muted">
+                        {professionals.length} professionals in Nigeria
+                      </p>
+                    </div>
+                  </div>
+
+                  {professionals.slice(0, 4).map((pro, index) => {
+                    const positions = [
+                      { top: '25%', left: '30%' },
+                      { top: '35%', right: '25%' },
+                      { top: '60%', left: '45%' },
+                      { top: '45%', right: '30%' },
+                    ];
+                    const pos = positions[index] || positions[0];
+                    return (
+                      <div
+                        key={pro.id}
+                        className="absolute w-8 h-8 rounded-full bg-brand-action flex items-center justify-center text-surface-base text-xs font-bold shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                        style={pos}
+                      >
+                        {index + 1}
+                      </div>
+                    );
+                  })}
+
+                  <div className="absolute top-4 right-4 bg-surface-overlay border border-border-strong rounded-full px-3 py-1.5 text-sm">
+                    <span className="text-brand-action font-bold">{professionals.length}</span>{' '}
+                    <span className="text-text-secondary">in area</span>
+                  </div>
+
+                  {nearMe && userLocation && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-surface-overlay border border-border-brand rounded-pill px-4 py-2 text-sm flex items-center gap-2">
+                      <Navigation className="w-4 h-4 text-brand-action" />
+                      <span className="text-text-secondary">Showing results near you</span>
+                    </div>
+                  )}
+                </Card>
               </div>
             </div>
-            <Button variant="brand" size="lg">
-              Search
-            </Button>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Filter Row */}
-      <section className="px-6 py-4 border-b border-border-subtle">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-overlay border border-border-strong text-text-secondary hover:border-border-brand hover:text-text-primary transition-all text-sm">
-            Service Type
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-overlay border border-border-strong text-text-secondary hover:border-border-brand hover:text-text-primary transition-all text-sm">
-            Location
-            <span className="text-brand-action">×</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-overlay border border-border-strong text-text-secondary hover:border-border-brand hover:text-text-primary transition-all text-sm">
-            Rating
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-overlay border border-border-strong text-text-secondary hover:border-border-brand hover:text-text-primary transition-all text-sm">
-            Price Range
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setVerifiedOnly(!verifiedOnly)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-pill border transition-all text-sm ${
-              verifiedOnly
-                ? 'bg-brand-action-bg border-brand-action text-brand-action'
-                : 'bg-surface-overlay border-border-strong text-text-secondary hover:border-border-brand'
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Verified Only
-          </button>
-          <span className="ml-auto text-sm text-text-muted">47 professionals found</span>
-        </div>
-      </section>
-
-      {/* Split View Content */}
-      <section className="px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left: Scrollable List (40%) */}
-            <div className="lg:w-[40%]">
-              <motion.div
-                className="space-y-4"
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
-              >
-                {professionals.map((pro) => (
-                  <motion.div key={pro.id} variants={fadeInUp}>
-                    <Link href={`/marketplace/${pro.id}`}>
-                      <Card
-                        className={`p-5 cursor-pointer transition-all duration-200 relative overflow-hidden group ${
-                          pro.featured
-                            ? 'border-border-brand bg-brand-primary-bg/20'
-                            : 'hover:border-border-brand'
-                        }`}
-                        onMouseEnter={() => setHoveredCard(pro.id)}
-                        onMouseLeave={() => setHoveredCard(null)}
-                      >
-                        <div className="flex gap-4">
-                          {/* Avatar */}
-                          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${
-                            pro.featured
-                              ? 'bg-brand-action-bg text-brand-action border-2 border-brand-action'
-                              : 'bg-surface-deep text-text-secondary border-2 border-border-strong'
-                          }`}>
-                            {pro.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-text-primary font-semibold truncate">{pro.name}</h3>
-                              {pro.verified && (
-                                <svg className="w-4 h-4 text-brand-action flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-3 text-sm mb-2">
-                              <span className="flex items-center gap-1 text-warning">
-                                <Star className="w-4 h-4 fill-current" />
-                                {pro.rating}
-                              </span>
-                              <span className="text-text-muted">({pro.reviews} reviews)</span>
-                              <span className="text-text-muted">·</span>
-                              <span className="text-text-muted flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {pro.distance}
-                              </span>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {pro.services.map((service) => (
-                                <Badge key={service} variant="brand" className="text-[10px]">
-                                  {service}
-                                </Badge>
-                              ))}
-                            </div>
-
-                            <p className="text-brand-action font-semibold text-sm">{pro.price}</p>
-                          </div>
-                        </div>
-
-                        {/* Hover Overlay */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: hoveredCard === pro.id ? 1 : 0 }}
-                          className="absolute inset-0 bg-surface-deep/80 flex items-center justify-center"
-                        >
-                          <Button variant="primary" size="sm">
-                            View Profile
-                            <ExternalLink className="w-4 h-4 ml-1" />
-                          </Button>
-                        </motion.div>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Right: Map (60%) */}
-            <div className="lg:w-[60%]">
-              <Card className="h-[600px] bg-surface-deep relative overflow-hidden">
-                {/* Map Placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🗺️</div>
-                    <p className="text-text-muted mb-2">Mapbox Dark Map</p>
-                    <p className="text-xs text-text-muted">
-                      {professionals.length} professionals in Lagos
-                    </p>
-                  </div>
-                </div>
-
-                {/* Map Markers (simulated) */}
-                <div className="absolute top-1/4 left-1/4">
-                  <div className="w-8 h-8 rounded-full bg-brand-action flex items-center justify-center text-surface-base text-xs font-bold shadow-lg animate-pulse">
-                    1
-                  </div>
-                </div>
-                <div className="absolute top-1/3 right-1/3">
-                  <div className="w-8 h-8 rounded-full bg-brand-action flex items-center justify-center text-surface-base text-xs font-bold shadow-lg">
-                    2
-                  </div>
-                </div>
-                <div className="absolute bottom-1/3 left-1/2">
-                  <div className="w-8 h-8 rounded-full bg-brand-action flex items-center justify-center text-surface-base text-xs font-bold shadow-lg">
-                    3
-                  </div>
-                </div>
-                <div className="absolute top-1/2 right-1/4">
-                  <div className="w-8 h-8 rounded-full bg-brand-action flex items-center justify-center text-surface-base text-xs font-bold shadow-lg">
-                    4
-                  </div>
-                </div>
-
-                {/* Cluster Bubble */}
-                <div className="absolute top-4 right-4 bg-surface-overlay border border-border-strong rounded-full px-3 py-1.5 text-sm text-text-primary">
-                  <span className="text-brand-action font-bold">8</span> in area
-                </div>
-
-                {/* Selected Tooltip */}
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-surface-overlay border border-border-brand rounded-card px-4 py-3 shadow-modal">
-                  <p className="text-text-primary font-medium text-sm">Adaeze Consulting Ltd</p>
-                  <p className="text-text-muted text-xs">₦15,000/filing · 4.9 ★</p>
-                </div>
-
-                {/* Bottom Location Pill */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-surface-overlay border border-border-strong rounded-pill px-4 py-2 text-sm text-text-secondary flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-brand-action" />
-                  Showing results near Lagos Island
-                </div>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
       <Footer />
     </div>
   );
