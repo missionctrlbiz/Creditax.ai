@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { Search, Clock, Bookmark, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const categories = ['All', 'Tax Tips', 'Product Updates', 'API Guides', 'Nigerian Finance', 'Credit & Borrowing'];
@@ -85,7 +87,8 @@ const staggerContainer = {
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-surface-base">
+    <div className="flex flex-col min-h-screen bg-surface-base">
+      <Header />
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'var(--ambient-glow)' }} />
 
@@ -275,6 +278,7 @@ export default function BlogPage() {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { CheckCircle, ChevronDown, ChevronUp, Bell, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
@@ -65,7 +67,8 @@ export default function StatusPage() {
   const uptimeData = generateUptimeData(activeTab === '7d' ? 7 : activeTab === '30d' ? 30 : 90);
 
   return (
-    <div className="min-h-screen bg-surface-base">
+    <div className="flex flex-col min-h-screen bg-surface-base">
+      <Header />
       {/* Page Header */}
       <section className="pt-24 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
@@ -301,6 +304,7 @@ export default function StatusPage() {
           </motion.div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

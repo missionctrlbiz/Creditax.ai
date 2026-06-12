@@ -22,6 +22,8 @@ import {
   Users,
   TrendingUp,
 } from 'lucide-react';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -92,7 +94,8 @@ export default function ProProfilePage() {
   const [showFullAbout, setShowFullAbout] = useState(false);
 
   return (
-    <div className="min-h-screen bg-surface-base pb-20">
+    <div className="flex flex-col min-h-screen bg-surface-base pb-20">
+      <Header />
       {/* Profile Header */}
       <section className="bg-[#0D1117] py-8 px-6 border-b border-border-subtle">
         <div className="max-w-6xl mx-auto">
@@ -375,6 +378,7 @@ export default function ProProfilePage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

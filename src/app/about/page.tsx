@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { MapPin, Users, TrendingUp, Shield, Zap, Globe, Mail, Link2, ExternalLink } from 'lucide-react';
 
 const fadeInUp = {
@@ -78,7 +80,8 @@ const stats = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-surface-base">
+    <div className="flex flex-col min-h-screen bg-surface-base">
+      <Header />
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'var(--ambient-glow)' }} />
 
@@ -297,6 +300,7 @@ export default function AboutPage() {
           </motion.form>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

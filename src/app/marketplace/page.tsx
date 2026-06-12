@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { Search, MapPin, Star, ChevronDown, ExternalLink, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -76,7 +78,8 @@ export default function MarketplacePage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-surface-base">
+    <div className="flex flex-col min-h-screen bg-surface-base">
+      <Header />
       {/* Search Header */}
       <section className="bg-[#0D1117] py-6 px-6 sticky top-0 z-40 border-b border-border-subtle">
         <div className="max-w-7xl mx-auto">
@@ -283,6 +286,7 @@ export default function MarketplacePage() {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }
