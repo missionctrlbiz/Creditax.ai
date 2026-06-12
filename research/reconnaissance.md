@@ -565,7 +565,7 @@ The Nigeria Tax Act (NTA) and Nigeria Tax Administration Act (NTAA) represent th
 |-----------|------------|-----------|
 | **API Frontend** | Vercel (Serverless Functions) | Free tier, global edge, easy scaling |
 | **Database + Auth + RAG** | Supabase | Free tier, PostgreSQL, built-in auth, vector support for RAG |
-| **Background Jobs** | GCP Triggers/Cloud Functions | Task queues, document processing jobs |
+| **Background Jobs** | Trigger.dev | Workflow automation, document processing jobs |
 | **AI/LLM** | OpenAI/Gemini via API | Can fine-tune later; for now use prompt engineering + RAG |
 | **Document Processing** | Google Document AI or Rossum API | Existing infrastructure, no need to build from scratch |
 | **Infrastructure as Code** | Terraform | Full IaC, learnable, GCP support |
@@ -758,3 +758,12 @@ Each feature built should exercise at least one of these:
 *Document Version: 1.0*
 *Last Updated: June 11, 2026*
 *Next Review: Upon feature completion*
+
+## Changelog
+
+### v1.0 (June 11, 2026)
+- Initial reconnaissance research
+- Market analysis for Nigerian tax + credit landscape
+- Competitive analysis for tax tech and credit tech
+- Feature gap analysis
+- Strategic opportunities identified

@@ -381,3 +381,9 @@ LARGE:  0 8px 40px rgba(13, 115, 119, 0.12)
 
 *Document Version: 1.0*
 *Last Updated: June 11, 2026*
+*Next Review: Upon brand refresh*
+
+## Changelog
+
+### v1.0 (June 11, 2026)
+- Initial brand identity draft

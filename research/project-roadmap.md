@@ -155,7 +155,7 @@ P2:
 |-------|---------------|
 | File upload handling | Multipart uploads, validation |
 | External AI API integration | Google Document AI |
-| Background jobs | GCP Triggers for heavy processing |
+| Background jobs | Trigger.dev for workflow automation |
 | Report generation | PDF/text generation |
 
 ### Feature List
@@ -181,7 +181,7 @@ P2:
 
 - **Document AI:** Google Document AI ($300 free tier)
 - **Storage:** Supabase Storage
-- **Background Jobs:** GCP Cloud Functions/Triggers
+- **Background Jobs:** Trigger.dev (Vercel-integrated, TypeScript-native)
 
 ---
 
@@ -282,6 +282,79 @@ P2:
 
 ---
 
+## Phase 5.5: Tax Professional Marketplace (Week 19-22)
+
+**Goal:** Onboard verified tax professionals, build marketplace with co-location search
+
+> ⚠️ **Important:** No official CAC public API exists. Use hybrid approach: Mono Lookup API + CAC certificate document upload + admin review.
+
+### Milestones
+
+- [ ] Tax professional signup flow with CAC verification
+- [ ] Mono Lookup API integration (business name lookup)
+- [ ] Document upload (CAC certificate, FIRS certificate, ID)
+- [ ] Mapbox geocoding setup (100k free requests/month)
+- [ ] Admin approval queue (`/admin/marketplace`)
+- [ ] Public marketplace listing (`/marketplace`)
+- [ ] Tax professional profile pages
+- [ ] RAG integration for natural language search
+- [ ] Proximity-based search ("near me" feature)
+
+### Technical Skills to Practice
+
+| Skill | How Practiced |
+|-------|---------------|
+| API verification | Mono Lookup for CAC number validation |
+| Geocoding | Mapbox Geocoding API for address → lat/lng |
+| Spatial queries | PostGIS/Supabase geography for distance |
+| Dual-index RAG | Separate indices for tax docs + pro profiles |
+| Hybrid search | Semantic similarity + geographic filtering |
+| Document upload | Supabase Storage for PDFs |
+
+### Verification Flow
+
+```
+1. Tax Pro enters CAC registration number
+2. Mono Lookup API validates → returns business name/status
+3. Tax Pro uploads CAC certificate PDF
+4. Admin reviews → approves/rejects
+5. Once approved → profile appears in marketplace
+```
+
+### Feature List
+
+```
+P0:
+- /pro/apply -> Tax pro application flow
+- /marketplace -> Public marketplace listing
+- /admin/marketplace -> Admin approval queue
+- POST /api/v1/tax-pro/verify-cac -> Mono Lookup
+- POST /api/v1/tax-pro/calculate-distance -> Proximity search
+
+P1:
+- /marketplace/[slug] -> Professional profile pages
+- Mapbox map view with markers
+- "Near me" feature (browser geolocation)
+- Dual-index RAG for natural language queries
+- Click-to-call, WhatsApp, email contact links
+
+P2:
+- RAG chat integration ("find tax pro near Lagos")
+- Review system
+- Quote request functionality
+- Calendar booking (future)
+```
+
+### Stack
+
+- **Verification:** Mono Lookup API
+- **Geocoding:** Mapbox (100k free requests/month)
+- **Storage:** Supabase Storage (for CAC/FIRS PDFs)
+- **Maps:** Mapbox GL JS
+- **RAG:** Existing RAG pipeline extended for pro profiles
+
+---
+
 ## Phase 6: Launch & Iterate (Week 21-24+)
 
 **Goal:** Public launch, get users, iterate based on feedback
@@ -332,8 +405,8 @@ Enterprise: Custom
 | **Month 2** | AI/RAG | RAG pipeline, tax Q&A, webhook system |
 | **Month 3** | Document Pipeline | Upload → Extract → Report, background jobs |
 | **Month 4** | Credit + IaC | Credit scoring, Terraform full setup, monitoring |
-| **Month 5** | B2B Platform | Developer dashboard, sandbox, usage analytics |
-| **Month 6** | Launch | Public launch, marketing, first revenue |
+| **Month 5** | B2B Platform + Marketplace | Developer dashboard, sandbox, tax pro signup flow |
+| **Month 6** | Launch + Marketplace RAG | Public launch, RAG marketplace search, first revenue |
 
 ---
 
@@ -403,6 +476,11 @@ Enterprise: Custom
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | June 12, 2026 | Added Phase 5.5: Tax Professional Marketplace (Week 19-22) |
+|       | | Added CAC verification via Mono Lookup API (no official CAC API exists) |
+|       | | Added Mapbox geocoding + proximity search |
+|       | | Added RAG dual-index for marketplace (tax docs + pro profiles) |
+|       | | Updated Month 5-6 breakdown to include marketplace features |
 | 1.0 | June 11, 2026 | Initial roadmap |
 
 ---

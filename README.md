@@ -66,7 +66,7 @@ creditax-ai/
 | Database + Auth | Supabase |
 | AI/LLM | OpenAI / Gemini |
 | Document AI | Google Document AI |
-| Background Jobs | GCP Cloud Functions |
+| Background Jobs | Trigger.dev |
 | Infrastructure as Code | Terraform |
 | Monitoring | GCP Cloud Monitoring |
 
