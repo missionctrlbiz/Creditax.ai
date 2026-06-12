@@ -246,7 +246,7 @@ export default function ReportsPage() {
                 <div className="mb-6">
                   <p className="text-[11px] uppercase tracking-wider text-text-muted mb-3">Monthly Income</p>
                   <div className="flex items-end justify-between gap-1 h-20">
-                    {previewData.monthlyIncome.map((amount) => {
+                    {previewData.monthlyIncome.map((amount, i) => {
                       const height = (amount / maxMonthlyIncome) * 100;
                       const isDecember = i === 11;
                       return (
