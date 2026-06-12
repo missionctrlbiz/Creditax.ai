@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -321,9 +321,8 @@ export default function AdminAuditPage() {
               </thead>
               <tbody>
                 {paginatedLogs.map((log, i) => (
-                  <>
+                  <React.Fragment key={log.id}>
                     <motion.tr
-                      key={log.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.02 }}
@@ -395,7 +394,7 @@ export default function AdminAuditPage() {
                         </motion.tr>
                       )}
                     </AnimatePresence>
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
