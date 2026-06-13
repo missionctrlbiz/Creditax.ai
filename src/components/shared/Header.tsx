@@ -9,7 +9,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 h-16 flex items-center justify-between px-10 max-w-[1440px] w-full mx-auto bg-transparent backdrop-blur-md z-50 select-none">
+    <header className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-10 w-full mx-auto bg-transparent backdrop-blur-[0px] z-50 select-none">
       <div className="flex items-center gap-2 h-8">
         <Link href="/">
           <img src="/logo.png" alt="Creditax.ai" className="h-8 cursor-pointer" />

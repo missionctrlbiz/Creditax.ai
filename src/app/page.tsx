@@ -17,9 +17,11 @@ export default function LandingPage() {
       {/* Main Content */}
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative pt-6 pb-12 md:pt-10 md:pb-16 overflow-hidden">
+        <section className="relative min-h-[600px] md:min-h-[700px] pt-32 pb-12 md:pt-40 md:pb-16 overflow-hidden bg-[var(--color-surface-base)]">
           {/* Radial gradient from top center for header/hero blend */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--color-brand-primary)_0%,transparent_60%)] opacity-30 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,var(--color-brand-primary)_0%,transparent_70%)] opacity-40 pointer-events-none" />
+          {/* Subtle gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-surface-base)] via-transparent to-[var(--color-surface-base)] pointer-events-none" />
           <div className="max-w-[1440px] mx-auto px-10 grid grid-cols-1 md:grid-cols-[40%_60%] items-center">
             {/* Left Column: Hero Content */}
             <div className="relative z-10 max-w-[620px]">
