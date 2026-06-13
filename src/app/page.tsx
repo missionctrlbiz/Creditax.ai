@@ -18,6 +18,8 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative pt-6 pb-12 md:pt-10 md:pb-16 overflow-hidden">
+          {/* Radial gradient from top center for header/hero blend */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--color-brand-primary)_0%,transparent_60%)] opacity-30 pointer-events-none" />
           <div className="max-w-[1440px] mx-auto px-10 grid grid-cols-1 md:grid-cols-[40%_60%] items-center">
             {/* Left Column: Hero Content */}
             <div className="relative z-10 max-w-[620px]">
