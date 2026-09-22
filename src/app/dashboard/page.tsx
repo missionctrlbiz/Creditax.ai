@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -14,6 +15,7 @@ export default function DashboardPage() {
       month: 'long',
       year: 'numeric',
     };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentDate(new Date().toLocaleDateString('en-NG', options));
   }, []);
 
@@ -123,11 +125,33 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Link href="/dashboard/tax-filing">
+          <Card className="p-5 hover:border-brand-primary transition-colors cursor-pointer h-full">
+            <div className="text-brand-primary font-semibold text-sm mb-1">Continue Tax Filing →</div>
+            <p className="text-text-muted text-xs leading-relaxed">60% complete · 3 documents still needed</p>
+          </Card>
+        </Link>
+        <Link href="/dashboard/reports">
+          <Card className="p-5 hover:border-brand-primary transition-colors cursor-pointer h-full">
+            <div className="text-brand-primary font-semibold text-sm mb-1">View Tax Outputs →</div>
+            <p className="text-text-muted text-xs leading-relaxed">Summaries, expense and credit reports</p>
+          </Card>
+        </Link>
+        <Link href="/dashboard/credit">
+          <Card className="p-5 hover:border-brand-primary transition-colors cursor-pointer h-full">
+            <div className="text-brand-primary font-semibold text-sm mb-1">Check Credit Score →</div>
+            <p className="text-text-muted text-xs leading-relaxed">720 VantageScore · +15 this month</p>
+          </Card>
+        </Link>
+      </div>
+
       {/* Activity Card */}
       <Card className="p-6 md:p-7">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-text-primary">Recent Activity</h2>
-          <a href="#" className="text-brand-primary text-xs font-semibold hover:underline">View all →</a>
+          <Link href="/dashboard/reports" className="text-brand-primary text-xs font-semibold hover:underline">View all →</Link>
         </div>
         
         <div className="flex flex-col">

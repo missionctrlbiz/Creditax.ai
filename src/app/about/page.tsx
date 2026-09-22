@@ -100,13 +100,13 @@ export default function AboutPage() {
             variants={fadeInUp}
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary leading-tight mb-6"
           >
-            We're building the financial infrastructure that Nigeria's tax and credit system deserves.
+            We&apos;re building the financial infrastructure that Nigeria&apos;s tax and credit system deserves.
           </motion.h1>
           <motion.p
             variants={fadeInUp}
             className="text-lg text-text-secondary max-w-2xl mx-auto mb-12"
           >
-            Creditax.ai was born from a simple frustration: millions of Nigerians are financially capable but invisible to lenders because their economic activity lives outside the formal credit system. We're changing that.
+            Creditax.ai was born from a simple frustration: millions of Nigerians are financially capable but invisible to lenders because their economic activity lives outside the formal credit system. We&apos;re changing that.
           </motion.p>
 
           {/* Stats */}

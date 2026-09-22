@@ -23,6 +23,13 @@
 | `research/project-roadmap.md` | 6-month implementation plan |
 | `research/marketing-strategy.md` | Twitter-first marketing, launch plan, SuperScale content plan |
 | `research/superScale-prompts.md` | All prompts for SuperScale.ai (mock-ups, videos, brand assets) |
+| `research/product-foundation.md` | **FOUNDATION:** what we build, audiences, stakeholders, positioning, RAG→API |
+| `research/pricing-and-access.md` | **FOUNDATION:** ₦ tiers, tight free limits, BVN rules, credit accounting |
+| `research/security-foundation.md` | **FOUNDATION:** PII rules, threat model, layered controls, NDPR |
+| `research/roles-and-experience.md` | **FOUNDATION:** 8 roles, auth, dashboard-first + canvas spec |
+| `research/mvp-demo-plan.md` | **FOUNDATION:** gaps, Track A/B split, demo scope + script, screenshots |
+| `research/legal-compliance.md` | **FOUNDATION:** CAC, NDPA/DPIA gating, CBN boundary, FIRS posture |
+| `research/feature-specs.md` | **FOUNDATION:** Skills concept + chips, MVP Skills 01–04, wave-two 05–10, future bets |
 | `.agents/skills/` | Design skills (frontend-design, web-design-guidelines, etc.) |
 
 **Read these before starting major work.**
@@ -303,10 +310,21 @@ Changelog goes at the bottom of the document, after the main content, before any
 
 ---
 
-*Document Version: 1.2*
-*Last Updated: June 12, 2026*
+*Document Version: 1.3*
+*Last Updated: September 21, 2026*
 
 ## Changelog
+
+### v1.5 (September 21, 2026)
+- Added feature-specs.md (Skills 01–10, future bets for paper); demo scope item 12 (Skills v1 on camera)
+
+### v1.4 (September 21, 2026)
+- Added legal-compliance.md (CAC, NDPA/DPIA, CBN boundary, FIRS posture)
+- Locked: 4-language i18n incl. prompting (all tracks), paid invites + canvas sharing, connectors on all tiers
+
+### v1.3 (September 21, 2026)
+- Added 5 foundation docs to key documents (product, pricing, security, roles, MVP demo plan)
+- Locked decisions: Naira-only pricing, consumer-first positioning, dashboard-first landing, 8 roles, Track A/B split
 
 ### v1.2 (June 12, 2026)
 - Added Mapbox to tech stack (geocoding, maps, 100k free requests/month)

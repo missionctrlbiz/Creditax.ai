@@ -59,8 +59,9 @@
   --shadow-btn-action: var(--shadow-btn-action);
   --shadow-btn-brand: var(--shadow-btn-brand);
 
-  --font-sans: var(--font-syne), sans-serif;
-  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-syne), var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 :root {
@@ -251,6 +252,123 @@ body {
   background-repeat: no-repeat;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   transition: background-color 0.15s ease, color 0.15s ease;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Prevent any element from causing horizontal scroll */
+img, video, svg, canvas, iframe {
+  max-width: 100%;
+  display: block;
+}
+
+/* ── Global type scale (root-level, applies everywhere) ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2rem, 1.4rem + 2.6vw, 3.5rem); }
+h2 { font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem); }
+h3 { font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); letter-spacing: -0.01em; }
+
+p  { text-wrap: pretty; }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* All figures & amounts use mono, tabular for alignment */
+.stat-number,
+[data-figure],
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Focus visibility (WCAG) ── */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--color-selection-bg);
+  color: var(--color-text-primary);
+}
+
+/* ── Scrollbars ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Forms ── */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Utility: display font on demand ── */
+.font-display {
+  font-family: var(--font-display);
 }

@@ -396,13 +396,13 @@ export default function QuickstartPage() {
                       <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
                     </svg>
                   </a>
-                  <a href="#" className="flex items-center justify-between text-sm text-brand-primary hover:underline">
+                  <a href="https://github.com/creditax-ai" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between text-sm text-brand-primary hover:underline">
                     Join Discord Community
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                       <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
                     </svg>
                   </a>
-                  <a href="#" className="flex items-center justify-between text-sm text-brand-primary hover:underline">
+                  <a href="/status" className="flex items-center justify-between text-sm text-brand-primary hover:underline">
                     Get Support
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                       <path d="M5 12h14M12 5l7 7-7 7" />

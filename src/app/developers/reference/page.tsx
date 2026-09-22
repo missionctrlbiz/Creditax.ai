@@ -530,13 +530,13 @@ export default function ReferencePage() {
             <Card className="p-4">
               <h3 className="text-sm font-semibold text-text-primary mb-3">Related Endpoints</h3>
               <div className="space-y-2">
-                <a href="#" className="block text-sm font-mono text-brand-primary hover:underline">
+                <a href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
                   POST /v2/tax/vat
                 </a>
-                <a href="#" className="block text-sm font-mono text-brand-primary hover:underline">
+                <a href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
                   GET /v2/tax/brackets
                 </a>
-                <a href="#" className="block text-sm font-mono text-brand-primary hover:underline">
+                <a href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
                   GET /v2/tax/wht
                 </a>
               </div>

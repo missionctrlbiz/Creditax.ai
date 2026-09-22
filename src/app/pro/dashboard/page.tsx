@@ -126,8 +126,10 @@ export default function ProDashboardPage() {
                 >
                   Upcoming Deadlines
                 </h2>
-                <a 
-                  href="#" 
+                <a
+                  href="https://www.firs.gov.ng"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-medium hover:underline"
                   style={{ color: 'var(--color-brand-primary)' }}
                 >
@@ -173,8 +175,10 @@ export default function ProDashboardPage() {
                   </motion.div>
                 ))}
               </div>
-              <a 
-                href="#" 
+              <a
+                href="https://www.firs.gov.ng"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 mt-4 text-sm font-medium hover:underline"
                 style={{ color: 'var(--color-brand-primary)' }}
               >
@@ -280,8 +284,8 @@ export default function ProDashboardPage() {
                     style={{ background: 'var(--color-brand-primary)' }}
                   />
                 </div>
-                <a 
-                  href="#" 
+                <a
+                  href="/pricing"
                   className="inline-flex items-center gap-1 mt-3 text-sm font-medium hover:underline"
                   style={{ color: 'var(--color-brand-primary)' }}
                 >

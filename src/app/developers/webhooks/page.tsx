@@ -360,7 +360,7 @@ export default function WebhooksPage() {
                         </Button>
                       </div>
                       <p className="text-xs text-text-muted mt-2">
-                        We'll sign all payloads with this secret. Verify in your server using HMAC-SHA256.
+                        We&apos;ll sign all payloads with this secret. Verify in your server using HMAC-SHA256.
                       </p>
                     </div>
 

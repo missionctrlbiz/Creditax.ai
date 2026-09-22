@@ -536,9 +536,9 @@ export default function ProApplyPage() {
                   <div className="pt-4 border-t border-border-default">
                     <p className="text-text-muted text-sm">
                       By submitting, you agree to our{' '}
-                      <a href="#" className="text-brand-primary hover:underline">Terms of Service</a>{' '}
+                      <a href="/terms" className="text-brand-primary hover:underline">Terms of Service</a>{' '}
                       and{' '}
-                      <a href="#" className="text-brand-primary hover:underline">Verification Policy</a>.
+                      <a href="/terms" className="text-brand-primary hover:underline">Verification Policy</a>.
                     </p>
                   </div>
                 </div>
@@ -584,11 +584,11 @@ export default function ProApplyPage() {
         >
           <p className="text-text-muted text-sm">
             Need help?{' '}
-            <a href="#" className="text-brand-primary hover:underline">
+            <a href="/status" className="text-brand-primary hover:underline">
               Contact support
             </a>{' '}
             or read our{' '}
-            <a href="#" className="text-brand-primary hover:underline">
+            <a href="/terms" className="text-brand-primary hover:underline">
               verification guide
             </a>.
           </p>

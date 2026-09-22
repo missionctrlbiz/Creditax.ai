@@ -107,7 +107,7 @@ export default function ApiKeysPage() {
           <span>
             Keep your API keys secure. Never share them in public repositories or client-side code.
             Rotate keys immediately if compromised.{' '}
-            <a href="#" className="text-brand-primary hover:underline">
+            <a href="/developers/reference" className="text-brand-primary hover:underline">
               Learn about API security →
             </a>
           </span>

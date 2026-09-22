@@ -229,7 +229,7 @@ export default function DocumentUploadPage() {
       {/* Filter and Content Header */}
       <div className="flex items-center justify-between mt-10 mb-3">
         <h2 className="text-lg font-semibold text-text-primary">Recent Uploads</h2>
-        <a href="#" className="text-brand-primary text-xs font-semibold hover:underline">
+        <a href="/dashboard/documents" className="text-brand-primary text-xs font-semibold hover:underline">
           View all in Documents →
         </a>
       </div>
@@ -352,8 +352,21 @@ export default function DocumentUploadPage() {
                       Extracted
                     </div>
                     <div className="flex gap-3 text-xs">
-                      <a href="#" className="text-brand-primary font-semibold hover:underline">View</a>
-                      <a href="#" className="text-text-secondary hover:text-text-primary transition-colors">Download</a>
+                      <a href="/dashboard/documents" className="text-brand-primary font-semibold hover:underline">View</a>
+                      <button
+                        onClick={() => {
+                          const summary = `Creditax.ai — Document Summary\nName: ${doc.name}\nStatus: ${doc.status}\nExported: ${new Date().toLocaleString('en-NG')}\n`;
+                          const url = URL.createObjectURL(new Blob([summary], { type: 'text/plain' }));
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${doc.name}.summary.txt`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                      >
+                        Download
+                      </button>
                       <button 
                         onClick={() => deleteDocument(doc.id)} 
                         className="text-status-error font-semibold hover:underline cursor-pointer"

@@ -22,7 +22,7 @@ export default function LandingPage() {
             <div className="relative z-10 max-w-[620px]">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-primary-bg border border-brand-primary-border rounded-full text-[11px] font-bold uppercase tracking-[0.12em] text-brand-primary mb-7">
                 <span className="w-1.5 h-1.5 bg-brand-action rounded-full animate-pulse" />
-                Now in Beta · Nigeria's First AI Tax-Credit Platform
+                Now in Beta · Nigeria&apos;s First AI Tax-Credit Platform
               </div>
               <h1 className="text-5xl md:text-6xl font-bold leading-[1.04] mb-5 tracking-tight font-sans">
                 Tax Smart.<br />
@@ -35,7 +35,7 @@ export default function LandingPage() {
                 <Link href="/login">
                   <Button variant="primary">Get Early Access →</Button>
                 </Link>
-                <Link href="#">
+                <Link href="/developers/quickstart">
                   <Button variant="secondary">View API Docs</Button>
                 </Link>
               </div>
@@ -63,7 +63,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 md:py-24 border-t border-border-default bg-surface-base">
+        <section id="features" className="py-20 md:py-24 border-t border-border-default bg-surface-base">
           <div className="max-w-[1440px] mx-auto px-10">
             <p className="text-center text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-4">
               PLATFORM FEATURES
@@ -93,8 +93,8 @@ export default function LandingPage() {
                 <div className="bg-surface-base rounded-[10px] p-4 border border-[rgba(255,255,255,0.04)] mt-auto">
                   <div className="font-mono text-[12px] leading-relaxed">
                     <span className="text-text-muted">{"{"}</span><br />
-                    &nbsp;&nbsp;<span className="text-brand-primary">"tax"</span>: <span className="text-brand-action">"4,800,000"</span>,<br />
-                    &nbsp;&nbsp;<span className="text-brand-primary">"rate"</span>: <span className="text-brand-action">0.07</span><br />
+                    &nbsp;&nbsp;<span className="text-brand-primary">&quot;tax&quot;</span>: <span className="text-brand-action">&quot;4,800,000&quot;</span>,<br />
+                    &nbsp;&nbsp;<span className="text-brand-primary">&quot;rate&quot;</span>: <span className="text-brand-action">0.07</span><br />
                     <span className="text-text-muted">{"}"}</span>
                   </div>
                 </div>

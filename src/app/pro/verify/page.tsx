@@ -89,8 +89,8 @@ export default function VerifyPage() {
                 Verification queries count toward your API usage. Each TIN/BVN lookup = 1 API call. Results are cached for 24 hours.
               </p>
             </div>
-            <a 
-              href="#" 
+            <a
+              href="/pro/settings"
               className="text-sm font-medium hover:underline flex-shrink-0"
               style={{ color: 'var(--color-brand-primary)' }}
             >
