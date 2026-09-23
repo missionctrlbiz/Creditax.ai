@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p4-money",
+  "current_phase": "p5-boards",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -234,13 +234,13 @@
     },
     {
       "id": "p4-money",
-      "status": "in_progress",
+      "status": "reviewed_pass",
       "attempts": 0,
       "items": {
-        "quota-engine": "todo",
-        "upgrade-walls-usage": "todo",
-        "mock-billing-tiers": "todo",
-        "subscriptions-collection": "todo"
+        "quota-engine": "done",
+        "upgrade-walls-usage": "done",
+        "mock-billing-tiers": "done",
+        "subscriptions-collection": "done"
       },
       "exit_criteria": [
         "F-11 server-side quota engine: quotas collection + credit counting per pricing-and-access §4 (chat=1, calc=2, upload=3, report=2, BVN=25) with daily/lifetime counters",
@@ -248,11 +248,23 @@
         "F-13 subscriptions collection; upgrade = set tier + toast (mocked Paystack is Track B)",
         "npm run lint passes"
       ],
-      "last_updated": "2026-09-23T17:35:00+01:00"
+      "last_updated": "2026-09-23T18:32:00+01:00",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T18:32:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0)",
+          "build": "env_blocked (sandbox EPERM; P4 exit criteria = lint only)"
+        },
+        "honesty_check": "pass (20 demo_seed flags across P4 outputs; ₦-only pricing; anonymous chat un-metered by design)",
+        "note": "Non-blocking reviewer notes deferred to Track B: per-action daily guardrails for credit-refresh/tin-cac/api, setTier upsert into PB subscriptions."
+      }
     },
     {
       "id": "p5-boards",
-      "status": "todo",
+      "status": "in_progress",
       "attempts": 0,
       "items": {
         "marketplace-contact-gating": "todo",

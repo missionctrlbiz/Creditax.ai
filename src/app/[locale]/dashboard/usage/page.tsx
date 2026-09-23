@@ -1,17 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { CountUp } from '@/components/ui/CountUp';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { UpgradeWall } from '@/components/shared/UpgradeWall';
+import { TIER_PLANS } from '@/ai/quota';
 
 type Period = '7d' | '30d' | '90d' | 'custom';
+
+interface LiveQuota {
+  tier: string;
+  credits: { today: number; budget: number; remaining: number };
+  chats: { today: number; cap: number; lifetime: number; lifetimeCap: number };
+  calcs: { today: number; cap: number };
+  uploads: { today: number; cap: number };
+  reports: { today: number; cap: number };
+  upgradeHint: { to: string; message: string } | null;
+  demo_seed?: boolean;
+}
+
+/** P4 F-12 — compact live counter tile for the usage page. */
+function QuotaTile({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <Card className="p-4">
+      <p className="text-text-muted text-[11px] font-semibold uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-2xl font-bold text-text-primary">{value}</p>
+      <p className="text-text-muted text-[11px] mt-0.5">{sub}</p>
+    </Card>
+  );
+}
 
 export default function UsagePage() {
   const [period, setPeriod] = useState<Period>('30d');
   const [chartView, setChartView] = useState<'hourly' | 'daily' | 'weekly'>('daily');
+  const [quota, setQuota] = useState<LiveQuota | null>(null);
+
+  // P4 F-12 — pull live counters from the quota engine (replaces mock figures).
+  useEffect(() => {
+    fetch('/api/v1/quota?userId=u-consumer')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setQuota(d as LiveQuota);
+      })
+      .catch(() => {});
+  }, []);
 
   const stats: {
     label: string;
@@ -136,9 +171,47 @@ export default function UsagePage() {
         </div>
       </div>
 
+      {/* P4 F-12 — Live quota panel: real counters from the quota engine */}
+      {quota && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant="brand">{quota.demo_seed ? 'demo_seed' : 'live'} · tier: {quota.tier}</Badge>
+            <span className="text-text-muted text-[11px]">Live counters (F-11 server-side metering)</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <QuotaTile label="Credits today" value={String(quota.credits.today)} sub={`budget ${quota.credits.budget === -1 ? 'unlimited' : quota.credits.budget}`} />
+            <QuotaTile label="Chats" value={`${quota.chats.today}${quota.chats.cap === -1 ? '' : ` / ${quota.chats.cap}`}`} sub={`lifetime ${quota.chats.lifetime}${quota.chats.lifetimeCap === -1 ? '' : ` / ${quota.chats.lifetimeCap}`}`} />
+            <QuotaTile label="Calculations" value={`${quota.calcs.today}${quota.calcs.cap === -1 ? '' : ` / ${quota.calcs.cap}`}`} sub="today" />
+            <QuotaTile label="Uploads" value={`${quota.uploads.today}${quota.uploads.cap === -1 ? '' : ` / ${quota.uploads.cap}`}`} sub="today" />
+          </div>
+
+          {/* F-12 — named-limit upgrade wall (only when a cap is hit) */}
+          {quota.upgradeHint &&
+            (() => {
+              const hint = quota.upgradeHint as { to: string; message: string };
+              return (
+                <div className="mt-4">
+                  <UpgradeWall
+                    hint={{ to: hint.to as 'plus', message: hint.message }}
+                    onUpgrade={() =>
+                      void fetch('/api/v1/quota/tier', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: 'u-consumer', tier: hint.to }),
+                      }).then((r) => r.json())
+                    }
+                  />
+                </div>
+              );
+            })()}
+        </div>
+      )}
+
       {/* Billing Info */}
       <div className="flex items-center justify-between mb-8 p-4 rounded-card bg-surface-overlay border border-border-default">
-        <span className="text-text-secondary text-sm">Next billing: July 1, 2025</span>
+        <span className="text-text-secondary text-sm">
+          Current plan: {TIER_PLANS.find((p) => p.tier === (quota?.tier ?? 'free'))?.name ?? 'Free'}
+        </span>
         <Button variant="primary" size="sm">
           Upgrade Plan →
         </Button>

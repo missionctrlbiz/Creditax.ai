@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { runRag, type RagResult, type RagTurn } from '@/ai/rag';
 import { getConversationStore } from '@/ai/rag/conversations';
 import { registerChatWebhook } from '@/ai/rag/webhooks';
+import { meter, type MeteredAction, type Tier } from '@/ai/quota';
 
 /**
  * POST /api/v1/chat — grounded tax answer (P2 base + P1 multi-turn / async).
@@ -31,6 +32,8 @@ export async function POST(req: NextRequest) {
     topK?: number;
     conversationId?: string;
     userId?: string;
+    tier?: Tier;
+    meteredAction?: MeteredAction;
     history?: RagTurn[];
     webhookUrl?: string;
   };
@@ -47,6 +50,27 @@ export async function POST(req: NextRequest) {
 
   const locale = ['en', 'yo', 'ha', 'ig'].includes(body.locale ?? '') ? body.locale : 'en';
   const topK = Math.min(8, Math.max(1, body.topK ?? 5));
+
+  // P4 F-11 — server-side credit enforcement: meter the action when a user is
+  // present. On a cap-hit we short-circuit with a 403 upgrade wall (F-12).
+  // Anonymous demo chat (no userId) stays un-metered so the demo never dead-ends.
+  const userId = body.userId;
+  const metered: MeteredAction = body.meteredAction ?? 'chat';
+  if (userId) {
+    const gate = meter(userId, metered, { tier: body.tier });
+    if (!gate.allowed) {
+      return NextResponse.json(
+        {
+          error: gate.reason,
+          blocked: true,
+          upgrade: gate.status.upgradeHint,
+          status: gate.status,
+          demo_seed: true,
+        },
+        { status: 403, headers: { 'X-Creditax-Quota': gate.reason ?? 'limit' } }
+      );
+    }
+  }
 
   // P1 multi-turn: resolve history from the conversation store when a
   // conversationId + userId are supplied, else fall back to the explicit
