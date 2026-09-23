@@ -38,7 +38,8 @@ import { AppLogo } from '@/components/shared/AppLogo';
 import { AccountMenu } from '@/components/shared/AccountMenu';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { NotificationBell } from '@/components/shared/NotificationBell';
-import { getSession, type PortalRole } from '@/lib/mock-auth';
+import type { PortalRole } from '@/lib/mock-auth';
+import { getSession as getUnifiedSession } from '@/lib/auth';
 import { useTheme } from '@/providers/ThemeProvider';
 import { cn } from '@/lib/utils';
 
@@ -140,10 +141,15 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const s = getSession();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSessionEmail(s.email);
-    setMounted(true);
+    let active = true;
+    getUnifiedSession().then((s) => {
+      if (!active) return;
+      setSessionEmail(s.email);
+      setMounted(true);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Hydrate collapse state after mount (deferred to avoid sync setState in effect)

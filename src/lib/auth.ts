@@ -12,7 +12,6 @@ import {
   getSession as getMockSession,
   setSession as setMockSession,
   clearSession as clearMockSession,
-  logout as mockLogout,
   getLocalePreference as getMockLocalePref,
   setLocalePreference as setMockLocalePref,
   type PortalRole,
@@ -54,10 +53,12 @@ export async function signIn(role: DemoRole, email: string): Promise<{ session: 
   return await loginAs(role, email);
 }
 
-/** Log out across both backends. */
+/**
+ * Log out across both backends (PB token + mock localStorage). No redirect —
+ * the caller decides navigation, so a mid-logout user can land on /login.
+ */
 export function logout(): void {
   logoutP1();
-  mockLogout();
 }
 
 /** Set the user's locale preference (localStorage for mock sessions; PB users keep record locale). */

@@ -10,8 +10,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
-import { getSession } from '@/lib/mock-auth';
+import { getSession as getUnifiedSession } from '@/lib/auth';
+import type { Tier } from '@/lib/seed/demoSeed';
 import { contactRevealPolicy, maskPhone, maskEmail, type RevealPolicy } from '@/ai/contact-gate';
+
+/** Valid tiers — an unexpected session tier string resolves to free (masked). */
+const TIER_SET: ReadonlySet<string> = new Set(['free', 'plus', 'professional', 'enterprise']);
 import {
   ArrowLeft,
   MapPin,
@@ -462,17 +466,22 @@ export default function ProProfilePage() {
   const pro = PROS[id];
 
   // P5 F-14b — contact gating (Marketplace contact reveal, pricing-and-access §2).
-  // Read the mock session after mount (SSR-safe, same pattern as AppShell).
-  const [viewer, setViewer] = useState<{ loggedIn: boolean; tier: 'free' | 'professional' }>({
+  // P7/P8: read the unified session after mount (PB with mock fallback) so the
+  // reveal uses the viewer's REAL tier, never a role→tier heuristic.
+  const [viewer, setViewer] = useState<{ loggedIn: boolean; tier: Tier }>({
     loggedIn: false,
     tier: 'free',
   });
   useEffect(() => {
-    const s = getSession();
-    if (s.role) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setViewer({ loggedIn: true, tier: s.role === 'personal' ? 'free' : 'professional' });
-    }
+    let active = true;
+    getUnifiedSession().then((s) => {
+      if (!active) return;
+      const tier = (TIER_SET.has(s.tier) ? s.tier : 'free') as Tier;
+      setViewer({ loggedIn: true, tier });
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const policy: RevealPolicy = contactRevealPolicy({ loggedIn: viewer.loggedIn, tier: viewer.tier });

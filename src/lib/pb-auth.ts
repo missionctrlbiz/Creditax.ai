@@ -18,7 +18,6 @@ import {
   getSession as getMockSession,
   setSession as setMockSession,
   clearSession as clearMockSession,
-  logout as mockLogout,
   type PortalRole,
 } from '@/lib/mock-auth';
 import { ROLE_HOME } from '@/lib/seed/demoSeed';
@@ -160,10 +159,22 @@ export async function loginAs(role: DemoRole, email: string): Promise<{ session:
   };
 }
 
-/** Log out across both backends. */
+/**
+ * Log out across BOTH backends so no session lingers as a second source of
+ * truth. Clears the PocketBase token (a local authStore removal, no network
+ * call, safe to run synchronously on the client) AND the mock localStorage
+ * session. The caller decides navigation (logout here does NOT redirect).
+ */
 export function logoutP1(): void {
+  try {
+    const pb: PocketBase = new PocketBase(
+      process.env.NEXT_PUBLIC_POCKETBASE_URL || process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
+    );
+    pb.authStore.clear();
+  } catch {
+    /* not on the PB path — ignore */
+  }
   clearMockSession();
-  mockLogout();
 }
 
 /** Re-export for import convenience. */

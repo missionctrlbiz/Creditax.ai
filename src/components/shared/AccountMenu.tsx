@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
-import { getSession, logout, ROLE_HOME, type PortalRole } from '@/lib/mock-auth';
+import { getSession, ROLE_HOME, type PortalRole } from '@/lib/mock-auth';
+import { logout } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const ALL_ROLES: { role: PortalRole; label: string }[] = [
@@ -76,6 +77,12 @@ export function AccountMenu({
   const email = mounted && sessionState.email ? sessionState.email : 'demo@creditax.ai';
   const initials = initialsFrom(mounted ? sessionState.email : null, role);
   const avatarSrc = DEMO_AVATARS[role];
+
+  /** Clear the session on both backends (PB + mock), then return to login. */
+  function handleLogout() {
+    logout();
+    if (typeof window !== 'undefined') window.location.href = '/login';
+  }
 
   return (
     <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -162,7 +169,7 @@ export function AccountMenu({
           <DropdownMenuPrimitive.Item asChild>
             <button
               type="button"
-              onClick={logout}
+              onClick={handleLogout}
               className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-error-text hover:bg-error-bg cursor-pointer outline-none data-[highlighted]:text-error-text"
             >
               <LogOut size={15} /> Log out
