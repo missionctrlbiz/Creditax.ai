@@ -1,13 +1,17 @@
 {
   "version": 1,
-  "current_phase": "marketplace",
+  "current_phase": "p3-docs-skills",
   "order": [
     "core-api",
     "rag-pipeline",
     "doc-processing",
     "credit-scoring",
     "b2b-platform",
-    "marketplace"
+    "marketplace",
+    "p3-docs-skills",
+    "p4-money",
+    "p5-boards",
+    "p6-collab-polish"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -198,6 +202,77 @@
         "note": "haversine geo-filter verified real math; approval flow mutates state; pro-rag hybrid (semantic+geo). Reviewer-flagged dead ternary cleaned."
       },
       "last_updated": "2026-09-23T14:39:00+01:00"
+    },
+    {
+      "id": "p3-docs-skills",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "deadline-notifications": "todo",
+        "pro-referral-card": "todo",
+        "skills-v1-chips": "todo"
+      },
+      "exit_criteria": [
+        "F-08 filing-deadline alerts + doc-processed events into the bell (F-08)",
+        "F-09 low-confidence / audit-intent triggers a verified-pro referral card with masked→logged-in contact reveal (F-09)",
+        "F-20 four Skill chips (WHT recovery, TCC readiness, notice explainer, invoice WHT check) each as a canvas result card with fixed I/O, credit cost, tier gate (F-20)",
+        "npm run lint passes; demo_seed honesty maintained"
+      ],
+      "last_updated": "2026-09-23T17:35:00+01:00"
+    },
+    {
+      "id": "p4-money",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "quota-engine": "todo",
+        "upgrade-walls-usage": "todo",
+        "mock-billing-tiers": "todo",
+        "subscriptions-collection": "todo"
+      },
+      "exit_criteria": [
+        "F-11 server-side quota engine: quotas collection + credit counting per pricing-and-access §4 (chat=1, calc=2, upload=3, report=2, BVN=25) with daily/lifetime counters",
+        "F-12 named-limit upgrade walls on the 6th chat / 60-cap + live /dashboard/usage with real counters",
+        "F-13 subscriptions collection; upgrade = set tier + toast (mocked Paystack is Track B)",
+        "npm run lint passes"
+      ],
+      "last_updated": "2026-09-23T17:35:00+01:00"
+    },
+    {
+      "id": "p5-boards",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "marketplace-contact-gating": "todo",
+        "admin-kb-publish": "todo",
+        "admin-users-board": "todo"
+      },
+      "exit_criteria": [
+        "F-14b marketplace profile contact masked until logged-in per tier rules",
+        "F-16 admin KB editor save → re-embed → new rules instantly searchable in chat (money shot; audit log)",
+        "F-17b admin users tab wired to data",
+        "npm run lint passes"
+      ],
+      "last_updated": "2026-09-23T17:35:00+01:00"
+    },
+    {
+      "id": "p6-collab-polish",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "collaboration-preview": "todo",
+        "connectors-preview": "todo",
+        "remaining-collections": "todo",
+        "screenshot-sweep": "todo"
+      },
+      "exit_criteria": [
+        "F-18 paid workspace invites a member (invites) + read-only shared-canvas link (shared_links) with signup CTA",
+        "F-19 one external app (Drive) connected as prompt context; free tier shows 2 connectors included",
+        "shared_links, invites, connectors collections added + seeded",
+        "demo-screenshot sweep across all four locales",
+        "npm run lint passes"
+      ],
+      "last_updated": "2026-09-23T17:35:00+01:00"
     }
   ]
 }
