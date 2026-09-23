@@ -26,6 +26,25 @@ Arguments ($ARGUMENTS): one of `run <phase-id>`, `advance`, `watchdog`. If empty
 
 ## Mode: run <phase-id> / advance
 
+0. **Gate check (run first, every gated phase).** Read STATE.json `gates` + each phase's `gate` field.
+   - If the target phase has a `gate` (e.g. `gated_until_p12_complete`), verify the gate condition is met **before any work**:
+     - All prior phases in `order` (up to and including the phase named in the gate, e.g. `p12-demo-polish`) are `reviewed_pass`.
+     - The tree is clean: `git status --porcelain` for source + progress shows no uncommitted in-flight changes that another session is mid-write. If the p12 session is still active/unfinished, the tree will be dirty or `current_phase` not yet advanced past it.
+     - No other runner session is currently active (check the last CHANGELOG line / session log timestamp is recent and closed).
+   - **Gate UNMET → DEFER, do not proceed.** Write one CHANGELOG line (`<date> — <phase> — DEFERRED (gate not met: <reason>)`), re-arm a one-shot scheduled task ~30–45 min out to re-run this same gate check, and STOP this run. Never partially work a gated phase.
+   - **Gate MET** → set phase `in_progress`, update `current_phase`, proceed to step 2.
+   - Non-gated phases skip this check.
+
+## Env / key safety (non-negotiable, added 2026-09-24)
+
+- Real keys live in `.env` (gitignored). NEVER commit `.env`, its values, or paste key values into STATE.json / changelog / session logs / code. Reference keys by name only; mask values in any log.
+- Only `.env.example` (key names + placeholders) is tracked. Keep it in sync when you add a new key.
+- Sandbox-only integrations (Mono/Paystack/Flutterwave): gate on `MONO_ENVIRONMENT=sandbox` / PSP test mode; a non-sandbox call must be blocked, not silently allowed.
+- When a phase wires a provider, keep the existing demo/offline fallback + `demo_seed` honesty flag working — live success flips the flag truthfully; never fake it.
+- Authoritative key → usage map is `progress/KEY-MAP.md`; update its Status column as you wire keys.
+
+## Mode: run / advance (continued)
+
 1. Read STATE.json. Find the phase (the one named in args, or `current_phase` for `advance`).
    - If its status is `reviewed_pass` and a next phase exists in the `order` array: set current_phase to the next, set it `in_progress`, write STATE.json, then jump to step 2 with the new phase.
    - If it is `blocked`: STOP. Do not re-run. Report to user what was written to progress/BLOCKED-<phase>.md.

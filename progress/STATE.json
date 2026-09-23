@@ -17,12 +17,17 @@
     "p9-pro-portal",
     "p10-admin-author",
     "p11-b2b-dev-status",
-    "p12-demo-polish"
+    "p12-demo-polish",
+    "p13-llm-live",
+    "p14-mapbox-geo",
+    "p15-mono-payments",
+    "p16-key-sweep"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
     "Codebase currently uses PocketBase (src/lib/pocketbase.ts, pb_migrations) while AGENTS.md still says Supabase. Follow the existing code unless a phase explicitly changes infra.",
-    "package.json has no `test` script; verification is `npm run build` + `npm run lint` via /usr/local/bin/node."
+    "package.json has no `test` script; verification is `npm run build` + `npm run lint` via /usr/local/bin/node.",
+    "GATE (2026-09-24): p13–p16 are all `gated_until_p12_complete`. DO NOT start any of them until the p12 session is fully finished and its tree is committed clean. The skill checks this gate at the start of any gated run and DEFERS (re-arms itself) if unmet. Keys are now live in .env (gitignored) — see env_keys_note; never commit .env or its values."
   ],
   "phases": [
     {
@@ -478,20 +483,123 @@
     },
     {
       "id": "p12-demo-polish",
-      "status": "todo",
-      "attempts": 0,
+      "status": "reviewed_pass",
+      "attempts": 1,
       "items": {
-        "css-global-complete": "todo",
-        "dead-buttons-sweep": "todo",
-        "demo-script-sweep": "todo",
-        "screenshot-prep": "todo"
+        "css-global-complete": "done",
+        "dead-buttons-sweep": "done",
+        "demo-script-sweep": "done",
+        "screenshot-prep": "done"
       },
       "exit_criteria": [
         "Every button resolves to a real handler (no console.log stubs / empty onClick); globals.css complete (.container, keyframes fallback, font vars)",
         "8-minute demo script beats 1-8 land on the correct live screens; demo-screenshot inventory (assets/demo-screenshots A-G)",
         "final sweep: tsc 0, lint 0, next build (in full-access env) green"
       ],
-      "last_updated": "2026-09-23T20:45:00+01:00"
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T23:05:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox; re-run in full-access)"
+        },
+        "honesty_check": "pass (wired dead buttons use toast/Link navigation; no fake live data introduced)",
+        "note": "Last 7 dead buttons wired (developers/reference Try-in-Sandbox -> sandbox; sdks Request Library -> toast; webhooks Edit/Delete/TestEndpoint + View Error Logs/Payload -> toasts; pro/clients/[id] Upload Document -> Link, both Generate Compliance Report + Message Client -> toasts). Stale unused toast imports in dashboard/documents + dashboard/usage removed. globals.css .container + keyframes + font vars verified present. Demo-script beats verified to land on correct live routes (KB at /admin/knowledge-base). Screenshot inventory manifest created (assets/demo-screenshots/README.md, sections A-G mapped to 8-min script); PNG capture deferred to full-access (browser+dev server required)."
+      },
+      "last_updated": "2026-09-23T23:05:00+01:00"
+    },
+    {
+      "id": "p13-llm-live",
+      "status": "queued",
+      "gate": "gated_until_p12_complete",
+      "attempts": 0,
+      "scope": "Plug real LLM/embedding provider keys from .env into the RAG pipeline so chat answers use live providers where a key exists, keeping the demo_seed offline fallback intact (never fake the flag). GROUNDING FIRST: reconcile the LLM provider three-way mismatch — .env.example + research/API-Research.md say LITELLM.dev is the canonical primary LLM, committed src/ai/rag/llm.ts reads KIMCHI_* vars, and the live .env has BOTH key sets. Decide the canonical provider from the docs, wire it, and record the decision in KEY-MAP.md.",
+      "items": {
+        "llm-provider-reconcile": "todo",
+        "llm-provider-wiring": "todo",
+        "embeddings-cascade": "todo",
+        "hf-vertex-cascade-legs": "todo",
+        "demo_seed-fallback-intact": "todo",
+        "provider-health-log": "todo"
+      },
+      "exit_criteria": [
+        "POST /api/v1/chat uses the canonical live LLM provider where a key exists, else falls back deterministically and still sets demo_seed truthfully; the LLM provider code-vs-manifest mismatch is resolved and recorded in progress/KEY-MAP.md",
+        "Embeddings cascade matches the .env.example order (OpenRouter -> HF -> Vertex -> local-hash) with each leg implemented; the chosen provider is logged in the response metadata",
+        "No demo_seed flag set true when a live provider actually answered; lint 0"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-24T00:46:00+01:00"
+    },
+    {
+      "id": "p14-mapbox-geo",
+      "status": "queued",
+      "gate": "gated_until_p12_complete",
+      "attempts": 0,
+      "scope": "Plug MAPBOX_ACCESS_TOKEN / NEXT_PUBLIC_MAPBOX_TOKEN into marketplace geocoding + map view ('near me'), replacing the simulated haversine/geo demo with real geocoded results where the key is present.",
+      "items": {
+        "mapbox-geocode": "todo",
+        "marketplace-map-view": "todo",
+        "near-me-live": "todo",
+        "geo-demo_seed-fallback": "todo"
+      },
+      "exit_criteria": [
+        "Marketplace search geocodes addresses via Mapbox Geocoding API when the token is present; falls back to the deterministic demo geo with a geo:demo flag otherwise",
+        "/marketplace map view renders markers at real lat/lng; 'near me' uses browser geolocation -> Mapbox reverse geocode",
+        "Token read from env (server-side MAPBOX_ACCESS_TOKEN, client NEXT_PUBLIC_MAPBOX_TOKEN); no key committed; lint 0"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-24T00:42:00+01:00"
+    },
+    {
+      "id": "p15-mono-payments",
+      "status": "queued",
+      "gate": "gated_until_p12_complete",
+      "attempts": 0,
+      "scope": "Plug Mono SANDBOX keys (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox) into the credit data provider interface + a payments/charge sandbox path. Sandbox only — never wired to production; keep demo_seed honest and label everything sandbox. Payments: research/API-Research.md recommends Flutterwave as the PSP for a Nigerian-focused MVP (Paystack as alternate); wire the PSP that has live sandbox keys in .env and record the choice in progress/KEY-MAP.md.",
+      "items": {
+        "mono-connect-sandbox": "todo",
+        "credit-data-provider-swap": "todo",
+        "payments-sandbox-path": "todo",
+        "sandbox-labeling": "todo"
+      },
+      "exit_criteria": [
+        "credit-scoring provider interface swaps local demo model -> Mono sandbox income/credit lookup when MONO keys present; result labeled source:'mono-sandbox'",
+        "Payments charge path hits Mono sandbox (or Paystack/Flutterwave sandbox test keys) for test transactions only; no production charge is possible in this build",
+        "MONO_ENVIRONMENT guard blocks any non-sandbox call; secrets stay in .env (gitignored); lint 0"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-24T00:42:00+01:00"
+    },
+    {
+      "id": "p16-key-sweep",
+      "status": "queued",
+      "gate": "gated_until_p12_complete",
+      "attempts": 0,
+      "scope": "Full key-map sweep: audit every key in .env and plug each into where it belongs, or explicitly mark it unused/Track-B. See progress/KEY-MAP.md (the authoritative key -> usage map). This is the catch-all mapping phase after the specific p13-p15 wirings.",
+      "items": {
+        "key-audit": "todo",
+        "mapbox-slot": "todo",
+        "b2-storage": "todo",
+        "cloudinary-images": "todo",
+        "trigger-jobs": "todo",
+        "resend-twilio-comms": "todo",
+        "paystack-flutterwave-payments": "todo",
+        "unused-keys-triaged": "todo"
+      },
+      "exit_criteria": [
+        "Every key in .env appears in progress/KEY-MAP.md with status: wired / sandboxed / unused-track-B and the exact file(s) it plugs into",
+        "MAPBOX slot confirmed wired (from p14); B2 storage + Cloudinary image paths wired where used; Trigger.dev jobs configured for async work",
+        "No secret is ever committed (.env stays gitignored; only .env.example tracked); a key-audit log records each decision; lint 0",
+        "Runbook + STATE notes record the final key -> usage map so later runs know what is live vs mock"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-24T00:42:00+01:00"
     }
-  ]
+  ],
+  "gates": {
+    "gated_until_p12_complete": "DO NOT start any p13/p14/p15/p16 work until (a) the p12-demo-polish session is fully finished and its tree is committed clean (no in-flight changes), and (b) no other runner session is active. The skill checks this gate at the start of any gated run: if unmet, it DEFERS by re-arming itself later instead of proceeding. This gate is set by the user on 2026-09-24."
+  },
+  "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked — NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog."
 }
