@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -15,6 +16,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { getSession } from "@/lib/auth";
+import type { ProDashboard } from "@/ai/pro-portal";
 
 const container = {
   hidden: { opacity: 0 },
@@ -29,42 +32,44 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-const statCards = [
-  { label: "Revenue (June)", value: "₦2,400,000", change: "+12% vs last month", tone: "success" as const },
-  { label: "Pending Tasks", value: "8", change: "3 due within 24 hrs", tone: "warning" as const },
-  { label: "Client Compliance Rate", value: "94%", change: "2 clients need attention", tone: "success" as const },
-  { label: "Active Clients", value: "47", change: "+3 new this month", tone: "success" as const },
-];
-
-const deadlines = [
-  { id: 1, date: "Jun 20", client: "Zenith Foods Ltd", task: "VAT Return", urgent: true },
-  { id: 2, date: "Jun 25", client: "Eko Logistics", task: "WHT Remittance", urgent: false },
-  { id: 3, date: "Jun 30", client: "Marina Tech", task: "CIT Filing", urgent: false },
-  { id: 4, date: "Jul 10", client: "Okafor & Sons", task: "Quarterly Review", urgent: false },
-  { id: 5, date: "Jul 15", client: "Sunrise Bakery", task: "Annual Return", urgent: false },
-];
-
-const activities = [
-  { id: 1, text: "Zenith Foods Ltd uploaded 3 new receipts", time: "2 min ago" },
-  { id: 2, text: "Eko Logistics requested a compliance report", time: "15 min ago" },
-  { id: 3, text: "Marina Tech completed onboarding", time: "1 hr ago" },
-  { id: 4, text: "Bulk calculation completed for 5 clients", time: "2 hr ago" },
-  { id: 5, text: "VAT filing submitted for Okafor & Sons", time: "3 hr ago" },
-  { id: 6, text: "New client Sunlight Ventures added", time: "5 hr ago" },
-];
+// P9 — offline fallback shapes (the store serves identical data when the API is
+// unreachable, so the demo never dead-ends). Field names match ProDashboard.
+const FALLBACK: ProDashboard = {
+  stats: [
+    { label: "Revenue (June)", value: "₦2,400,000", change: "+12% vs last month", tone: "success" },
+    { label: "Pending Tasks", value: "8", change: "3 due within 24 hrs", tone: "warning" },
+    { label: "Client Compliance Rate", value: "94%", change: "2 clients need attention", tone: "success" },
+    { label: "Active Clients", value: "47", change: "+3 new this month", tone: "success" },
+  ],
+  deadlines: [
+    { id: "dl-1", proId: "u-pro", date: "Jun 20", client: "Zenith Foods Ltd", task: "VAT Return", urgent: true, demo_seed: true },
+    { id: "dl-2", proId: "u-pro", date: "Jun 25", client: "Eko Logistics", task: "WHT Remittance", urgent: false, demo_seed: true },
+    { id: "dl-3", proId: "u-pro", date: "Jun 30", client: "Marina Tech", task: "CIT Filing", urgent: false, demo_seed: true },
+    { id: "dl-4", proId: "u-pro", date: "Jul 10", client: "Okafor & Sons", task: "Quarterly Review", urgent: false, demo_seed: true },
+    { id: "dl-5", proId: "u-pro", date: "Jul 15", client: "Sunrise Bakery", task: "Annual Return", urgent: false, demo_seed: true },
+  ],
+  activities: [
+    { id: "ac-1", proId: "u-pro", text: "Zenith Foods Ltd uploaded 3 new receipts", time: "2 min ago", demo_seed: true },
+    { id: "ac-2", proId: "u-pro", text: "Eko Logistics requested a compliance report", time: "15 min ago", demo_seed: true },
+    { id: "ac-3", proId: "u-pro", text: "Marina Tech completed onboarding", time: "1 hr ago", demo_seed: true },
+    { id: "ac-4", proId: "u-pro", text: "Bulk calculation completed for 5 clients", time: "2 hr ago", demo_seed: true },
+    { id: "ac-5", proId: "u-pro", text: "VAT filing submitted for Okafor & Sons", time: "3 hr ago", demo_seed: true },
+    { id: "ac-6", proId: "u-pro", text: "New client Sunlight Ventures added", time: "5 hr ago", demo_seed: true },
+  ],
+  recentClients: [
+    { id: "1", proId: "u-pro", name: "Zenith Foods Ltd", cac: "RC-248571", tin: "1234567-0001", compliance: 94, lastActivity: "2 min ago", status: "active", location: "Ikeja, Lagos, Nigeria", industry: "Food & Beverage", taxYear: "2024", assignedPro: "Ayo Ogundimu", email: "finance@zenithfoods.com", phone: "+234 801 234 5678", registrationDate: "January 15, 2018", lastFiling: "March 31, 2025", demo_seed: true },
+    { id: "2", proId: "u-pro", name: "Eko Logistics", cac: "RC-189432", tin: "9876543-0002", compliance: 78, lastActivity: "15 min ago", status: "alert", location: "Apapa, Lagos, Nigeria", industry: "Logistics", taxYear: "2024", assignedPro: "Ayo Ogundimu", email: "admin@ekologistics.ng", phone: "+234 802 555 0182", registrationDate: "March 2, 2016", lastFiling: "April 12, 2025", demo_seed: true },
+    { id: "3", proId: "u-pro", name: "Marina Tech Ltd", cac: "RC-301287", tin: "5678901-0003", compliance: 100, lastActivity: "1 hr ago", status: "active", location: "Victoria Island, Lagos", industry: "Technology", taxYear: "2024", assignedPro: "Ayo Ogundimu", email: "hello@marinatech.io", phone: "+234 803 777 4410", registrationDate: "July 19, 2019", lastFiling: "March 28, 2025", demo_seed: true },
+    { id: "4", proId: "u-pro", name: "Okafor & Sons", cac: "RC-145678", tin: "2345678-0004", compliance: 85, lastActivity: "3 hr ago", status: "active", location: "Onitsha, Anambra", industry: "Trading", taxYear: "2024", assignedPro: "Ayo Ogundimu", email: "contact@okaforandsons.com", phone: "+234 806 222 9031", registrationDate: "November 8, 2012", lastFiling: "March 30, 2025", demo_seed: true },
+    { id: "5", proId: "u-pro", name: "Sunrise Bakery", cac: "RC-298761", tin: "3456789-0005", compliance: 62, lastActivity: "5 hr ago", status: "pending", location: "Surulere, Lagos, Nigeria", industry: "Food & Beverage", taxYear: "2024", assignedPro: "Ayo Ogundimu", email: "bake@sunrisebakery.ng", phone: "+234 807 100 2245", registrationDate: "February 27, 2021", lastFiling: "April 18, 2025", demo_seed: true },
+  ],
+  demo_seed: true,
+};
 
 const quickActions = [
   { href: "/pro/verify", label: "Verify New Client", icon: ShieldCheck },
   { href: "/pro/calculations", label: "Run Bulk Calculation", icon: Calculator },
   { href: "/pro/clients", label: "Manage Clients", icon: Users },
-];
-
-const recentClients = [
-  { id: 1, name: "Zenith Foods Ltd", cac: "RC-248571", tin: "1234567-0001", compliance: 94, lastActivity: "2 min ago", status: "active" },
-  { id: 2, name: "Eko Logistics", cac: "RC-189432", tin: "9876543-0002", compliance: 78, lastActivity: "15 min ago", status: "alert" },
-  { id: 3, name: "Marina Tech Ltd", cac: "RC-301287", tin: "5678901-0003", compliance: 100, lastActivity: "1 hr ago", status: "active" },
-  { id: 4, name: "Okafor & Sons", cac: "RC-145678", tin: "2345678-0004", compliance: 85, lastActivity: "3 hr ago", status: "active" },
-  { id: 5, name: "Sunrise Bakery", cac: "RC-298761", tin: "3456789-0005", compliance: 62, lastActivity: "5 hr ago", status: "pending" },
 ];
 
 const statusVariant: Record<string, "success" | "error" | "warning" | "info"> = {
@@ -89,6 +94,33 @@ const toneTextClass: Record<string, string> = {
 };
 
 export default function ProDashboardPage() {
+  const [data, setData] = useState<ProDashboard>(FALLBACK);
+  const [proName, setProName] = useState("Ayo Ogundimu");
+  const [live, setLive] = useState(false);
+
+  // P9 — hydrate the client book + bulk-calc summary from the pro store
+  // (demo_seed); offline, the FALLBACK constants keep the board complete.
+  useEffect(() => {
+    let active = true;
+    getSession().then((s) => {
+      if (active && s.name) setProName(s.name);
+    });
+    fetch("/api/v1/pro/dashboard?proId=u-pro")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ProDashboard | null) => {
+        if (!active || !d) return;
+        setData(d);
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const pending = Number(data.stats.find((s) => s.label === "Pending Tasks")?.value ?? 0);
+  const urgentDeadlines = data.deadlines.filter((d) => d.urgent).length;
+
   return (
     <motion.div
       variants={container}
@@ -99,22 +131,26 @@ export default function ProDashboardPage() {
       {/* Header */}
       <motion.div variants={item} className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1>Good morning, Adaeze</h1>
+          <h1>Good morning, {proName.split(" ")[0]}</h1>
           <p className="text-text-muted text-sm mt-1">
-            You have 8 pending tasks and 2 filing deadlines this week.
+            You have {pending} pending tasks and {urgentDeadlines} urgent filing deadline
+            {urgentDeadlines === 1 ? "" : "s"} this week.
           </p>
         </div>
-        <Link href="/pro/verify">
-          <Button variant="primary" size="lg">
-            <Plus size={16} />
-            Add Client
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          {live && <Badge variant="info">live · demo_seed</Badge>}
+          <Link href="/pro/verify">
+            <Button variant="primary" size="lg">
+              <Plus size={16} />
+              Add Client
+            </Button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Stat Cards */}
       <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
+        {data.stats.map((stat) => (
           <Card key={stat.label} className="p-5">
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               {stat.label}
@@ -154,7 +190,7 @@ export default function ProDashboardPage() {
               </Link>
             </div>
             <div className="space-y-1">
-              {deadlines.map((d) => (
+              {data.deadlines.map((d) => (
                 <div
                   key={d.id}
                   className="flex items-center gap-3 p-2 rounded-btn transition-colors hover:bg-hover-overlay"
@@ -195,7 +231,7 @@ export default function ProDashboardPage() {
           <Card className="p-5 h-full">
             <h2 className="font-semibold text-text-primary mb-4">Client Activity</h2>
             <div className="space-y-3">
-              {activities.map((a) => (
+              {data.activities.map((a) => (
                 <div key={a.id} className="flex items-start gap-3">
                   <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 bg-brand-primary" />
                   <div className="flex-1">
@@ -281,7 +317,7 @@ export default function ProDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentClients.map((client) => {
+                {data.recentClients.map((client, idx) => {
                   const tone = complianceTone(client.compliance);
                   return (
                   <tr
@@ -292,7 +328,7 @@ export default function ProDashboardPage() {
                       <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={`/images/avatars/avatar-${String((client.id % 10) + 1).padStart(2, "0")}.png`}
+                          src={`/images/avatars/avatar-${String((idx % 10) + 1).padStart(2, "0")}.png`}
                           alt=""
                           width={32}
                           height={32}

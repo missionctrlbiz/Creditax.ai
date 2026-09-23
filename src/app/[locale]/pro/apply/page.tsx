@@ -48,13 +48,15 @@ export default function ProApplyPage() {
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusinessName, setCacBusinessName] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [appRecord, setAppRecord] = useState<{ id: string; status: string; cac_lookup: string } | null>(null);
 
   // marketplace P5: submit to the live application endpoint so the admin
-  // approval queue (below) actually receives it; on failure, mark submitted
+  // approval queue (below) actually receives it; capture the returned
+  // application record for the success view; on failure, mark submitted
   // locally so the click-through completes offline.
   const submitApplication = async () => {
     try {
-      await fetch('/api/v1/pro/apply', {
+      const res = await fetch('/api/v1/pro/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,6 +68,12 @@ export default function ProApplyPage() {
           state: formData.state,
         }),
       });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.application) {
+          setAppRecord({ id: d.application.id, status: d.status, cac_lookup: d.cac_lookup });
+        }
+      }
     } catch {
       /* offline — local submit */
     }
@@ -568,6 +576,28 @@ export default function ProApplyPage() {
                     <Link href="/terms" className="text-brand-primary hover:underline">Verification Policy</Link>.
                   </p>
                 </div>
+
+                {/* P9 — the real application record from the marketplace store */}
+                {submitted && (
+                  <div className="p-4 rounded-card border border-brand-action-border bg-brand-action-bg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 size={18} className="text-brand-action" />
+                      <p className="text-sm font-semibold text-text-primary">Application submitted for admin review</p>
+                    </div>
+                    {appRecord ? (
+                      <p className="text-[12px] text-text-secondary leading-relaxed">
+                        Record <span className="font-mono text-text-primary">{appRecord.id}</span> · status{' '}
+                        <span className="font-medium text-text-primary">{appRecord.status}</span> · CAC lookup{' '}
+                        {appRecord.cac_lookup}
+                        <span className="block mt-1 text-text-muted">demo_seed · a Super Admin approval flips this pro to verified</span>
+                      </p>
+                    ) : (
+                      <p className="text-[12px] text-text-muted">
+                        Queued locally (offline) — the live record will appear in the admin approval queue.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

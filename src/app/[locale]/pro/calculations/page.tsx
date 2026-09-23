@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calculator,
@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
+import type { BulkCalcResult } from "@/ai/pro-portal";
 
 type CalcTypeId = "income" | "vat" | "wht";
 type RunStatus = "idle" | "running" | "done";
@@ -36,7 +37,7 @@ const calculationTypes: { id: CalcTypeId; label: string; desc: string; rate: num
 
 const fiscalYears = ["2022", "2023", "2024", "2025"];
 
-const clients = [
+const fallbackClients = [
   { id: 1, name: "Zenith Foods Ltd", compliance: 94 },
   { id: 2, name: "Eko Logistics", compliance: 78 },
   { id: 3, name: "Marina Tech Ltd", compliance: 100 },
@@ -84,7 +85,7 @@ const toneTextClass: Record<string, string> = {
 const ngn = (value: number) => `₦${value.toLocaleString("en-NG")}`;
 
 const initialRows: BatchRow[] = [1, 2, 3].map((id) => {
-  const client = clients.find((c) => c.id === id)!;
+  const client = fallbackClients.find((c) => c.id === id)!;
   const figures = initialFigures[id];
   return {
     id,
@@ -102,6 +103,27 @@ export default function CalculationsPage() {
   const [clientSearch, setClientSearch] = useState("");
   const [status, setStatus] = useState<RunStatus>("idle");
   const [runAt, setRunAt] = useState<string | null>(null);
+  // P9 — live client book from the pro store; bulk-calc summary from the API.
+  const [clients, setClients] = useState(fallbackClients);
+  const [live, setLive] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkCalcResult | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/v1/pro/clients?proId=u-pro")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { clients?: Array<{ id: string; name: string; compliance: number }> } | null) => {
+        if (!active || !d?.clients?.length) return;
+        setClients(
+          d.clients.map((c) => ({ id: Number(c.id), name: c.name, compliance: c.compliance }))
+        );
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const activeType = calculationTypes.find((t) => t.id === calcType)!;
 
@@ -176,6 +198,22 @@ export default function CalculationsPage() {
     if (rows.length === 0) return;
     setStatus("running");
     setRunAt(null);
+    // P9 — pull the live bulk-calc summary from the pro store (demo_seed).
+    const bulkTypeMap: Record<CalcTypeId, string> = {
+      income: "CIT",
+      vat: "VAT",
+      wht: "WHT",
+    };
+    fetch("/api/v1/pro/calculations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ proId: "u-pro", types: [bulkTypeMap[calcType]] }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: BulkCalcResult | null) => {
+        if (d) setBulkResult(d);
+      })
+      .catch(() => {});
     // Capture the run timestamp in state (never new Date() in the render body).
     window.setTimeout(() => {
       setStatus("done");
@@ -308,7 +346,10 @@ export default function CalculationsPage() {
           <motion.div variants={item}>
             <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-text-primary">Batch Clients</h2>
+                <h2 className="flex items-center gap-2 font-semibold text-text-primary">
+                  Batch Clients
+                  {live && <Badge variant="info">live · demo_seed</Badge>}
+                </h2>
                 <Badge variant="brand">{rows.length} selected</Badge>
               </div>
 
@@ -440,6 +481,14 @@ export default function CalculationsPage() {
                             ? `Run at ${runAt} · effective rate ${(activeType.rate * 100).toFixed(1)}%`
                             : "Results update live — press Run to record a run"}
                         </p>
+                        {/* P9 — live bulk-calc summary from the pro store (demo_seed) */}
+                        {status === "done" && bulkResult && (
+                          <p className="text-[11px] text-text-muted mt-1">
+                            Store run <span className="font-mono">{bulkResult.id}</span> ·{" "}
+                            {bulkResult.completed} completed · {bulkResult.needsReview}{" "}
+                            need review · total {ngn(bulkResult.total)} · demo_seed
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <button

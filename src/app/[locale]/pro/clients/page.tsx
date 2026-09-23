@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
+import type { ProClient } from "@/ai/pro-portal";
 
 interface Client {
   id: number;
@@ -28,6 +29,19 @@ interface Client {
   compliance: number;
   lastActivity: string;
   status: "active" | "alert" | "pending";
+}
+
+/** Map the store's ProClient (string id) to the page's numeric Client shape. */
+function toClient(p: ProClient): Client {
+  return {
+    id: Number(p.id),
+    name: p.name,
+    cac: p.cac,
+    tin: p.tin,
+    compliance: p.compliance,
+    lastActivity: p.lastActivity,
+    status: p.status,
+  };
 }
 
 const allClients: Client[] = [
@@ -98,12 +112,30 @@ function downloadCsv(rows: Client[], fileName: string) {
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>(allClients);
+  const [live, setLive] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [complianceFilter, setComplianceFilter] = useState("All");
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+
+  // P9 — hydrate the client book from the pro store (demo_seed); offline keeps
+  // the allClients fallback so the list is never empty.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/v1/pro/clients?proId=u-pro")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { clients?: ProClient[] } | null) => {
+        if (!active || !d?.clients?.length) return;
+        setClients(d.clients.map(toClient));
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -176,6 +208,7 @@ export default function ClientsPage() {
           />
           <h1>Clients</h1>
           <Badge variant="brand">{clients.length}</Badge>
+          {live && <Badge variant="info">live · demo_seed</Badge>}
         </div>
         <div className="flex items-center gap-3">
           <Button

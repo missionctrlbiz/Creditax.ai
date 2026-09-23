@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import type { ProVerification } from "@/ai/pro-portal";
 
 type StepId = "lookup" | "details" | "certificate" | "submit";
 
@@ -142,6 +143,22 @@ export default function VerifyPage() {
   const [dragOver, setDragOver] = useState(false);
   const [certificate, setCertificate] = useState<{ name: string; size: string } | null>(null);
   const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  // P9 — the pro's live verification record (own CAC + per-client checks).
+  const [liveVerif, setLiveVerif] = useState<ProVerification | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/v1/pro/verify?proId=u-pro")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ProVerification | null) => {
+        if (!active || !d) return;
+        setLiveVerif(d);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const currentStepIndex = steps.findIndex((s) => s.id === step);
   const meta = typeMeta[activeType];
@@ -634,35 +651,70 @@ export default function VerifyPage() {
         )}
       </AnimatePresence>
 
-      {/* Status Reference Cards */}
+      {/* Status Reference Cards — P9: live per-client checks from the verify store */}
       <motion.div variants={item}>
-        <h2 className="font-semibold text-text-primary mb-4">Recent Verification Status</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="p-4 border-success-border bg-success-bg">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 size={16} className="text-success-text" />
-              <span className="text-sm font-semibold text-success-text">Verified</span>
-            </div>
-            <p className="text-sm font-medium text-text-primary">Zenith Foods Ltd</p>
-            <p className="text-xs text-text-muted mt-0.5">RC-248571 · verified Jun 18, 2025</p>
-          </Card>
-          <Card className="p-4 border-warning-border bg-warning-bg">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock size={16} className="text-warning-text" />
-              <span className="text-sm font-semibold text-warning-text">Pending</span>
-            </div>
-            <p className="text-sm font-medium text-text-primary">Eko Logistics</p>
-            <p className="text-xs text-text-muted mt-0.5">RC-189432 · awaiting certificate</p>
-          </Card>
-          <Card className="p-4 border-error-border bg-error-bg">
-            <div className="flex items-center gap-2 mb-2">
-              <XCircle size={16} className="text-error-text" />
-              <span className="text-sm font-semibold text-error-text">Rejected</span>
-            </div>
-            <p className="text-sm font-medium text-text-primary">Delta Pharmaceuticals</p>
-            <p className="text-xs text-text-muted mt-0.5">RC-289034 · CAC number not found</p>
-          </Card>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-text-primary">Recent Verification Status</h2>
+          {liveVerif && (
+            <Badge variant="info">
+              CAC {liveVerif.cacNumber} · {liveVerif.status} · {liveVerif.cacLookup}
+            </Badge>
+          )}
         </div>
+        {liveVerif ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {liveVerif.clientChecks.map((chk) => {
+              const tone =
+                chk.result === "matched"
+                  ? { border: "border-success-border", bg: "bg-success-bg", text: "text-success-text", label: "Verified", icon: CheckCircle2 }
+                  : chk.result === "not_found"
+                    ? { border: "border-warning-border", bg: "bg-warning-bg", text: "text-warning-text", label: "Pending", icon: Clock }
+                    : { border: "border-error-border", bg: "bg-error-bg", text: "text-error-text", label: "Mismatch", icon: XCircle };
+              const Icon = tone.icon;
+              return (
+                <Card key={chk.client} className={`p-4 ${tone.border} ${tone.bg}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon size={16} className={tone.text} />
+                    <span className={`text-sm font-semibold ${tone.text}`}>
+                      {tone.label} · {chk.type}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-text-primary">{chk.client}</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {chk.result === "matched" ? "registry match confirmed" : chk.result === "not_found" ? "record not found — resubmit" : "details mismatch — review required"}
+                  </p>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="p-4 border-success-border bg-success-bg">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 size={16} className="text-success-text" />
+                <span className="text-sm font-semibold text-success-text">Verified</span>
+              </div>
+              <p className="text-sm font-medium text-text-primary">Zenith Foods Ltd</p>
+              <p className="text-xs text-text-muted mt-0.5">RC-248571 · verified Jun 18, 2025</p>
+            </Card>
+            <Card className="p-4 border-warning-border bg-warning-bg">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={16} className="text-warning-text" />
+                <span className="text-sm font-semibold text-warning-text">Pending</span>
+              </div>
+              <p className="text-sm font-medium text-text-primary">Eko Logistics</p>
+              <p className="text-xs text-text-muted mt-0.5">RC-189432 · awaiting certificate</p>
+            </Card>
+            <Card className="p-4 border-error-border bg-error-bg">
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle size={16} className="text-error-text" />
+                <span className="text-sm font-semibold text-error-text">Rejected</span>
+              </div>
+              <p className="text-sm font-medium text-text-primary">Delta Pharmaceuticals</p>
+              <p className="text-xs text-text-muted mt-0.5">RC-289034 · CAC number not found</p>
+            </Card>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

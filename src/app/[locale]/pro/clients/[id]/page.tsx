@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
+import type { ProClient } from "@/ai/pro-portal";
 
 const tabs = ["Overview", "Documents", "Filings", "Reports"] as const;
 type Tab = (typeof tabs)[number];
@@ -177,9 +178,31 @@ const filingVariant: Record<string, "success" | "warning" | "info"> = {
 export default function ClientDetailPage() {
   const params = useParams();
   const clientId = Number(params.id) || 1;
+  // P9 — the live client record from the pro store (by id), falling back to
+  // the local roster when the API is unreachable or the id is out of range.
+  const [liveClient, setLiveClient] = useState<ProClient | null>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/v1/pro/clients?proId=u-pro&id=${clientId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ProClient | null) => {
+        if (!active || !d) return;
+        setLiveClient(d);
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [clientId]);
+
   const client = useMemo(
-    () => clientRoster.find((c) => c.id === clientId) ?? clientRoster[0],
-    [clientId]
+    () =>
+      liveClient ??
+      clientRoster.find((c) => c.id === clientId) ??
+      clientRoster[0],
+    [clientId, liveClient]
   );
 
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
@@ -231,14 +254,17 @@ export default function ClientDetailPage() {
         <Card className="p-5 flex flex-wrap items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`/images/avatars/avatar-${String((client.id % 10) + 1).padStart(2, "0")}.png`}
+            src={`/images/avatars/avatar-${String((Number(client.id) % 10) + 1).padStart(2, "0")}.png`}
             alt=""
             width={56}
             height={56}
             className="w-14 h-14 rounded-full object-cover flex-shrink-0 border border-border-subtle"
           />
           <div className="flex-1 min-w-0">
-            <h1 className="truncate">{client.name}</h1>
+            <h1 className="flex items-center gap-2 truncate">
+              {client.name}
+              {live && <Badge variant="info">live · demo_seed</Badge>}
+            </h1>
             <p className="text-sm text-text-muted mt-0.5 font-mono">
               CAC {client.cac} · TIN {client.tin} · {client.location}
             </p>

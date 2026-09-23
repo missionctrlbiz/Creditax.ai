@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p9-pro-portal",
+  "current_phase": "p10-admin-author",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -392,13 +392,13 @@
     },
     {
       "id": "p9-pro-portal",
-      "status": "todo",
-      "attempts": 0,
+      "status": "reviewed_pass",
+      "attempts": 1,
       "items": {
-        "pro-dashboard-live": "todo",
-        "pro-clients-bulk-calc": "todo",
-        "pro-verify-state": "todo",
-        "pro-apply-live": "todo"
+        "pro-dashboard-live": "done",
+        "pro-clients-bulk-calc": "done",
+        "pro-verify-state": "done",
+        "pro-apply-live": "done"
       },
       "exit_criteria": [
         "Pro login → /pro/dashboard hydrates client list + bulk-calc summary from the marketplace/application/pro stores (demo_seed, not constants)",
@@ -406,7 +406,18 @@
         "/pro/verify stepper + /pro/apply submit reflect the real application record",
         "complete pro journey (login→dashboard→calc→verify→sign-out) lands on live data; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:45:00+01:00"
+      "last_updated": "2026-09-23T21:29:46.002Z",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T21:32:52.706Z",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "not_gated (p9 exit criteria = tsc+lint)"
+        },
+        "note": "Independent gate verified: pro-portal store (src/ai/pro-portal.ts) + 5 API routes; all 5 pro pages hydrate live store data (dashboard/clients/detail/calculations/verify) with offline fallbacks; apply captures the real application record. Non-blocking: calc-type→bulk-type single mapping, proId hard-coded u-pro, cosmetic Edit/More stubs."
+      }
     },
     {
       "id": "p10-admin-author",
