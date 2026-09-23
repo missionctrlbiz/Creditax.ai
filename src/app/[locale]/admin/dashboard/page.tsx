@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -41,12 +42,6 @@ const systemHealth = [
   { name: 'Auth Service', status: 'degraded', detail: 'Elevated latency', statusColor: 'warning' },
 ];
 
-const statCards = [
-  { label: 'Active Users', value: '1,247', change: '+43 today' },
-  { label: 'Verified Tax Pros', value: '89', change: '3 pending approval' },
-  { label: 'API Calls Today', value: '45,231', change: 'Peak: 2,847/hr at 14:00' },
-];
-
 const systemEvents = [
   { icon: Lock, event: 'Admin login', user: 'admin@creditax.ai', time: '2 min ago', type: 'auth' },
   { icon: CheckCircle2, event: 'Pro verified: Akinwale & Associates', user: 'system', time: '5 min ago', type: 'success' },
@@ -75,7 +70,60 @@ const eventTypeColors: Record<string, string> = {
   config: 'text-info',
 };
 
+/** P10 — the live aggregate the admin board hydrates from /api/v1/admin/summary. */
+interface AdminSummary {
+  users: { total: number; active: number; suspended: number };
+  approvalQueue: { pending: number; pendingNames: string[]; verified: number };
+  kb: { docs: number };
+  quota: { usersTracked: number; freeUsed: number; freeCap: number; freeNearCap: boolean; freeNote: string };
+}
+
 export default function AdminDashboardPage() {
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
+
+  // P10 — hydrate the counts live (users, approval queue, KB corpus, quota
+  // usage) so the board shows real figures, not page constants. Offline the
+  // constants below keep the board complete.
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/admin/summary')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: AdminSummary | null) => {
+        if (!active || !d) return;
+        setSummary(d);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // P10 — live pending-approvals list (names from the application store; the
+  // offline FALLBACK keeps the same shape so the panel never renders empty).
+  const livePending = summary
+    ? summary.approvalQueue.pendingNames.map((name) => ({
+        name,
+        applied: 'Recently',
+        docs: [{ name: 'CAC', ok: true }, { name: 'FIRS', ok: true }, { name: 'ID', ok: true }],
+      }))
+    : pendingApprovals;
+
+  const activeUsers = summary ? String(summary.users.total) : '1,247';
+  const verifiedPros = summary ? String(summary.approvalQueue.verified) : '89';
+  const pendingCount = summary ? summary.approvalQueue.pending : 3;
+
+  // P10 — live stat cards (users/verified/KB/quota hydrated; offline the
+  // fallbacks keep the board complete).
+  const liveStatCards = [
+    { label: 'Active Users', value: activeUsers, change: summary ? `${summary.users.active} active · ${summary.users.suspended} suspended` : '+43 today' },
+    { label: 'Verified Tax Pros', value: verifiedPros, change: `${pendingCount} pending approval` },
+    { label: 'KB Corpus', value: summary ? String(summary.kb.docs) : '5', change: summary ? 'docs embedded & searchable' : 'docs embedded' },
+    {
+      label: 'Free-Tier Chats',
+      value: summary ? `${summary.quota.freeUsed}/${summary.quota.freeCap}` : '4/5',
+      change: summary ? `${summary.quota.freeNearCap ? 'at cap — upgrade wall armed' : 'within cap'}` : 'within cap',
+    },
+  ];
   return (
     <motion.div
       variants={containerVariants}
@@ -84,9 +132,14 @@ export default function AdminDashboardPage() {
       className="space-y-6"
     >
       {/* Page Header */}
-      <motion.div variants={itemVariants} className="mb-8">
-        <h1>Admin Dashboard</h1>
-        <p className="text-text-muted mt-1">Platform overview and management</p>
+      <motion.div variants={itemVariants} className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="flex items-center gap-2">
+            Admin Dashboard
+            {summary && <Badge variant="info">live · demo_seed</Badge>}
+          </h1>
+          <p className="text-text-muted mt-1">Platform overview and management</p>
+        </div>
       </motion.div>
 
       {/* System Health Row */}
@@ -145,9 +198,9 @@ export default function AdminDashboardPage() {
         </Card>
       </motion.div>
 
-      {/* Stat Cards — restrained type, muted accents */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {statCards.map((stat) => (
+      {/* Stat Cards — restrained type, muted accents (P10: hydrated live) */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {liveStatCards.map((stat) => (
           <Card
             key={stat.label}
             className="p-5 hover:border-border-strong transition-all duration-150"
@@ -200,10 +253,10 @@ export default function AdminDashboardPage() {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-text-primary">Marketplace Approvals</h2>
-              <Badge variant="warning" className="text-xs">3 pending</Badge>
+              <Badge variant="warning" className="text-xs">{pendingCount} pending</Badge>
             </div>
             <div className="space-y-4">
-              {pendingApprovals.map((approval, i) => (
+              {livePending.map((approval, i) => (
                 <div
                   key={i}
                   className="p-4 rounded-lg bg-surface-base border border-border-default hover:border-border-strong transition-all duration-150"

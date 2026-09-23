@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
@@ -10,11 +11,13 @@ import {
   ChevronUp,
   Download,
   RotateCcw,
+  BookOpenCheck,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import type { AuditEntry } from '@/ai/kb-admin';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -221,6 +224,27 @@ export default function AdminAuditPage() {
   const [systemOnly, setSystemOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(12);
+  // P10 — live KB publish audit log (the P5 money shot). The GET returns it
+  // alongside the corpus; when empty it means no publishes this session yet.
+  const [kbAudit, setKbAudit] = useState<AuditEntry[]>([]);
+  const [kbCorpus, setKbCorpus] = useState(0);
+  const [kbLive, setKbLive] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/admin/kb')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { audit?: AuditEntry[]; documents?: unknown[] } | null) => {
+        if (!active || !d) return;
+        setKbAudit(d.audit ?? []);
+        setKbCorpus(d.documents?.length ?? 0);
+        setKbLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const visibleLogs = systemOnly
     ? auditLogs.filter((log) => log.user === 'system')
@@ -273,6 +297,46 @@ export default function AdminAuditPage() {
             </button>
           </div>
         </div>
+      </motion.div>
+
+      {/* P10 — KB publish audit log (the P5 money shot): publishes from
+          /admin/knowledge-base land here with their embedding + chunk stats. */}
+      <motion.div variants={itemVariants}>
+        <Card className="p-4 border-brand-primary-border/40">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+              <BookOpenCheck size={15} className="text-brand-primary" />
+              Knowledge Base Publish Log
+              {kbLive && <Badge variant="info">live · demo_seed</Badge>}
+            </h2>
+            <Link href="/admin/knowledge-base" className="text-xs font-medium text-brand-primary hover:underline">
+              Open KB editor →
+            </Link>
+          </div>
+          {kbAudit.length > 0 ? (
+            <div className="space-y-2">
+              {kbAudit.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 p-2.5 rounded-btn bg-surface-base border border-border-subtle text-xs"
+                >
+                  <Badge variant={entry.action === 'published' ? 'success' : 'info'}>{entry.action}</Badge>
+                  <span className="font-medium text-text-primary">{entry.title}</span>
+                  <span className="text-text-muted font-mono">{entry.slug}</span>
+                  <span className="text-text-muted">
+                    {entry.chunks} chunks · {entry.embeddingProvider} · by {entry.actor}
+                  </span>
+                  <span className="ml-auto text-text-muted">{new Date(entry.at).toLocaleString('en-NG', { hour12: false })}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-text-muted">
+              No KB publishes this session yet — publish from the Knowledge Base board and the
+              entry lands here (corpus {kbCorpus || 5} docs · {kbLive ? 'live' : 'offline'}).
+            </p>
+          )}
+        </Card>
       </motion.div>
 
       {/* Filters */}

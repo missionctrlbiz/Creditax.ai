@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p10-admin-author",
+  "current_phase": "p11-b2b-dev-status",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -421,13 +421,13 @@
     },
     {
       "id": "p10-admin-author",
-      "status": "todo",
-      "attempts": 0,
+      "status": "reviewed_pass",
+      "attempts": 1,
       "items": {
-        "admin-dashboard-live": "todo",
-        "admin-professionals-live": "todo",
-        "admin-audit-live": "todo",
-        "author-kb-board": "todo"
+        "admin-dashboard-live": "done",
+        "admin-professionals-live": "done",
+        "admin-audit-live": "done",
+        "author-kb-board": "done"
       },
       "exit_criteria": [
         "Admin dashboard counts (users, approval queue, KB corpus, quota usage) hydrated live",
@@ -435,7 +435,18 @@
         "Author role gets a scoped board = KB editor + publish + audit (roles doc)",
         "admin+author journey complete; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:45:00+01:00"
+      "last_updated": "2026-09-23T21:53:19.247Z",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T21:55:27.676Z",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "not_gated (p10 exit criteria = tsc+lint)"
+        },
+        "note": "Independent gate verified all 3 exit criteria against actual code: (1) /admin/dashboard hydrated from new /api/v1/admin/summary aggregate route with offline fallback; (2) /admin/professionals merged live application store (seedDemoApplication now 3 pending) + /admin/audit renders live KB publish audit log panel; (3) Author scoped board via AUTHOR_NAV (KB+Audit) + scoped enforcement in admin layout, admin keeps full ADMIN_NAV."
+      }
     },
     {
       "id": "p11-b2b-dev-status",

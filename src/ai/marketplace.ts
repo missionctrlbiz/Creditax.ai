@@ -251,12 +251,30 @@ export function rejectApplication(id: string): ProApplication | null {
 /** Seed one pending application so the admin queue shows content. */
 export function seedDemoApplication(): ProApplication[] {
   if (applications.size > 0) return listApplications();
+  // P10 — seed the 3 pending applications the admin boards show (matching the
+  // professionals/marketplace page fallbacks) so live counts agree.
   submitApplication({
-    businessName: 'SouthWest Tax & Audit',
-    ownerName: 'Bola T.',
-    cacNumber: 'RC-5544332',
-    services: ['Tax Audit', 'VAT Filing'],
+    businessName: 'Benson Tax Consultants',
+    ownerName: 'Benson O.',
+    cacNumber: 'RC-4112233',
+    services: ['VAT Returns', 'WHT Filing'],
+    city: 'Abuja',
+    state: 'FCT',
+  });
+  submitApplication({
+    businessName: 'Okonkwo & Partners',
+    ownerName: 'Chidi O.',
+    cacNumber: 'RC-7788990',
+    services: ['Tax Audit Support', 'TCC'],
     city: 'Lagos',
+    state: 'Lagos',
+  });
+  submitApplication({
+    businessName: 'Lagos Tax Solutions',
+    ownerName: 'Tunde A.',
+    cacNumber: 'RC-6655443',
+    services: ['Corporate Tax', 'PAYE'],
+    city: 'Victoria Island',
     state: 'Lagos',
   });
   return listApplications();

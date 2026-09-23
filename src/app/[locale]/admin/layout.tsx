@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { AppShell, ADMIN_NAV, type NavItem } from '@/components/shell/AppShell';
+import { AppShell, ADMIN_NAV, AUTHOR_NAV, type NavItem } from '@/components/shell/AppShell';
 import { getSession } from '@/lib/auth';
 import type { UnifiedSession } from '@/lib/auth';
 
@@ -46,13 +46,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <div className="min-h-screen flex items-center justify-center text-text-muted text-sm">Loading…</div>;
   }
 
+  // P10 — Author is a scoped grant on the admin board: KB editor + publish +
+  // audit only (roles-and-experience §1). Admin gets the full board.
+  const isAuthor = session?.role === 'author';
+  const nav = isAuthor ? AUTHOR_NAV : ADMIN_NAV;
+
+  // Scoped enforcement: an author visiting an admin-only section is bounced
+  // to their KB board (same role-gate pattern as the other boards).
+  if (isAuthor && !pathname.startsWith('/admin/knowledge-base') && !pathname.startsWith('/admin/audit')) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <p className="text-text-secondary">
+          Your <b>Author</b> grant covers the Knowledge Base and Audit Log.
+        </p>
+        <Link href="/admin/knowledge-base" className="text-brand-primary font-semibold hover:underline">
+          Open your content board →
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <AppShell
       portal="admin"
-      nav={ADMIN_NAV}
-      title={titleFromPath(pathname, ADMIN_NAV)}
+      nav={nav}
+      title={titleFromPath(pathname, nav)}
       eyebrow="admin"
-      searchPlaceholder="Search users, pros, logs…"
+      searchPlaceholder={isAuthor ? 'Search KB docs, audit logs…' : 'Search users, pros, logs…'}
     >
       {children}
     </AppShell>

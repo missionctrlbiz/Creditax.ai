@@ -108,6 +108,17 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/settings', labelKey: 'settings', label: 'Settings', icon: ICONS.settings },
 ];
 
+/**
+ * P10 — Author (Content Author, roles-and-experience §1): a *scoped* grant on
+ * the admin board. The author sees only the content surface — KB editor/publish
+ * + the publish audit log — not users/marketplace/approvals/settings. This is
+ * the "KB editor + publish + audit" board the exit criterion requires.
+ */
+export const AUTHOR_NAV: NavItem[] = [
+  { href: '/admin/knowledge-base', labelKey: 'knowledgeBase', label: 'Knowledge Base', icon: ICONS.knowledge },
+  { href: '/admin/audit', labelKey: 'auditLog', label: 'Audit Log', icon: ICONS.audit },
+];
+
 const COLLAPSE_KEY = 'creditax-sidebar-collapsed';
 
 interface AppShellProps {

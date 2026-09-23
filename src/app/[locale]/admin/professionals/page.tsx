@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check,
@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import type { ProApplication } from '@/ai/marketplace';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -42,12 +43,6 @@ const professionals = [
   { id: 8, name: 'Ibadan Tax Services', email: 'ibadan@taxservices.ng', status: 'verified', rating: 4.7, reviews: 156, location: 'Ibadan', applied: 'May 5, 2025' },
 ];
 
-const statusTabs = [
-  { label: 'All', count: 89, value: 'all' },
-  { label: 'Pending', count: 3, value: 'pending', variant: 'warning' as const },
-  { label: 'Verified', count: 83, value: 'verified', variant: 'success' as const },
-  { label: 'Rejected', count: 3, value: 'rejected', variant: 'error' as const },
-];
 
 const statusBadgeVariant: Record<string, 'success' | 'warning' | 'error'> = {
   verified: 'success',
@@ -64,8 +59,47 @@ export default function AdminProfessionalsPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedPro, setSelectedPro] = useState<typeof professionals[0] | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  // P10 — the live application store (demo_seed) drives the pending queue +
+  // counts; the page fallback list keeps the board complete offline.
+  const [liveApps, setLiveApps] = useState<ProApplication[] | null>(null);
 
-  const filteredPros = professionals.filter((pro) => {
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/admin/marketplace')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { applications?: ProApplication[] } | null) => {
+        if (!active || !d?.applications?.length) return;
+        setLiveApps(d.applications);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Merge live pending applications into the review list (by name) so the
+  // "Pending" tab reflects the real application store, not just the fallback.
+  const livePending = (liveApps ?? []).filter((a) => a.status === 'pending');
+  const proStatus = (name: string): 'verified' | 'pending' | 'rejected' => {
+    const match = livePending.find((a) => a.business_name === name);
+    if (match) return match.status;
+    return (professionals.find((p) => p.name === name)?.status as 'verified' | 'pending' | 'rejected') ?? 'verified';
+  };
+  const mergedPros = professionals.map((p) => ({ ...p, status: proStatus(p.name) }));
+
+  const pendingCount = livePending.length || mergedPros.filter((p) => p.status === 'pending').length;
+  const verifiedCount = mergedPros.filter((p) => p.status === 'verified').length;
+  const rejectedCount = mergedPros.filter((p) => p.status === 'rejected').length;
+
+  // P10 — status tabs with live counts (the "All" tab shows the total).
+  const liveStatusTabs = [
+    { label: 'All', value: 'all', count: mergedPros.length },
+    { label: 'Pending', value: 'pending', variant: 'warning' as const, count: pendingCount },
+    { label: 'Verified', value: 'verified', variant: 'success' as const, count: verifiedCount },
+    { label: 'Rejected', value: 'rejected', variant: 'error' as const, count: rejectedCount },
+  ];
+
+  const filteredPros = mergedPros.filter((pro) => {
     const matchesSearch = pro.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pro.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === 'all' || pro.status === activeTab;
@@ -91,26 +125,26 @@ export default function AdminProfessionalsPage() {
         <p className="text-text-muted mt-1">Manage verification and professional accounts</p>
       </motion.div>
 
-      {/* Stats */}
+      {/* Stats — P10: hydrated from the live application store */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Total Pros</p>
-          <p className="text-2xl font-mono font-bold text-text-primary mt-1 tabular-nums">89</p>
-          <p className="text-xs text-text-muted mt-1">+3 this month</p>
+          <p className="text-2xl font-mono font-bold text-text-primary mt-1 tabular-nums">{mergedPros.length}</p>
+          <p className="text-xs text-text-muted mt-1">{liveApps ? 'from application store · demo_seed' : '+3 this month'}</p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Pending Verification</p>
-          <p className="text-2xl font-mono font-bold text-warning-text mt-1 tabular-nums">3</p>
+          <p className="text-2xl font-mono font-bold text-warning-text mt-1 tabular-nums">{pendingCount}</p>
           <p className="text-xs text-text-muted mt-1">Requires review</p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Verified</p>
-          <p className="text-2xl font-mono font-bold text-success-text mt-1 tabular-nums">83</p>
+          <p className="text-2xl font-mono font-bold text-success-text mt-1 tabular-nums">{verifiedCount}</p>
           <p className="text-xs text-text-muted mt-1">Active professionals</p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Rejected</p>
-          <p className="text-2xl font-mono font-bold text-error-text mt-1 tabular-nums">3</p>
+          <p className="text-2xl font-mono font-bold text-error-text mt-1 tabular-nums">{rejectedCount}</p>
           <p className="text-xs text-text-muted mt-1">Applications denied</p>
         </Card>
       </motion.div>
@@ -159,10 +193,10 @@ export default function AdminProfessionalsPage() {
         )}
       </AnimatePresence>
 
-      {/* Status Tabs */}
+      {/* Status Tabs — P10: live counts from the application store */}
       <motion.div variants={itemVariants}>
         <div className="flex gap-2 border-b border-border-default">
-          {statusTabs.map((tab) => (
+          {liveStatusTabs.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
