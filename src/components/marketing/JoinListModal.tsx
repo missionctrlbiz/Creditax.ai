@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, Loader2, Mail } from 'lucide-react';
 import {
   Dialog,
@@ -14,10 +15,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { captureWaitlistEmail, type CaptureResult } from '@/lib/pocketbase';
 
-const SUCCESS_COPY =
-  "You're on the list. We'll email you when Creditax launches.";
-
 export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
+  const t = useTranslations('waitlist');
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -57,11 +56,11 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-brand-action-bg border border-brand-action-border grid place-items-center">
               <Check size={22} className="text-brand-action" />
             </div>
-            <DialogTitle className="text-lg mb-2">{SUCCESS_COPY}</DialogTitle>
+            <DialogTitle className="text-lg mb-2">
+              {result === 'duplicate' ? t('successDuplicate') : t('success')}
+            </DialogTitle>
             <DialogDescription>
-              {result === 'duplicate'
-                ? 'This email is already on the list — nothing else to do.'
-                : 'No spam. One launch email, then only what you opt into.'}
+              {result === 'duplicate' ? t('note') : t('successDesc')}
             </DialogDescription>
             <Button
               variant="secondary"
@@ -69,7 +68,7 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
               className="mt-5"
               onClick={() => handleOpenChange(false)}
             >
-              Done
+              {t('done')}
             </Button>
           </div>
         ) : (
@@ -77,12 +76,9 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Mail size={18} className="text-brand-primary" />
-                Join the list
+                {t('title')}
               </DialogTitle>
-              <DialogDescription>
-                Early access opens in batches. Drop your email and we&apos;ll notify you the moment
-                Creditax launches.
-              </DialogDescription>
+              <DialogDescription>{t('desc')}</DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -90,8 +86,8 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
                 type="email"
                 required
                 autoFocus
-                placeholder="you@email.com"
-                aria-label="Email address"
+                placeholder={t('placeholder')}
+                aria-label={t('placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -105,15 +101,11 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
                 )}
               </Button>
               {status === 'error' && (
-                <p className="text-xs text-error-text text-center">
-                  Something broke on our end. We&apos;re fixing it — try again in a moment.
-                </p>
+                <p className="text-xs text-error-text text-center">{t('error')}</p>
               )}
             </form>
 
-            <p className="text-[11px] text-text-muted text-center mt-3">
-              One email at launch. Unsubscribe anytime.
-            </p>
+            <p className="text-[11px] text-text-muted text-center mt-3">{t('note')}</p>
           </>
         )}
       </DialogContent>

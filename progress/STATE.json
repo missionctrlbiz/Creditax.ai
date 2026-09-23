@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "current_phase": "core-api",
+  "order": ["core-api", "rag-pipeline", "doc-processing", "credit-scoring", "b2b-platform", "marketplace"],
+  "notes": [
+    "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
+    "Codebase currently uses PocketBase (src/lib/pocketbase.ts, pb_migrations) while AGENTS.md still says Supabase. Follow the existing code unless a phase explicitly changes infra.",
+    "package.json has no `test` script; verification is `npm run build` + `npm run lint` via /usr/local/bin/node."
+  ],
+  "phases": [
+    {
+      "id": "core-api",
+      "status": "in_progress",
+      "attempts": 0,
+      "items": {
+        "auth-verify": "todo",
+        "tax-calculate": "todo",
+        "tax-brackets": "todo",
+        "api-keys-crud": "todo",
+        "rate-limit": "todo",
+        "openapi-docs": "todo"
+      },
+      "exit_criteria": [
+        "POST /api/v1/auth/verify validates an API key and returns structured JSON",
+        "POST /api/v1/tax/calculate returns income tax estimate (Nigerian personal income tax)",
+        "GET /api/v1/tax/brackets returns current tax brackets",
+        "POST/GET/DELETE /api/v1/api-keys implemented with storage",
+        "Rate limiting 100 req/min per key enforced",
+        "npm run build and npm run lint pass"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    },
+    {
+      "id": "rag-pipeline",
+      "status": "queued",
+      "attempts": 0,
+      "items": { "vector-store": "todo", "ingest-tax-docs": "todo", "rag-chat-endpoint": "todo" },
+      "exit_criteria": [
+        "POST /api/v1/chat answers a Nigerian tax question using retrieval from ingested NTA/NTAA/FIRS docs",
+        "Embedding + vector search code path is exercised by a manual or automated check",
+        "npm run build passes"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    },
+    {
+      "id": "doc-processing",
+      "status": "queued",
+      "attempts": 0,
+      "items": { "receipt-invoice-extraction": "todo", "report-generation": "todo", "async-webhooks": "todo" },
+      "exit_criteria": [
+        "Uploaded receipt/invoice is parsed and totals stored",
+        "Async processing result is delivered via webhook or polling endpoint",
+        "npm run build passes"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    },
+    {
+      "id": "credit-scoring",
+      "status": "queued",
+      "attempts": 0,
+      "items": { "mono-integration": "todo", "score-model": "todo" },
+      "exit_criteria": ["Credit score derived from f(income, stability, savings rate, debt burden) with Mono data wired"],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    },
+    {
+      "id": "b2b-platform",
+      "status": "queued",
+      "attempts": 0,
+      "items": { "developer-portal": "todo", "webhooks": "todo" },
+      "exit_criteria": ["B2B developer portal with key management and docs"],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    },
+    {
+      "id": "marketplace",
+      "status": "queued",
+      "attempts": 0,
+      "items": { "pro-verification": "todo", "geo-search": "todo", "pro-rag": "todo" },
+      "exit_criteria": [
+        "Tax pro application flow with CAC number validation + certificate upload + admin approval queue",
+        "Marketplace search with geolocation filtering works",
+        "npm run build passes"
+      ],
+      "last_review": null,
+      "last_updated": "2026-09-23T14:20:00+01:00"
+    }
+  ]
+}

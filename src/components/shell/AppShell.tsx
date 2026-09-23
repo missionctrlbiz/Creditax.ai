@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
   Bell,
-  Building2,
   Calculator,
   CreditCard,
   FileText,
@@ -19,7 +19,6 @@ import {
   Inbox,
   KeyRound,
   LayoutDashboard,
-  LogOut,
   Menu,
   MessageSquare,
   Moon,
@@ -37,14 +36,17 @@ import {
   X,
 } from 'lucide-react';
 import { AppLogo } from '@/components/shared/AppLogo';
-import { AccountMenu, type } from '@/components/shared/AccountMenu';
-import { getSession, logout, type PortalRole } from '@/lib/mock-auth';
+import { AccountMenu } from '@/components/shared/AccountMenu';
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { getSession, type PortalRole } from '@/lib/mock-auth';
 import { useTheme } from '@/providers/ThemeProvider';
 import { cn } from '@/lib/utils';
 
 export interface NavItem {
   href: string;
   label: string;
+  /** i18n key under the `shell` namespace (nav labels + header title). */
+  labelKey?: string;
   icon: React.ReactNode;
   badge?: string | number;
 }
@@ -74,35 +76,35 @@ const ICONS = {
 };
 
 export const PERSONAL_NAV: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: ICONS.dashboard },
-  { href: '/dashboard/chat', label: 'Tax Assistant', icon: ICONS.chat },
-  { href: '/dashboard/tax-filing', label: 'Tax Filing', icon: ICONS.filing },
-  { href: '/dashboard/documents', label: 'Documents', icon: ICONS.documents },
-  { href: '/dashboard/documents/upload', label: 'Upload', icon: ICONS.upload },
-  { href: '/dashboard/credit', label: 'Credit', icon: ICONS.credit },
-  { href: '/dashboard/reports', label: 'Reports', icon: ICONS.reports },
-  { href: '/dashboard/usage', label: 'Usage', icon: ICONS.usage },
-  { href: '/dashboard/keys', label: 'API Keys', icon: ICONS.keys },
-  { href: '/dashboard/settings', label: 'Settings', icon: ICONS.settings },
+  { href: '/dashboard', labelKey: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+  { href: '/dashboard/chat', labelKey: 'taxAssistant', label: 'Tax Assistant', icon: ICONS.chat },
+  { href: '/dashboard/tax-filing', labelKey: 'taxFiling', label: 'Tax Filing', icon: ICONS.filing },
+  { href: '/dashboard/documents', labelKey: 'documents', label: 'Documents', icon: ICONS.documents },
+  { href: '/dashboard/documents/upload', labelKey: 'upload', label: 'Upload', icon: ICONS.upload },
+  { href: '/dashboard/credit', labelKey: 'credit', label: 'Credit', icon: ICONS.credit },
+  { href: '/dashboard/reports', labelKey: 'reports', label: 'Reports', icon: ICONS.reports },
+  { href: '/dashboard/usage', labelKey: 'usage', label: 'Usage', icon: ICONS.usage },
+  { href: '/dashboard/keys', labelKey: 'apiKeys', label: 'API Keys', icon: ICONS.keys },
+  { href: '/dashboard/settings', labelKey: 'settings', label: 'Settings', icon: ICONS.settings },
 ];
 
 export const PRO_NAV: NavItem[] = [
-  { href: '/pro/dashboard', label: 'Dashboard', icon: ICONS.dashboard },
-  { href: '/pro/clients', label: 'Clients', icon: ICONS.clients },
-  { href: '/pro/calculations', label: 'Bulk Calculations', icon: ICONS.calculator },
-  { href: '/pro/verify', label: 'Verify (CAC/TIN)', icon: ICONS.verify },
-  { href: '/pro/apply', label: 'Applications', icon: ICONS.apply },
-  { href: '/pro/settings', label: 'Settings', icon: ICONS.settings },
+  { href: '/pro/dashboard', labelKey: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+  { href: '/pro/clients', labelKey: 'clients', label: 'Clients', icon: ICONS.clients },
+  { href: '/pro/calculations', labelKey: 'bulkCalcs', label: 'Bulk Calculations', icon: ICONS.calculator },
+  { href: '/pro/verify', labelKey: 'verify', label: 'Verify (CAC/TIN)', icon: ICONS.verify },
+  { href: '/pro/apply', labelKey: 'applications', label: 'Applications', icon: ICONS.apply },
+  { href: '/pro/settings', labelKey: 'settings', label: 'Settings', icon: ICONS.settings },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: ICONS.dashboard },
-  { href: '/admin/users', label: 'Users', icon: ICONS.users },
-  { href: '/admin/professionals', label: 'Professionals', icon: ICONS.pros, badge: 3 },
-  { href: '/admin/marketplace', label: 'Marketplace', icon: ICONS.marketplace },
-  { href: '/admin/knowledge-base', label: 'Knowledge Base', icon: ICONS.knowledge },
-  { href: '/admin/audit', label: 'Audit Log', icon: ICONS.audit },
-  { href: '/admin/settings', label: 'Settings', icon: ICONS.settings },
+  { href: '/admin/dashboard', labelKey: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+  { href: '/admin/users', labelKey: 'users', label: 'Users', icon: ICONS.users },
+  { href: '/admin/professionals', labelKey: 'professionals', label: 'Professionals', icon: ICONS.pros, badge: 3 },
+  { href: '/admin/marketplace', labelKey: 'marketplace', label: 'Marketplace', icon: ICONS.marketplace },
+  { href: '/admin/knowledge-base', labelKey: 'knowledgeBase', label: 'Knowledge Base', icon: ICONS.knowledge },
+  { href: '/admin/audit', labelKey: 'auditLog', label: 'Audit Log', icon: ICONS.audit },
+  { href: '/admin/settings', labelKey: 'settings', label: 'Settings', icon: ICONS.settings },
 ];
 
 const COLLAPSE_KEY = 'creditax-sidebar-collapsed';
@@ -128,15 +130,28 @@ interface AppShellProps {
  */
 export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, children }: AppShellProps) {
   const pathname = usePathname();
+  const t = useTranslations();
   const { theme, toggleTheme } = useTheme();
-  const session = getSession();
 
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Session read only after mount — SSR must match client HTML (hydration fix).
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === '1');
+    const s = getSession();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSessionEmail(s.email);
+    setMounted(true);
+  }, []);
+
+  // Hydrate collapse state after mount (deferred to avoid sync setState in effect)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === '1');
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   function toggleCollapsed() {
@@ -147,37 +162,31 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
     });
   }
 
-  // Close the mobile drawer on navigation
+  // Close the mobile drawer on navigation (deferred one frame)
   useEffect(() => {
-    setDrawerOpen(false);
+    const id = requestAnimationFrame(() => setDrawerOpen(false));
+    return () => cancelAnimationFrame(id);
   }, [pathname]);
 
   const sidebarWidth = collapsed ? 68 : 240;
 
   const sidebarContent = (
     <>
-      {/* Logo row — aligned with header line (h-16) */}
-      <div className="h-16 flex items-center px-4 border-b border-border-subtle shrink-0">
-        {collapsed ? (
-          <Link href="/" aria-label="Creditax.ai — home" className="mx-auto">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={theme === 'light' ? '/logo.png' : '/logo-dark.png'}
-              alt="Creditax"
-              style={{ height: 26 }}
-              className="w-auto"
-            />
-          </Link>
-        ) : (
-          <AppLogo height={28} />
+      {/* Logo row — aligned with header line (h-16); AppLogo links home itself */}
+      <div
+        className={cn(
+          'h-16 flex items-center px-4 border-b border-border-subtle shrink-0',
+          collapsed && 'justify-center px-0'
         )}
+      >
+        <AppLogo height={collapsed ? 24 : 28} />
       </div>
 
       {/* Portal badge */}
       {!collapsed && (
         <div className="px-4 pt-4 pb-1">
           <span className="inline-flex items-center px-2 py-0.5 rounded-badge text-[10px] font-bold tracking-wider uppercase bg-brand-primary-bg border border-brand-primary-border text-brand-primary">
-            {portal === 'personal' ? 'Personal' : portal === 'pro' ? 'Pro Portal' : 'Admin'}
+            {portal === 'personal' ? t('shell.personal') : portal === 'pro' ? t('shell.proPortal') : t('shell.admin')}
           </span>
         </div>
       )}
@@ -187,11 +196,12 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
         <ul className="space-y-1">
           {nav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
+            const label = item.labelKey ? t(`shell.${item.labelKey}`) : item.label;
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? label : undefined}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex items-center gap-3 h-10 px-3 rounded-btn text-sm font-medium transition-colors duration-150',
@@ -204,7 +214,7 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
                   <span className="shrink-0">{item.icon}</span>
                   {!collapsed && (
                     <>
-                      <span className="truncate flex-1">{item.label}</span>
+                      <span className="truncate flex-1">{label}</span>
                       {item.badge != null && (
                         <span className="min-w-5 h-5 px-1 rounded-full bg-warning-bg border border-warning-border text-warning-text text-[10px] font-bold grid place-items-center">
                           {item.badge}
@@ -223,26 +233,26 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
       <div className="p-2.5 border-t border-border-subtle space-y-1 shrink-0">
         <Link
           href="/marketplace"
-          title={collapsed ? 'Marketplace' : undefined}
+          title={collapsed ? t('shell.marketplace') : undefined}
           className={cn(
             'flex items-center gap-3 h-9 px-3 rounded-btn text-[13px] text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors',
             collapsed && 'justify-center px-0'
           )}
         >
           <ShoppingBag size={16} />
-          {!collapsed && <span>Marketplace</span>}
+          {!collapsed && <span>{t('shell.marketplace')}</span>}
         </Link>
         <button
           type="button"
           onClick={toggleCollapsed}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? t('shell.collapse') : t('shell.collapse')}
           className={cn(
             'w-full flex items-center gap-3 h-9 px-3 rounded-btn text-[13px] text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer',
             collapsed && 'justify-center px-0'
           )}
         >
           {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{t('shell.collapse')}</span>}
         </button>
       </div>
     </>
@@ -308,11 +318,13 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
           <div className="min-w-0 flex items-baseline gap-2.5">
             {eyebrow && (
               <span className="hidden sm:inline text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-                {eyebrow}
+                {t(`shell.${eyebrow}`)}
               </span>
             )}
             <h1 className="text-[15px] sm:text-base font-semibold text-text-primary truncate">
-              {title}
+              {nav.find((item) => item.label === title && item.labelKey)
+                ? t(`shell.${nav.find((item) => item.label === title && item.labelKey)!.labelKey}`)
+                : title}
             </h1>
           </div>
 
@@ -323,12 +335,14 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
               <Search size={14} />
               <input
                 type="search"
-                placeholder={searchPlaceholder}
-                aria-label={searchPlaceholder}
+                placeholder={t('shell.search')}
+                aria-label={t('shell.search')}
                 className="bg-transparent border-none outline-none text-xs w-full text-text-primary placeholder:text-text-placeholder"
               />
             </div>
           )}
+
+          <LanguageSwitcher className="hidden sm:inline-flex" />
 
           <button
             type="button"
@@ -341,7 +355,7 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
 
           <button
             type="button"
-            aria-label="Notifications"
+            aria-label={t('shell.notifications')}
             className="relative p-2 rounded-btn text-text-secondary hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
           >
             <Bell size={17} />
@@ -351,18 +365,21 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
           <div className="flex items-center gap-2.5 pl-1 border-l border-border-subtle ml-1">
             <div className="hidden sm:flex flex-col items-end leading-tight mr-0.5">
               <span className="text-[13px] font-medium text-text-primary">
-                {portal === 'admin' ? 'Admin O.' : portal === 'pro' ? 'Ayo Ogundimu' : 'Emeka O.'}
+                {portal === 'admin' ? t('auth.admin') + ' O.' : portal === 'pro' ? 'Ayo Ogundimu' : 'Emeka O.'}
               </span>
               <span className="text-[10px] text-text-muted truncate max-w-[140px]">
-                {session.email ?? 'demo@creditax.ai'}
+                {mounted && sessionEmail ? sessionEmail : 'demo@creditax.ai'}
               </span>
             </div>
             <AccountMenu defaultRole={portal} size={34} />
           </div>
         </header>
 
-        {/* Page */}
-        <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+        {/* Page — consistent gutter on every data page; content stops well
+            before the page edge so tables never run past the viewport */}
+        <main className="min-h-[calc(100vh-4rem)] px-4 sm:px-6 lg:px-8 py-6">
+          <div className="app-main">{children}</div>
+        </main>
       </div>
     </div>
   );

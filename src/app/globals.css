@@ -41,6 +41,9 @@
   --color-info-border: var(--color-info-border);
   --color-info-text: var(--color-info-text);
 
+  --color-hover-overlay: var(--color-hover-overlay);
+  --color-active-overlay: var(--color-active-overlay);
+
   --color-border-default: var(--color-border-default);
   --color-border-subtle: var(--color-border-subtle);
   --color-border-strong: var(--color-border-strong);
@@ -243,27 +246,29 @@
   --ambient-glow: radial-gradient(ellipse at top, rgba(13,115,119,0.08) 0%, transparent 60%);
 }
 
-body {
-  background-color: var(--color-surface-base);
-  background-image: var(--ambient-glow);
-  background-attachment: fixed;
-  background-size: 1000px 500px;
-  background-position: top center;
-  background-repeat: no-repeat;
-  color: var(--color-text-primary);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+@layer base {
+  body {
+    background-color: var(--color-surface-base);
+    background-image: var(--ambient-glow);
+    background-attachment: fixed;
+    background-size: 1000px 500px;
+    background-position: top center;
+    background-repeat: no-repeat;
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-html {
-  overflow-x: hidden;
-  width: 100%;
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
 }
 
 *,
@@ -278,25 +283,46 @@ img, video, svg, canvas, iframe {
   display: block;
 }
 
-/* ── Global type scale (root-level, applies everywhere) ── */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: var(--color-text-primary);
-  text-wrap: balance;
+/* ── Global type scale (root-level, applies everywhere) ──
+   One heading family (Inter, tight tracking) keeps every board calm and
+   consistent. The display face (Syne) is reserved for deliberate display
+   moments via the `.font-display` utility — never stacked on UI headings.
+   Lives in @layer base so per-element utilities (text-sm etc.) still win. */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--color-text-primary);
+    text-wrap: balance;
+  }
+
+  h1 { font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.25rem); }
+  h2 { font-size: clamp(1.375rem, 1.15rem + 1vw, 1.75rem); }
+  h3 { font-size: 1.125rem; letter-spacing: -0.01em; }
+
+  p { text-wrap: pretty; }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
-h1 { font-size: clamp(2rem, 1.4rem + 2.6vw, 3.5rem); }
-h2 { font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem); }
-h3 { font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); letter-spacing: -0.01em; }
+/* ── Tables: complete, contained, never endless ── */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
 
-p  { text-wrap: pretty; }
-
-a {
-  color: inherit;
-  text-decoration: none;
+/* ── Content cap: data views stop well before the page edge ── */
+.app-main {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
 }
 
 /* All figures & amounts use mono, tabular for alignment */
@@ -372,3 +398,30 @@ textarea::placeholder {
 .font-display {
   font-family: var(--font-display);
 }
+
+/* ── Markdown answer rendering (chat canvas) ── */
+.prose-creditax > :first-child { margin-top: 0; }
+.prose-creditax > :last-child { margin-bottom: 0; }
+.prose-creditax p { margin: 0.5em 0; }
+.prose-creditax ul,
+.prose-creditax ol { margin: 0.5em 0; padding-left: 1.25em; }
+.prose-creditax li { margin: 0.2em 0; }
+.prose-creditax ul { list-style: disc; }
+.prose-creditax ol { list-style: decimal; }
+.prose-creditax strong { font-weight: 600; color: var(--color-text-primary); }
+.prose-creditax code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--color-surface-inset);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.prose-creditax blockquote {
+  border-left: 2px solid var(--color-brand-primary);
+  margin: 0.5em 0;
+  padding-left: 0.8em;
+  color: var(--color-text-secondary);
+}
+.prose-creditax table { display: table; }
+.prose-creditax th,
+.prose-creditax td { display: table-cell; }

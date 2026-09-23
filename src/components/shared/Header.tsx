@@ -1,29 +1,24 @@
 'use client';
 
-import { useSyncExternalStore, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { AppLogo } from '@/components/shared/AppLogo';
 import { JoinListModal } from '@/components/marketing/JoinListModal';
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 
-function useMounted() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-}
-
-const NAV_LINKS = [
-  { href: '/#features', label: 'Product' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/marketplace', label: 'Marketplace' },
-  { href: '/developers', label: 'API Docs' },
-  { href: '/blog', label: 'Blog' },
-];
+const NAV = [
+  { href: '/#features', key: 'product' },
+  { href: '/pricing', key: 'pricing' },
+  { href: '/about', key: 'about' },
+  { href: '/marketplace', key: 'marketplace' },
+  { href: '/developers', key: 'apiDocs' },
+  { href: '/blog', key: 'blog' },
+] as const;
 
 function NavItems({
   pathname,
@@ -34,9 +29,10 @@ function NavItems({
   onNavigate?: () => void;
   className?: string;
 }) {
+  const t = useTranslations('nav');
   return (
     <nav className={className}>
-      {NAV_LINKS.map((link) => {
+      {NAV.map((link) => {
         const active = link.href !== '/#features' && pathname === link.href;
         return (
           <Link
@@ -49,7 +45,7 @@ function NavItems({
                 : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            {link.label}
+            {t(link.key)}
           </Link>
         );
       })}
@@ -59,7 +55,7 @@ function NavItems({
 
 export function Header() {
   const pathname = usePathname();
-  const mounted = useMounted();
+  const t = useTranslations('nav');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -71,16 +67,17 @@ export function Header() {
       <NavItems pathname={pathname} className="hidden md:flex gap-7 items-center" />
 
       <div className="flex items-center gap-3 md:gap-4">
+        <LanguageSwitcher className="hidden sm:inline-flex" />
         <ThemeToggle />
         <Link href="/login" className="hidden sm:block">
           <button className="text-text-secondary text-sm bg-transparent border-none p-2 hover:text-text-primary cursor-pointer transition-colors">
-            Log in
+            {t('login')}
           </button>
         </Link>
         <JoinListModal
           trigger={
             <Button size="sm" aria-haspopup="dialog">
-              Join the list
+              {t('joinList')}
             </Button>
           }
         />
@@ -107,7 +104,7 @@ export function Header() {
             onClick={() => setMobileOpen(false)}
             className="text-sm text-text-secondary hover:text-text-primary"
           >
-            Log in
+            {t('login')}
           </Link>
         </div>
       )}

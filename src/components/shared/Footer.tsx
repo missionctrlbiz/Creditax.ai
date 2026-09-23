@@ -1,50 +1,51 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { AppLogo } from '@/components/shared/AppLogo';
 import { JoinListModal } from '@/components/marketing/JoinListModal';
 import { Button } from '@/components/ui/Button';
 
-const FOOTER_COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
-  {
-    title: 'Product',
-    links: [
-      { label: 'Features', href: '/#features' },
-      { label: 'Pricing', href: '/pricing' },
-      { label: 'Marketplace', href: '/marketplace' },
-      { label: 'API Docs', href: '/developers' },
-      { label: 'Status', href: '/status' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'About', href: '/about' },
-      { label: 'Blog', href: '/blog' },
-      { label: 'Careers', href: '/about#contact' },
-      { label: 'Contact', href: '/about#contact' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Quickstart', href: '/developers/quickstart' },
-      { label: 'Reference', href: '/developers/reference' },
-      { label: 'Sandbox', href: '/developers/sandbox' },
-      { label: 'For tax pros', href: '/pro/apply' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
-      { label: 'Security', href: '/privacy' },
-    ],
-  },
-];
-
 export function Footer() {
+  const t = useTranslations();
+  const FOOTER_COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
+    {
+      title: t('footer.product'),
+      links: [
+        { label: t('footer.features'), href: '/#features' },
+        { label: t('footer.pricing'), href: '/pricing' },
+        { label: t('footer.marketplace'), href: '/marketplace' },
+        { label: t('footer.apiDocs'), href: '/developers' },
+        { label: t('footer.status'), href: '/status' },
+      ],
+    },
+    {
+      title: t('footer.company'),
+      links: [
+        { label: t('footer.about'), href: '/about' },
+        { label: t('footer.blog'), href: '/blog' },
+        { label: t('footer.careers'), href: '/about#contact' },
+        { label: t('footer.contact'), href: '/about#contact' },
+      ],
+    },
+    {
+      title: t('footer.resources'),
+      links: [
+        { label: t('footer.quickstart'), href: '/developers/quickstart' },
+        { label: t('footer.reference'), href: '/developers/reference' },
+        { label: t('footer.sandbox'), href: '/developers/sandbox' },
+        { label: t('footer.forPros'), href: '/pro/apply' },
+      ],
+    },
+    {
+      title: t('footer.legal'),
+      links: [
+        { label: t('footer.privacy'), href: '/privacy' },
+        { label: t('footer.terms'), href: '/terms' },
+        { label: t('footer.security'), href: '/privacy' },
+      ],
+    },
+  ];
   return (
     <footer className="bg-surface-raised border-t border-border-default pt-14 pb-8 w-full">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10">
@@ -52,16 +53,16 @@ export function Footer() {
           <div className="col-span-2">
             <AppLogo height={30} />
             <p className="text-text-secondary text-sm mt-3 font-display tracking-wide">
-              Tax Smart. Borrow Smart.
+              {t('footer.tagline')}
             </p>
             <p className="text-text-muted text-[13px] mt-4 max-w-[260px] leading-relaxed">
-              Know what you owe, file it right, and turn your tax record into credit lenders trust.
+              {t('footer.blurb')}
             </p>
             <div className="mt-5">
               <JoinListModal
                 trigger={
                   <Button variant="secondary" size="sm" aria-haspopup="dialog">
-                    Join the list
+                    {t('nav.joinList')}
                   </Button>
                 }
               />
@@ -90,16 +91,16 @@ export function Footer() {
         </div>
 
         <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-text-muted text-xs">© 2026 Creditax.ai · Built for Nigeria</p>
+          <p className="text-text-muted text-xs">{t('footer.copy')}</p>
           <div className="flex gap-5">
             <Link href="/privacy" className="text-text-muted text-xs hover:text-text-secondary">
-              Privacy
+              {t('footer.privacy')}
             </Link>
             <Link href="/terms" className="text-text-muted text-xs hover:text-text-secondary">
-              Terms
+              {t('footer.terms')}
             </Link>
             <Link href="/status" className="text-text-muted text-xs hover:text-text-secondary">
-              Status
+              {t('footer.status')}
             </Link>
           </div>
         </div>

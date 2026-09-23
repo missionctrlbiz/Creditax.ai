@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
@@ -11,12 +11,22 @@ const ALL_ROLES: { role: PortalRole; label: string }[] = [
   { role: 'personal', label: 'Personal' },
   { role: 'pro', label: 'Tax Pro' },
   { role: 'admin', label: 'Admin' },
+  { role: 'author', label: 'Author' },
 ];
 
 const DEMO_NAMES: Record<PortalRole, string> = {
   personal: 'Emeka O.',
   pro: 'Ayo Ogundimu',
   admin: 'Admin O.',
+  author: 'Nneka Eze',
+};
+
+/** Demo avatar picture per portal (generated images in /public/images/avatars). */
+const DEMO_AVATARS: Record<PortalRole, string> = {
+  personal: '/images/avatars/avatar-01.png',
+  pro: '/images/avatars/avatar-04.png',
+  admin: '/images/avatars/avatar-07.png',
+  author: '/images/avatars/avatar-05.png',
 };
 
 function initialsFrom(email: string | null, role: PortalRole): string {
@@ -34,6 +44,9 @@ function initialsFrom(email: string | null, role: PortalRole): string {
  * The ONE account menu used across personal, pro and admin boards.
  * Opens only from the circular avatar. Shows demo name + email,
  * portal switchers and log out.
+ *
+ * Session is read after mount only — SSR renders the default role so
+ * client hydration matches (fixes dashboard hydration mismatch).
  */
 export function AccountMenu({
   defaultRole,
@@ -45,11 +58,24 @@ export function AccountMenu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const session = getSession();
-  const role: PortalRole = session.role ?? defaultRole ?? 'personal';
+  const [mounted, setMounted] = useState(false);
+  const [sessionState, setSessionState] = useState<{ role: PortalRole | null; email: string | null }>({
+    role: null,
+    email: null,
+  });
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSessionState(getSession());
+    setMounted(true);
+  }, []);
+
+  const role: PortalRole = mounted && sessionState.role ? sessionState.role : defaultRole ?? 'personal';
   const name = DEMO_NAMES[role];
-  const email = session.email ?? 'demo@creditax.ai';
-  const initials = initialsFrom(session.email, role);
+  const email = mounted && sessionState.email ? sessionState.email : 'demo@creditax.ai';
+  const initials = initialsFrom(mounted ? sessionState.email : null, role);
+  const avatarSrc = DEMO_AVATARS[role];
 
   return (
     <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -60,19 +86,31 @@ export function AccountMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           className={cn(
-            'relative rounded-full ring-2 ring-transparent hover:ring-brand-primary-border',
+            'relative rounded-full ring-2 ring-transparent hover:ring-brand-primary-border overflow-hidden',
             'transition-all duration-150 cursor-pointer outline-none',
             'focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)]',
             className
           )}
           style={{ width: size, height: size }}
         >
-          <span
-            className="absolute inset-0 rounded-full bg-brand-primary text-text-inverse flex items-center justify-center font-semibold"
-            style={{ fontSize: size * 0.36 }}
-          >
-            {initials}
-          </span>
+          {!imgFailed ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarSrc}
+              alt=""
+              width={size}
+              height={size}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={() => setImgFailed(true)}
+            />
+          ) : (
+            <span
+              className="absolute inset-0 rounded-full bg-brand-primary text-text-inverse flex items-center justify-center font-semibold"
+              style={{ fontSize: size * 0.36 }}
+            >
+              {initials}
+            </span>
+          )}
           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-brand-action border-2 border-surface-raised" />
         </button>
       </DropdownMenuPrimitive.Trigger>
@@ -143,9 +181,20 @@ export function AccountMenu({
 
 /** Display name for the current (or given) demo account — for headers that show it beside the avatar. */
 export function AccountName({ defaultRole }: { defaultRole?: PortalRole }) {
-  const session = getSession();
-  const role: PortalRole = session.role ?? defaultRole ?? 'personal';
+  const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState<{ role: PortalRole | null; email: string | null }>({
+    role: null,
+    email: null,
+  });
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSession(getSession());
+    setMounted(true);
+  }, []);
+
+  const role: PortalRole = mounted && session.role ? session.role : defaultRole ?? 'personal';
   return <span className="text-sm font-medium text-text-primary">{DEMO_NAMES[role]}</span>;
 }
 
-export { DEMO_NAMES };
+export { DEMO_NAMES, DEMO_AVATARS };

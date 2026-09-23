@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   `inline-flex items-center justify-center gap-2 font-sans font-semibold
    transition-all duration-150 cursor-pointer select-none
-   focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)]
+   focus:outline-none focus:ring-2 focus:ring-brand-primary
    focus:ring-offset-2
    disabled:opacity-40 disabled:cursor-not-allowed`,
   {
@@ -23,7 +23,7 @@ const buttonVariants = cva(
         ghost: `
           bg-transparent text-text-primary
           border border-border-strong
-          hover:bg-[var(--color-hover-overlay)]
+          hover:bg-hover-overlay
         `,
         brand: `
           bg-brand-primary text-text-inverse
@@ -31,9 +31,9 @@ const buttonVariants = cva(
           hover:brightness-110 active:brightness-90
         `,
         danger: `
-          bg-transparent text-[var(--color-error-text)]
-          border border-[var(--color-error-border)]
-          hover:bg-[var(--color-error-bg)]
+          bg-transparent text-error-text
+          border border-error-border
+          hover:bg-error-bg
         `,
         link: `
           bg-transparent text-brand-primary underline-offset-4

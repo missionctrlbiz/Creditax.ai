@@ -28,12 +28,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
              placeholder:text-text-placeholder
              transition-all duration-150
              focus:outline-none focus:ring-2
-             focus:ring-[var(--color-focus-ring)]
+             focus:ring-brand-primary
              focus:ring-offset-0
              focus:border-brand-primary
              disabled:opacity-40 disabled:cursor-not-allowed`,
             error
-              ? 'border-[var(--color-error)] focus:ring-[var(--color-error-bg)]'
+              ? 'border-error focus:ring-error-bg'
               : 'border-border-strong',
             className
           )}
@@ -42,7 +42,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {hint && (
           <span className={cn(
             'text-xs block',
-            error ? 'text-[var(--color-error-text)]' : 'text-text-muted'
+            error ? 'text-error-text' : 'text-text-muted'
           )}>
             {hint}
           </span>
