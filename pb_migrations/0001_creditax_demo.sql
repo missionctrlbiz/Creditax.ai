@@ -168,6 +168,22 @@ CREATE TABLE IF NOT EXISTS invites (
   accepted_at DATETIME
 );
 
+-- ===== api_keys (b2b-platform key management) ============================
+CREATE TABLE IF NOT EXISTS api_keys (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  key TEXT NOT NULL,
+  environment TEXT NOT NULL DEFAULT 'live',  -- live | test
+  scopes TEXT NOT NULL DEFAULT '["Read","Write"]',  -- JSON array
+  status TEXT NOT NULL DEFAULT 'active',     -- active | revoked
+  usage INTEGER DEFAULT 0,
+  limit INTEGER DEFAULT -1,                  -- -1 = unlimited
+  created_by TEXT,
+  last_used TEXT,
+  demo_seed INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ===== webhooks (async chat delivery — P1 stub; Track B worker consumes) ==
 CREATE TABLE IF NOT EXISTS webhooks (
   id TEXT PRIMARY KEY,

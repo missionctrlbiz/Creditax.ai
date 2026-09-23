@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
@@ -25,6 +25,7 @@ export default function ApiKeysPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [demoSeed, setDemoSeed] = useState(false);
 
   const [newKey, setNewKey] = useState({
     name: '',
@@ -32,7 +33,9 @@ export default function ApiKeysPage() {
     scopes: ['Read', 'Write'],
   });
 
-  const apiKeys: ApiKey[] = [
+  // b2b-platform: hydrate live keys from /api/v1/api-keys; the static mock is
+  // the SSR-safe initial state + offline fallback (no hydration mismatch).
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
     {
       id: '1',
       name: 'Production Key',
@@ -57,7 +60,85 @@ export default function ApiKeysPage() {
       limit: Infinity,
       createdBy: 'Emeka Obi',
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/api-keys')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active || !d || !Array.isArray(d.keys) || d.keys.length === 0) return;
+        setApiKeys(
+          d.keys.map((k: Record<string, unknown>) => ({
+            id: String(k.id),
+            name: String(k.name),
+            key: String(k.key),
+            environment: k.environment === 'test' ? 'test' : 'live',
+            scopes: Array.isArray(k.scopes) ? (k.scopes as string[]) : ['Read'],
+            createdAt: String(k.created_at ?? '—'),
+            lastUsed: String(k.last_used ?? 'never'),
+            usage: Number(k.usage ?? 0),
+            limit: Number(k.limit ?? Infinity),
+            createdBy: String(k.created_by ?? 'demo'),
+          }))
+        );
+        setDemoSeed(!!d.demo_seed);
+      })
+      .catch(() => {
+        /* offline — keep the mock */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleRevoke(keyId: string) {
+    // Live revoke via the b2b API; on success drop the key from the list.
+    // Offline (fetch fails) we still reflect the action locally so the
+    // click-through completes.
+    try {
+      await fetch(`/api/v1/api-keys/${keyId}`, { method: 'DELETE' });
+    } catch {
+      /* offline */
+    }
+    setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
+  }
+
+  async function handleCreate() {
+    if (!newKey.name.trim()) return;
+    const created: ApiKey = {
+      id: `local-${Date.now()}`,
+      name: newKey.name.trim(),
+      key: `sk_${newKey.environment === 'live' ? 'live' : 'test'}_****************************${Math.random().toString(36).slice(2, 6)}`,
+      environment: newKey.environment,
+      scopes: newKey.scopes,
+      createdAt: 'Just now',
+      lastUsed: 'never',
+      usage: 0,
+      limit: Infinity,
+      createdBy: 'You',
+    };
+    try {
+      const res = await fetch('/api/v1/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: created.name, environment: created.environment, scopes: created.scopes }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const k = d.key as Record<string, unknown>;
+        created.id = String(k.id);
+        created.key = String(k.key);
+        created.createdBy = String(k.created_by ?? 'You');
+        setDemoSeed(!!k.demo_seed);
+      }
+    } catch {
+      /* offline — the locally-built key already reflects the action */
+    }
+    setApiKeys((prev) => [created, ...prev]);
+    setShowCreateModal(false);
+    setNewKey({ name: '', environment: 'live', scopes: ['Read', 'Write'] });
+  }
 
   const toggleReveal = (keyId: string) => {
     const newRevealed = new Set(revealedKeys);
@@ -91,6 +172,12 @@ export default function ApiKeysPage() {
           <p className="text-text-secondary text-sm">
             Manage your API keys for accessing Creditax.ai services
           </p>
+          {demoSeed && (
+            <p className="text-text-muted text-[11px] mt-1.5 flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-action" />
+              Demo keys — secrets are simulated (real issuance + rate limits arrive in Track B).
+            </p>
+          )}
         </div>
         <Button variant="primary" onClick={() => setShowCreateModal(true)}>
           + Create New Key
@@ -205,8 +292,12 @@ export default function ApiKeysPage() {
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-4 border-t border-border-default">
-                <Button variant="danger" size="sm">Revoke Key</Button>
-                <Button variant="ghost" size="sm">Edit Name</Button>
+                <Button variant="danger" size="sm" onClick={() => void handleRevoke(apiKey.id)}>
+                  Revoke Key
+                </Button>
+                <Button variant="ghost" size="sm">
+                  Edit Name
+                </Button>
               </div>
             </Card>
           </motion.div>
@@ -335,7 +426,7 @@ export default function ApiKeysPage() {
 
                   {/* Actions */}
                   <div className="pt-4">
-                    <Button variant="primary" fullWidth>
+                    <Button variant="primary" fullWidth onClick={() => void handleCreate()}>
                       Create Key →
                     </Button>
                   </div>
