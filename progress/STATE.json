@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p7-agent-canvas",
+  "current_phase": "p7-auth-real",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -12,8 +12,12 @@
     "p4-money",
     "p5-boards",
     "p6-collab-polish",
-    "p7-agent-canvas",
-    "p8-pro-admin-author"
+    "p7-auth-real",
+    "p8-canvas-heart",
+    "p9-pro-portal",
+    "p10-admin-author",
+    "p11-b2b-dev-status",
+    "p12-demo-polish"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -325,43 +329,113 @@
       }
     },
     {
-      "id": "p7-agent-canvas",
+      "id": "p7-auth-real",
+      "status": "in_progress",
+      "attempts": 0,
+      "items": {
+        "unified-auth-spike": "todo",
+        "layout-guards-on-pb-auth": "todo",
+        "login-signup-real-session": "todo",
+        "tier-resolution": "todo",
+        "i18n-font-vars": "todo"
+      },
+      "exit_criteria": [
+        "Layouts (dashboard/pro/admin) gate on a single session source — pb-auth with mock fallback (pb-data reachable flag), NOT localStorage-only; role+tier resolve from the same object",
+        "login/signup persist a session the guards read (no double source of truth)",
+        "en.json dashboard.tagline added; font vars (font-inter/syne/jetbrains-mono) + .container utility wired in globals.css",
+        "all 4 locales still i18n-consistent; tsc 0 + lint 0"
+      ],
+      "last_updated": "2026-09-23T20:45:00+01:00"
+    },
+    {
+      "id": "p8-canvas-heart",
       "status": "todo",
       "attempts": 0,
       "items": {
         "canvas-user-context": "todo",
         "canvas-live-library": "todo",
-        "canvas-locale-sweep": "todo",
-        "status-page-live": "todo"
+        "tier-aware-referral": "todo",
+        "live-quota-in-canvas": "todo",
+        "connector-context": "todo",
+        "locale-answers": "todo"
       },
       "exit_criteria": [
-        "Chat canvas sends userId+locale+tier so server-side quota metering + referral tier are real (upgrade wall fires from the canvas on the 5th free chat)",
-        "Canvas library = live processed documents (attach pins doc context into the next chat turn, not a static LIBRARY array)",
-        "Skills chips + connectors shown as prompt-context on the canvas; localized agent answers EN/YO/HA/IG verified on the chat flow",
-        "/status all-green + pricing/usage consistent (demo scope 10)",
-        "npm run lint passes"
+        "Chat POST sends {userId, locale, tier} so server-side quota metering actually fires from the canvas (5th free chat → 403 upgrade wall renders)",
+        "Canvas library = live processed documents (attach pins doc context into the next turn), not the static LIBRARY array",
+        "Referral reveal is tier-aware (reveals for Plus/Pro login; masked for free) — no more hardcoded tier 'free'",
+        "Skill chips + connected apps shown as prompt-context on the canvas; localized agent answers EN/YO/HA/IG verified on the chat flow; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:25:00+01:00"
+      "last_updated": "2026-09-23T20:45:00+01:00"
     },
     {
-      "id": "p8-pro-admin-author",
+      "id": "p9-pro-portal",
       "status": "todo",
       "attempts": 0,
       "items": {
         "pro-dashboard-live": "todo",
-        "pro-verify-apply": "todo",
-        "admin-dashboard-live": "todo",
-        "author-board": "todo",
-        "demo-script-sweep": "todo"
+        "pro-clients-bulk-calc": "todo",
+        "pro-verify-state": "todo",
+        "pro-apply-live": "todo"
       },
       "exit_criteria": [
-        "Pro dashboard clients + bulk calc + verification state hydrated from the marketplace/application stores (demo_seed)",
-        "Pro apply/verify steppers reflect live application status",
-        "Admin dashboard live counts (users, approval queue, KB corpus, quota usage)",
-        "Author role gets its scoped content board (KB editor + audit) per roles doc",
-        "8-minute demo script beats 1-8 land on the correct screens; tsc + lint 0"
+        "Pro login → /pro/dashboard hydrates client list + bulk-calc summary from the marketplace/application/pro stores (demo_seed, not constants)",
+        "/pro/clients + [id] reflect live application/verification status",
+        "/pro/verify stepper + /pro/apply submit reflect the real application record",
+        "complete pro journey (login→dashboard→calc→verify→sign-out) lands on live data; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:25:00+01:00"
+      "last_updated": "2026-09-23T20:45:00+01:00"
+    },
+    {
+      "id": "p10-admin-author",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "admin-dashboard-live": "todo",
+        "admin-professionals-live": "todo",
+        "admin-audit-live": "todo",
+        "author-kb-board": "todo"
+      },
+      "exit_criteria": [
+        "Admin dashboard counts (users, approval queue, KB corpus, quota usage) hydrated live",
+        "/admin/professionals + approval queue reflect the application store; /admin/audit shows the KB publish audit log (ties to P5 money shot)",
+        "Author role gets a scoped board = KB editor + publish + audit (roles doc)",
+        "admin+author journey complete; tsc 0 + lint 0"
+      ],
+      "last_updated": "2026-09-23T20:45:00+01:00"
+    },
+    {
+      "id": "p11-b2b-dev-status",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "status-page-live": "todo",
+        "usage-pricing-consistent": "todo",
+        "dev-quickstart-sandbox": "todo",
+        "api-keys-live": "todo"
+      },
+      "exit_criteria": [
+        "/status all-green + pricing/usage consistent (demo scope 10), fetched not hardcoded",
+        "developers quickstart/sandbox/reference wired to the api-keys + webhooks stores",
+        "pricing ↔ usage ↔ quota page numbers agree; tsc 0 + lint 0"
+      ],
+      "last_updated": "2026-09-23T20:45:00+01:00"
+    },
+    {
+      "id": "p12-demo-polish",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "css-global-complete": "todo",
+        "dead-buttons-sweep": "todo",
+        "demo-script-sweep": "todo",
+        "screenshot-prep": "todo"
+      },
+      "exit_criteria": [
+        "Every button resolves to a real handler (no console.log stubs / empty onClick); globals.css complete (.container, keyframes fallback, font vars)",
+        "8-minute demo script beats 1-8 land on the correct live screens; demo-screenshot inventory (assets/demo-screenshots A-G)",
+        "final sweep: tsc 0, lint 0, next build (in full-access env) green"
+      ],
+      "last_updated": "2026-09-23T20:45:00+01:00"
     }
   ]
 }
