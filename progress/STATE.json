@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p6-collab-polish",
+  "current_phase": "p7-agent-canvas",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -11,7 +11,9 @@
     "p3-docs-skills",
     "p4-money",
     "p5-boards",
-    "p6-collab-polish"
+    "p6-collab-polish",
+    "p7-agent-canvas",
+    "p8-pro-admin-author"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -321,6 +323,45 @@
         "honesty_check": "pass (demo_seed:true on all P6 collab/connector/share outputs; visible UI badges)",
         "note": "F-18 paid-only invite/share gate (free→403+upgradeTo:plus) + read-only /share/[slug] preview with signup CTA; F-19 CONNECTORS_PER_TIER free=2 cap enforcement + Drive-as-context; collections seeded; 4-locale i18n consistent. Chain complete: all phases in STATE.json order reviewed_pass."
       }
+    },
+    {
+      "id": "p7-agent-canvas",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "canvas-user-context": "todo",
+        "canvas-live-library": "todo",
+        "canvas-locale-sweep": "todo",
+        "status-page-live": "todo"
+      },
+      "exit_criteria": [
+        "Chat canvas sends userId+locale+tier so server-side quota metering + referral tier are real (upgrade wall fires from the canvas on the 5th free chat)",
+        "Canvas library = live processed documents (attach pins doc context into the next chat turn, not a static LIBRARY array)",
+        "Skills chips + connectors shown as prompt-context on the canvas; localized agent answers EN/YO/HA/IG verified on the chat flow",
+        "/status all-green + pricing/usage consistent (demo scope 10)",
+        "npm run lint passes"
+      ],
+      "last_updated": "2026-09-23T20:25:00+01:00"
+    },
+    {
+      "id": "p8-pro-admin-author",
+      "status": "todo",
+      "attempts": 0,
+      "items": {
+        "pro-dashboard-live": "todo",
+        "pro-verify-apply": "todo",
+        "admin-dashboard-live": "todo",
+        "author-board": "todo",
+        "demo-script-sweep": "todo"
+      },
+      "exit_criteria": [
+        "Pro dashboard clients + bulk calc + verification state hydrated from the marketplace/application stores (demo_seed)",
+        "Pro apply/verify steppers reflect live application status",
+        "Admin dashboard live counts (users, approval queue, KB corpus, quota usage)",
+        "Author role gets its scoped content board (KB editor + audit) per roles doc",
+        "8-minute demo script beats 1-8 land on the correct screens; tsc + lint 0"
+      ],
+      "last_updated": "2026-09-23T20:25:00+01:00"
     }
   ]
 }
