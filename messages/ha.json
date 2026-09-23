@@ -242,5 +242,17 @@
     "recentActivity": "Ayyukan kwanan nan",
     "viewAll": "Duba duka",
     "tagline": "Haraji Mai Hikima. Rango Mai Hikima."
+  },
+  "share": {
+    "sharedCanvas": "Allon rarrawa",
+    "sharedBy": "An raba ta ta hanyar",
+    "readOnly": "kara kawai",
+    "previewCanvas": "Hoto allon",
+    "loading": "Ana shiga allon…",
+    "ctaTitle": "Duba wannan a ginyar gine kyaku",
+    "ctaBody": "Wannan hoto karantsa kawai ce. Kira asusu Creditax kyaku don koya mai hawa-cunkushe, isa bayyana, da rarrawa allon tare da cajinka.",
+    "ctaSignin": "Kira asusu kyaku",
+    "ctaFindPro": "Nemo mai shari'a",
+    "backHome": "Gida"
   }
 }

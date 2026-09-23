@@ -241,5 +241,17 @@
     "checkCredit": "Check credit score",
     "recentActivity": "Recent activity",
     "viewAll": "View all"
+  },
+  "share": {
+    "sharedCanvas": "Shared canvas",
+    "sharedBy": "Shared by",
+    "readOnly": "read-only",
+    "previewCanvas": "Canvas preview",
+    "loading": "Loading canvas…",
+    "ctaTitle": "See this on your own workspace",
+    "ctaBody": "This is a read-only preview. Create a free Creditax account to run your own tax agent, upload docs, and share canvases with your team.",
+    "ctaSignin": "Create free account",
+    "ctaFindPro": "Find a pro",
+    "backHome": "Home"
   }
 }

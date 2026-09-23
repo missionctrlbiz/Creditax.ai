@@ -208,3 +208,78 @@ export const seedNotifications: DemoNotification[] = [
   { id: 'n-3', userId: 'u-consumer', kind: 'score_change', title: 'Credit health up 4 pts', body: 'Your filing streak beat your balance this month.', read: true, demo_seed: true },
   { id: 'n-4', userId: 'u-consumer', kind: 'filing_deadline', title: 'WHT remittance due', body: 'May WHT (₦38,500) is due by 21 June.', due: '2026-06-21', read: false, demo_seed: true },
 ];
+
+// ---------------------------------------------------------------------------
+// P6 F-18/F-19 — collaboration + connectors seed (product-foundation §10)
+// ---------------------------------------------------------------------------
+
+export interface DemoInvite {
+  id: string;
+  workspaceId: string;
+  email: string;
+  role: 'member' | 'viewer';
+  token: string;
+  status: 'pending' | 'accepted' | 'revoked';
+  /** Only paid workspaces may invite (product-foundation §10). */
+  tier: Tier;
+  demo_seed: true;
+}
+
+export interface DemoSharedLink {
+  id: string;
+  userId: string;
+  conversationId: string;
+  urlSlug: string;
+  access: 'view' | 'comment';
+  demo_seed: true;
+}
+
+export type ConnectorService = 'google_drive' | 'claude' | 'chatgpt' | 'notion' | 'second_brain';
+
+export interface DemoConnector {
+  id: string;
+  userId: string;
+  service: ConnectorService;
+  displayName: string;
+  scope: 'read' | 'read_write';
+  status: 'connected' | 'disconnected';
+  demo_seed: true;
+}
+
+export interface DemoSubscription {
+  id: string;
+  userId: string;
+  plan: Tier;
+  status: 'active' | 'cancelled' | 'past_due';
+  billingCycle: 'monthly' | 'annual';
+  demo_seed: true;
+}
+
+/** Free tier includes 2 connectors (product-foundation §10 / pricing-and-access §2). */
+export const CONNECTORS_PER_TIER: Record<Tier, number> = {
+  free: 2,
+  plus: 10,
+  professional: Infinity,
+  enterprise: Infinity,
+};
+
+export const seedConnectors: DemoConnector[] = [
+  { id: 'c-1', userId: 'u-consumer', service: 'google_drive', displayName: 'Google Drive', scope: 'read', status: 'connected', demo_seed: true },
+  { id: 'c-2', userId: 'u-consumer', service: 'claude', displayName: 'Claude (Anthropic)', scope: 'read', status: 'connected', demo_seed: true },
+  { id: 'c-3', userId: 'u-pro', service: 'notion', displayName: 'Notion', scope: 'read_write', status: 'connected', demo_seed: true },
+];
+
+export const seedSharedLinks: DemoSharedLink[] = [
+  { id: 'sl-1', userId: 'u-pro', conversationId: 'cv-pro-1', urlSlug: 'share_7f3a9c', access: 'view', demo_seed: true },
+  { id: 'sl-2', userId: 'u-pro', conversationId: 'cv-pro-2', urlSlug: 'share_b2e81d', access: 'comment', demo_seed: true },
+];
+
+export const seedInvites: DemoInvite[] = [
+  { id: 'inv-1', workspaceId: 'ws-pro', email: 'barr.chidi@taxhub.ng', role: 'member', token: 'tok_a1b2', status: 'pending', tier: 'professional', demo_seed: true },
+  { id: 'inv-2', workspaceId: 'ws-pro', email: 'grace@greenleaf.tax', role: 'viewer', token: 'tok_c3d4', status: 'accepted', tier: 'professional', demo_seed: true },
+];
+
+export const seedSubscriptions: DemoSubscription[] = [
+  { id: 'sub-1', userId: 'u-pro', plan: 'professional', status: 'active', billingCycle: 'monthly', demo_seed: true },
+  { id: 'sub-2', userId: 'u-consumer', plan: 'free', status: 'active', billingCycle: 'monthly', demo_seed: true },
+];

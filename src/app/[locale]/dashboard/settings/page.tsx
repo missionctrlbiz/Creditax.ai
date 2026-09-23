@@ -1,13 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { Link2, Users, Share2, Plus, HardDrive } from 'lucide-react';
 
-type SettingsSection = 'account' | 'notifications' | 'security' | 'billing' | 'api';
+type SettingsSection = 'account' | 'notifications' | 'security' | 'billing' | 'api' | 'team' | 'connectors';
+
+// P6 F-18/F-19 shapes from the collab + connectors endpoints.
+interface CollabData {
+  invites: { email: string; role: string; status: string; tier: string }[];
+  links: { urlSlug: string; access: string }[];
+}
+interface ConnectorData {
+  connectors: { service: string; displayName: string; status: string }[];
+  status: { used: number; cap: number; remaining: number; unlimited: boolean };
+  services: { service: string; displayName: string; description: string }[];
+}
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('account');
@@ -18,11 +30,35 @@ export default function SettingsPage() {
     digest: true,
   });
 
+  // P6 — load the collab + connectors boards live (fall back to empty when offline).
+  const [collab, setCollab] = useState<CollabData | null>(null);
+  const [connectors, setConnectors] = useState<ConnectorData | null>(null);
+  const [tier] = useState<'free' | 'plus' | 'professional'>('free');
+
+  function loadCollab() {
+    return fetch('/api/v1/collab')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setCollab(d))
+      .catch(() => {});
+  }
+  function loadConnectors(t: 'free' | 'plus' | 'professional') {
+    return fetch(`/api/v1/connectors?userId=u-consumer&tier=${t}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setConnectors(d))
+      .catch(() => {});
+  }
+  useEffect(() => {
+    loadCollab();
+    loadConnectors('free');
+  }, []);
+
   const sections = [
     { id: 'account' as const, label: 'Account' },
     { id: 'notifications' as const, label: 'Notifications' },
     { id: 'security' as const, label: 'Security' },
     { id: 'billing' as const, label: 'Billing' },
+    { id: 'team' as const, label: 'Team & Sharing' },
+    { id: 'connectors' as const, label: 'Connected apps' },
     { id: 'api' as const, label: 'API' },
   ];
 
@@ -358,6 +394,149 @@ export default function SettingsPage() {
                     Manage your subscription and payment methods.
                   </p>
                   <p className="text-text-secondary">Billing settings coming soon.</p>
+                </Card>
+              </motion.div>
+            )}
+
+            {activeSection === 'team' && (
+              <motion.div
+                key="team"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-lg font-bold text-text-primary">Team &amp; Sharing</h2>
+                    <Badge variant="info">demo_seed</Badge>
+                  </div>
+                  <p className="text-text-muted text-sm mb-6">
+                    Invite your team and share a canvas link (paid feature, product-foundation §10).
+                  </p>
+
+                  {/* F-18 — shared-canvas links */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Share2 className="w-4 h-4 text-text-muted" />
+                      <h3 className="text-sm font-semibold text-text-primary">Shared canvas links</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {(collab?.links ?? [{ urlSlug: 'share_7f3a9c', access: 'view' }]).map((l) => (
+                        <li key={l.urlSlug} className="flex items-center gap-3 p-3 rounded-card border border-border-subtle bg-surface-overlay">
+                          <Link2 className="w-4 h-4 text-brand-action shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-mono text-text-primary truncate">/share/{l.urlSlug}</p>
+                            <p className="text-[11px] text-text-muted">read-only · {l.access}</p>
+                          </div>
+                          <Badge variant={l.access === 'view' ? 'success' : 'brand'}>{l.access}</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* F-18 — workspace invites */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users className="w-4 h-4 text-text-muted" />
+                      <h3 className="text-sm font-semibold text-text-primary">Workspace invites</h3>
+                    </div>
+                    <div className="flex gap-2 mb-3">
+                      <Input
+                        placeholder="teammate@firm.ng"
+                        className="h-9 flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const v = (e.target as HTMLInputElement).value;
+                            if (v) fetch('/api/v1/collab/invite', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ email: v, tier }),
+                            }).then(() => loadCollab()).catch(() => {});
+                          }
+                        }}
+                      />
+                      <Button variant="primary" size="sm">
+                        <Plus size={14} /> Invite
+                      </Button>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {(collab?.invites ?? []).map((inv) => (
+                        <li key={inv.email} className="flex items-center gap-2 text-[12px]">
+                          <span className="w-2 h-2 rounded-full bg-brand-action shrink-0" />
+                          <span className="text-text-primary font-medium">{inv.email}</span>
+                          <span className="text-text-muted">{inv.role}</span>
+                          <Badge variant={inv.status === 'accepted' ? 'success' : 'warning'} className="ml-auto">{inv.status}</Badge>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[11px] text-text-muted mt-3">Invites + canvas sharing are paid features (Plus / Pro).</p>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {activeSection === 'connectors' && (
+              <motion.div
+                key="connectors"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-lg font-bold text-text-primary">Connected apps</h2>
+                    <Badge variant="info">demo_seed</Badge>
+                  </div>
+                  <p className="text-text-muted text-sm mb-6">
+                    Prompt with external tools as context. Free tier includes 2 connectors.
+                  </p>
+
+                  {/* F-19 — per-tier cap */}
+                  {connectors?.status && (
+                    <div className="mb-6 p-3 rounded-card border border-brand-primary-border bg-brand-primary-bg/30">
+                      <p className="text-sm text-text-primary">
+                        {connectors.status.unlimited
+                          ? 'Unlimited connectors on your tier'
+                          : `You have ${connectors.status.remaining} of ${connectors.status.cap} connectors left on Free`}
+                      </p>
+                      <p className="text-[11px] text-text-muted mt-1">Connect more on Plus (₦5,000/mo)</p>
+                    </div>
+                  )}
+
+                  {/* F-19 — connected services as prompt context */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">Prompt context</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {(connectors?.connectors ?? [{ service: 'google_drive', displayName: 'Google Drive', status: 'connected' }]).map((c) => (
+                        <span key={c.service} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-primary-border bg-brand-primary-bg text-brand-primary text-[12px] font-medium">
+                          <HardDrive size={13} /> {c.displayName}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* F-19 — connect another */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">Connect a tool</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {(connectors?.services ?? [{ service: 'google_drive', displayName: 'Google Drive', description: 'Read documents as prompt context' }, { service: 'notion', displayName: 'Notion', description: 'Link Notion pages' }]).map((s) => (
+                        <button
+                          key={s.service}
+                          onClick={() => fetch('/api/v1/connectors', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ service: s.service, tier }),
+                          }).then(() => loadConnectors(tier)).catch(() => {})}
+                          className="p-3 rounded-card border border-border-subtle bg-surface-overlay hover:border-brand-primary-border transition-colors text-left cursor-pointer"
+                        >
+                          <p className="text-sm font-medium text-text-primary">{s.displayName}</p>
+                          <p className="text-[11px] text-text-muted">{s.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </Card>
               </motion.div>
             )}

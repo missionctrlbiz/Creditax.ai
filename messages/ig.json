@@ -242,5 +242,17 @@
     "recentActivity": "Ihe mere na nso nso",
     "viewAll": "Hụ ihe niile",
     "tagline": "Ụtụ n’Amamihe. Gbazite n’Amamihe."
+  },
+  "share": {
+    "sharedCanvas": "Ntezi nkwere",
+    "sharedBy": "A were site na",
+    "readOnly": "lee anya naanị",
+    "previewCanvas": "Ebe ntuka a",
+    "loading": "A na-ebu ntezi…",
+    "ctaTitle": "Hu nke a n'oti gi",
+    "ctaBody": "Nke a bu anya lele noziriri. Meputa akaunti Creditax efu ije mepee onwe gi, juputa ihe depụta, kwekọrịta ntezi na itu n'okpuru.",
+    "ctaSignin": "Meputa akaunti efu",
+    "ctaFindPro": "Cho onye ahiya",
+    "backHome": "Ulo"
   }
 }

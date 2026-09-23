@@ -293,13 +293,13 @@
     },
     {
       "id": "p6-collab-polish",
-      "status": "in_progress",
+      "status": "reviewed_pass",
       "attempts": 0,
       "items": {
-        "collaboration-preview": "todo",
-        "connectors-preview": "todo",
-        "remaining-collections": "todo",
-        "screenshot-sweep": "todo"
+        "collaboration-preview": "done",
+        "connectors-preview": "done",
+        "remaining-collections": "done",
+        "screenshot-sweep": "done"
       },
       "exit_criteria": [
         "F-18 paid workspace invites a member (invites) + read-only shared-canvas link (shared_links) with signup CTA",
@@ -308,7 +308,19 @@
         "demo-screenshot sweep across all four locales",
         "npm run lint passes"
       ],
-      "last_updated": "2026-09-23T17:35:00+01:00"
+      "last_updated": "2026-09-23T22:15:00+01:00",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T22:15:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox; P6 gate is lint-only)"
+        },
+        "honesty_check": "pass (demo_seed:true on all P6 collab/connector/share outputs; visible UI badges)",
+        "note": "F-18 paid-only invite/share gate (free→403+upgradeTo:plus) + read-only /share/[slug] preview with signup CTA; F-19 CONNECTORS_PER_TIER free=2 cap enforcement + Drive-as-context; collections seeded; 4-locale i18n consistent. Chain complete: all phases in STATE.json order reviewed_pass."
+      }
     }
   ]
 }

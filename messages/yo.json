@@ -242,5 +242,17 @@
     "recentActivity": "Ìṣẹ̀lẹ̀ tuntun",
     "viewAll": "Wo gbogbo rẹ̀",
     "tagline": "Ówó-órí ní Ìmọ̀. Gbàwó ní Ìmọ̀."
+  },
+  "share": {
+    "sharedCanvas": "Eto pinpin",
+    "sharedBy": "A ti pinpin nipasẹ",
+    "readOnly": "wo-nikan",
+    "previewCanvas": "Ifihan eto",
+    "loading": "N gbe eto si…",
+    "ctaTitle": "Ṣe iru eyi ni ipo tirẹ riran",
+    "ctaBody": "Eyi ni ifihan wo-nikan. Ṣẹda akọọlẹ Creditax ọfẹ lati ṣiṣẹ ẹṣọ ọti nipa-ṣọran rẹ, ifilọpamọ awọn ohun-èlò, ati pinpin eto pẹlu ẹgbẹ rẹ.",
+    "ctaSignin": "Ṣẹda akọọlẹ ọfẹ",
+    "ctaFindPro": "Wa ẹlẹmeji",
+    "backHome": "Ilé"
   }
 }
