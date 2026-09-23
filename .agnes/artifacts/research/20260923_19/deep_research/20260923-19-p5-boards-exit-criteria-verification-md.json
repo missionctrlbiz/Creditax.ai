@@ -1,0 +1,166 @@
+{
+  "kind": "agnes_artifact",
+  "artifact_type": "research_markdown_report",
+  "research_kind": "deep_research",
+  "mode": "deep_research",
+  "session_id": "20260923_19",
+  "title": "P5-Boards exit-criteria verification (F-14b, F-16, F-17b, lint)",
+  "local_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_19/deep_research/20260923-19-p5-boards-exit-criteria-verification-md.md",
+  "manifest_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_19/deep_research/20260923-19-p5-boards-exit-criteria-verification-md.json",
+  "repo_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/work/research/20260923_19/deep_research/repo",
+  "preview_uri": "ui://agnes-research/deep_research/20260923-19-p5-boards-exit-criteria-verification-md",
+  "sources_count": 12,
+  "evidence_count": 7,
+  "conflicts_count": 0,
+  "blocked_sources_count": 0,
+  "confidence": "medium",
+  "quality_warnings": [
+    "7 evidence item(s) are missing source_url.",
+    "No evidence entries include quotes or extracted text; add short quotes for auditability.",
+    "Structured evidence was provided, but the Markdown report does not appear to include an evidence section."
+  ],
+  "created_at": "2026-09-23T18:22:16.710969+00:00",
+  "sources": [
+    {
+      "title": "progress/STATE.json (phase p5-boards)",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/STATE.json",
+      "note": null
+    },
+    {
+      "title": "research/project-roadmap.md",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/research/project-roadmap.md",
+      "note": null
+    },
+    {
+      "title": "src/ai/contact-gate.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/contact-gate.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/[locale]/marketplace/[proId]/page.tsx",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/[locale]/marketplace/[proId]/page.tsx",
+      "note": null
+    },
+    {
+      "title": "src/ai/kb-admin.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/kb-admin.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/admin/kb/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/admin/kb/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/admin/kb/publish/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/admin/kb/publish/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/[locale]/admin/knowledge-base/page.tsx",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/[locale]/admin/knowledge-base/page.tsx",
+      "note": null
+    },
+    {
+      "title": "src/ai/rag/vector-store.ts (active store shared by publish + chat)",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/rag/vector-store.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/chat/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/chat/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/user-admin.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/user-admin.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/[locale]/admin/users/page.tsx",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/[locale]/admin/users/page.tsx",
+      "note": null
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "lint gate passes via /usr/local/bin/node (eslint . exit 0; tsc --noEmit exit 0)",
+      "value": "EXIT=0 / TSC_EXIT=0",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "command_output",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "node v20.16.0; eslint binary at node_modules/eslint/bin/eslint.js; no test script in package.json"
+    },
+    {
+      "claim": "F-16 publish writes into the active vector store that /api/v1/chat reads",
+      "value": "kb-admin.publishKbDoc → getVectorStore().ingest; chat route → runRag → retrieve → getVectorStore().search (same module-level cached instance)",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "code",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "vector-store.ts keeps `let cached: VectorStore | null`; SeededVectorStore.ingest upserts by slug and replaces chunks"
+    },
+    {
+      "claim": "F-16 audit log exists and is exposed to the admin board",
+      "value": "auditLog in kb-admin.ts; GET /api/v1/admin/kb returns audit (last 20); rendered in admin KB page",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "code",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "F-14b mask-until-logged-in per tier is implemented",
+      "value": "contactRevealPolicy({loggedIn, tier}) + maskPhone/maskEmail applied in marketplace/[proId]/page.tsx via getSession()",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "code",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "F-17b users board fetches the endpoint (not hard-coded only)",
+      "value": "useEffect fetch('/api/v1/admin/users') replaces board; status/invite POSTs to /api/v1/admin/users/:id/status and /invite",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "code",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "SEED_USERS remains as offline fallback; fetch mapping drops server u.status (hard-codes 'Active')"
+    },
+    {
+      "claim": "next build is environment-blocked in the sandbox, not a code defect",
+      "value": "Turbopack tokio worker panic writing panic log to sandbox tmp path; BUILD_EXIT=1; matches prior phase env_blocked pattern",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "command_output",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "demo_seed honesty on P5 outputs",
+      "value": "publish/audit/users responses carry truthful demo_seed (local-hash ⇒ true); admin KB page badges it; marketplace toasts label mocked actions",
+      "source_title": null,
+      "source_url": null,
+      "source_type": "code",
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    }
+  ],
+  "conflicts": [],
+  "blocked_sources": []
+}

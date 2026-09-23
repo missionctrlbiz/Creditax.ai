@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
+import { getSession } from '@/lib/mock-auth';
+import { contactRevealPolicy, maskPhone, maskEmail, type RevealPolicy } from '@/ai/contact-gate';
 import {
   ArrowLeft,
   MapPin,
@@ -458,7 +461,31 @@ export default function ProProfilePage() {
   const id = Array.isArray(rawId) ? rawId[0] : (rawId ?? '');
   const pro = PROS[id];
 
+  // P5 F-14b — contact gating (Marketplace contact reveal, pricing-and-access §2).
+  // Read the mock session after mount (SSR-safe, same pattern as AppShell).
+  const [viewer, setViewer] = useState<{ loggedIn: boolean; tier: 'free' | 'professional' }>({
+    loggedIn: false,
+    tier: 'free',
+  });
+  useEffect(() => {
+    const s = getSession();
+    if (s.role) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setViewer({ loggedIn: true, tier: s.role === 'personal' ? 'free' : 'professional' });
+    }
+  }, []);
+
+  const policy: RevealPolicy = contactRevealPolicy({ loggedIn: viewer.loggedIn, tier: viewer.tier });
+  const shownPhone = policy.revealed ? pro.phone : maskPhone(pro.phone);
+  const shownEmail = policy.revealed ? pro.email : maskEmail(pro.email);
+
   const showDemoToast = () => {
+    if (!policy.revealed) {
+      toast(`Contact is masked — ${policy.hint}`, {
+        description: 'Sign in at a paid tier to reveal phone, email and WhatsApp.',
+      });
+      return;
+    }
     toast(DEMO_TOAST, {
       description: 'Real contact details unlock once the marketplace backend ships.',
     });
@@ -562,23 +589,23 @@ export default function ProProfilePage() {
                   </div>
                 </div>
 
-                {/* Contact actions */}
+                {/* Contact actions — F-14b gate: masked until logged-in at a paid tier */}
                 <div className="lg:w-[260px] shrink-0 lg:text-right">
                   <div className="flex lg:justify-end items-center gap-2.5">
-                    <ContactIconButton label={`Call ${pro.name} (demo)`} onClick={showDemoToast}>
+                    <ContactIconButton
+                      label={policy.revealed ? `Call ${pro.name}` : `Call ${pro.name} (masked)`}
+                      onClick={showDemoToast}
+                    >
                       <Phone className="w-4 h-4" />
                     </ContactIconButton>
-                    <ContactIconButton label={`Email ${pro.name} (demo)`} onClick={showDemoToast}>
+                    <ContactIconButton
+                      label={policy.revealed ? `Email ${pro.name}` : `Email ${pro.name} (masked)`}
+                      onClick={showDemoToast}
+                    >
                       <Mail className="w-4 h-4" />
                     </ContactIconButton>
                     <ContactIconButton
-                      label={`Message ${pro.name} (demo)`}
-                      onClick={showDemoToast}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </ContactIconButton>
-                    <ContactIconButton
-                      label={`WhatsApp ${pro.name} (demo)`}
+                      label={policy.revealed ? `WhatsApp ${pro.name}` : `WhatsApp ${pro.name} (masked)`}
                       onClick={showDemoToast}
                     >
                       <MessageCircle className="w-4 h-4" />
@@ -592,7 +619,14 @@ export default function ProProfilePage() {
                     Request Consultation
                   </button>
                   <p className="mt-2 text-[11px] text-text-muted">
-                    Demo build — every contact action on this page is mocked.
+                    {policy.revealed ? (
+                      <>Contact revealed · {policy.hint}</>
+                    ) : (
+                      <>
+                        <span className="font-medium text-text-primary">{policy.hint}</span>
+                        {' — '}demo build, actions are mocked.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -735,7 +769,7 @@ export default function ProProfilePage() {
                       <dt className="text-text-muted text-[11px] uppercase tracking-wider">
                         Phone
                       </dt>
-                      <dd className="font-mono text-text-primary">{pro.phone}</dd>
+                      <dd className="font-mono text-text-primary">{shownPhone}</dd>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -744,7 +778,7 @@ export default function ProProfilePage() {
                       <dt className="text-text-muted text-[11px] uppercase tracking-wider">
                         Email
                       </dt>
-                      <dd className="font-mono text-text-primary break-all">{pro.email}</dd>
+                      <dd className="font-mono text-text-primary break-all">{shownEmail}</dd>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">

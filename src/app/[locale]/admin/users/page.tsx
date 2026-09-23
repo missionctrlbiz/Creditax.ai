@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ban, Download, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -21,30 +21,47 @@ const itemVariants = {
   show: { opacity: 1, y: 0 }
 };
 
-const users = [
-  { id: 1, name: 'Emeka Obi', email: 'emeka.obi@email.com', role: 'Super Admin', status: 'Active', lastActive: '2 min ago' },
-  { id: 2, name: 'Chioma Adeyemi', email: 'chioma.a@email.com', role: 'Admin', status: 'Active', lastActive: '15 min ago' },
-  { id: 3, name: 'Adebayo Smith', email: 'adebayo@taxpro.com', role: 'Tax Pro', status: 'Active', lastActive: '1 hr ago' },
-  { id: 4, name: 'Fatima Hassan', email: 'fatima.h@company.ng', role: 'User', status: 'Active', lastActive: '3 hr ago' },
-  { id: 5, name: 'Olumide Johnson', email: 'olu.j@business.com', role: 'User', status: 'Suspended', lastActive: '2 days ago' },
-  { id: 6, name: 'Ngozi Marcus', email: 'ngozi.m@email.com', role: 'Tax Pro', status: 'Active', lastActive: '5 hr ago' },
-  { id: 7, name: 'Ibrahim Bello', email: 'ibrahim.b@firm.ng', role: 'User', status: 'Active', lastActive: '1 day ago' },
-  { id: 8, name: 'Grace Okonkwo', email: 'grace.o@email.com', role: 'Admin', status: 'Active', lastActive: '30 min ago' },
-  { id: 9, name: 'Kunle Adebisi', email: 'kunle.a@corp.com', role: 'User', status: 'Active', lastActive: '4 hr ago' },
-  { id: 10, name: 'Amina Yusuf', email: 'amina.y@email.com', role: 'Tax Pro', status: 'Suspended', lastActive: '1 week ago' },
+// F-17b — board rows seeded from the 4 demo role accounts (Track A).
+const ROLE_LABEL: Record<string, string> = {
+  consumer: 'User',
+  tax_pro: 'Tax Pro',
+  admin: 'Admin',
+  author: 'Author',
+};
+
+type BoardUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  tier: string;
+  status: 'Active' | 'Suspended';
+  lastActive: string;
+};
+
+const SEED_USERS: BoardUser[] = [
+  { id: 'u-consumer', name: 'Emeka Okafor', email: 'demo@creditax.ai', role: 'User', tier: 'free', status: 'Active', lastActive: '2 min ago' },
+  { id: 'u-pro', name: 'Ayo Ogundimu', email: 'pro@creditax.ai', role: 'Tax Pro', tier: 'professional', status: 'Active', lastActive: '15 min ago' },
+  { id: 'u-admin', name: 'Super Admin', email: 'admin@creditax.ai', role: 'Admin', tier: 'enterprise', status: 'Active', lastActive: '1 hr ago' },
+  { id: 'u-author', name: 'Nneka Eze', email: 'author@creditax.ai', role: 'Author', tier: 'free', status: 'Active', lastActive: '3 hr ago' },
 ];
 
 const roleBadgeVariant: Record<string, 'error' | 'warning' | 'brand' | 'info'> = {
   'Super Admin': 'error',
-  'Admin': 'warning',
+  Admin: 'warning',
   'Tax Pro': 'brand',
-  'User': 'info',
+  User: 'info',
+  Author: 'info',
 };
 
+function roleLabel(role: string): string {
+  return ROLE_LABEL[role] ?? role;
+}
+
 interface EditModalProps {
-  user: typeof users[0] | null;
+  user: BoardUser | null;
   onClose: () => void;
-  onSave: (user: typeof users[0]) => void;
+  onSave: (user: BoardUser) => void;
 }
 
 function EditUserModal({ user, onClose, onSave }: EditModalProps) {
@@ -135,13 +152,73 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedUser, setSelectedUser] = useState<typeof users[0] | null>(null);
+  const [selectedUser, setSelectedUser] = useState<BoardUser | null>(null);
 
-  const filteredUsers = users.filter((user) => {
+  // F-17b — board is wired to data: load from /api/v1/admin/users (falls back to
+  // the seed when offline), then apply local status/invite overrides live.
+  const [board, setBoard] = useState<BoardUser[]>(SEED_USERS);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, 'Active' | 'Suspended'>>({});
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/v1/admin/users')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.users?.length) {
+          const rows: BoardUser[] = d.users.map(
+            (u: { id: string; name: string; email: string; role: string; tier?: string; status?: 'active' | 'suspended'; lastActive?: string }) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: roleLabel(u.role),
+              tier: u.tier ?? 'free',
+              status: u.status === 'suspended' ? 'Suspended' : 'Active',
+              lastActive: u.lastActive ?? 'just now',
+            })
+          );
+          setBoard(rows);
+        }
+        setLive(true);
+      })
+      .catch(() => setLive(true));
+  }, []);
+
+  function toggleStatus(user: BoardUser) {
+    const next: 'Active' | 'Suspended' = statusOverrides[user.id] === 'Suspended' ? 'Active' : 'Suspended';
+    setStatusOverrides((prev) => ({ ...prev, [user.id]: next }));
+    fetch(`/api/v1/admin/users/${user.id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next === 'Active' ? 'active' : 'suspended' }),
+    }).catch(() => {});
+  }
+
+  function invite(email: string, role?: string) {
+    const row: BoardUser = {
+      id: `invite-${Date.now().toString(36)}`,
+      name: email.split('@')[0],
+      email,
+      role: role ? roleLabel(role) : 'User',
+      tier: 'free',
+      status: 'Active',
+      lastActive: 'invited just now',
+    };
+    setBoard((prev) => [...prev, row]);
+    fetch('/api/v1/admin/users/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role }),
+    }).catch(() => {});
+  }
+
+  // Effective status = live override (or seed) so icon actions reflect instantly.
+  const effStatus = (u: BoardUser): 'Active' | 'Suspended' => statusOverrides[u.id] ?? u.status;
+
+  const filteredUsers = board.filter((user) => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'All' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'All' || user.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || effStatus(user) === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -193,10 +270,10 @@ export default function AdminUsersPage() {
           className="h-10 px-4 rounded-input bg-surface-base border border-border-strong text-text-primary text-sm"
         >
           <option>All</option>
-          <option>Super Admin</option>
           <option>Admin</option>
           <option>Tax Pro</option>
           <option>User</option>
+          <option>Author</option>
         </select>
         <select
           value={statusFilter}
@@ -212,11 +289,16 @@ export default function AdminUsersPage() {
             <Download size={15} />
             Export
           </Button>
-          <Button variant="primary" size="md">
+          <Button variant="primary" size="md" onClick={() => invite('new-member@creditax.ai', 'consumer')}>
             <UserPlus size={15} />
             Add User
           </Button>
         </div>
+        {live && (
+          <Badge variant="info" className="text-[11px]">
+            {board.length} users · wired to data
+          </Badge>
+        )}
       </motion.div>
 
       {/* Users Table */}
@@ -247,7 +329,7 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={`/images/avatars/avatar-${String((user.id % 10) + 1).padStart(2, '0')}.png`}
+                          src={`/images/avatars/avatar-${String(((board.indexOf(user) % 10) + 1)).padStart(2, '0')}.png`}
                           alt=""
                           width={32}
                           height={32}
@@ -263,12 +345,12 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${
-                          user.status === 'Active' ? 'bg-success' : 'bg-warning'
+                          effStatus(user) === 'Active' ? 'bg-success' : 'bg-warning'
                         }`} />
                         <span className={`text-sm ${
-                          user.status === 'Active' ? 'text-text-primary' : 'text-warning-text'
+                          effStatus(user) === 'Active' ? 'text-text-primary' : 'text-warning-text'
                         }`}>
-                          {user.status}
+                          {effStatus(user)}
                         </span>
                       </div>
                     </td>
@@ -284,8 +366,9 @@ export default function AdminUsersPage() {
                           <Pencil size={15} />
                         </button>
                         <button
-                          aria-label={`Suspend ${user.name}`}
-                          title="Suspend"
+                          onClick={() => toggleStatus(user)}
+                          aria-label={`${effStatus(user) === 'Active' ? 'Suspend' : 'Activate'} ${user.name}`}
+                          title={effStatus(user) === 'Active' ? 'Suspend' : 'Activate'}
                           className="p-1.5 rounded-btn text-text-muted hover:text-warning-text hover:bg-hover-overlay transition-colors cursor-pointer"
                         >
                           <Ban size={15} />
