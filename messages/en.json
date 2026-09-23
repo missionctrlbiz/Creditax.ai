@@ -104,7 +104,9 @@
   "typing": "Thinking...",
   "share": "Share",
   "newChat": "New chat",
-  "clear": "Clear"
+  "clear": "Clear",
+  "demoAnswer": "demo answer",
+  "thinkingHint": "Thinking…"
  },
  "footer": {
   "tagline": "Tax Smart. Borrow Smart.",

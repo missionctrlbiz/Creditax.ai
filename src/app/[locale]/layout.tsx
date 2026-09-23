@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { MotionConfig } from "framer-motion";
 import { ThemedToaster } from "@/components/shared/ThemedToaster";
@@ -11,22 +11,25 @@ import { routing } from "@/i18n/routing";
 import { LocalePreferenceSync } from "@/components/shared/LocalePreferenceSync";
 import "../globals.css";
 
-const syne = Syne({
+// Vendored latin variable woff2 (from the cached dev build) so `next build`
+// stays hermetic — no Google Fonts network fetch. One variable file covers
+// all weights for each family.
+const syne = localFont({
   variable: "--font-syne",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  src: "../../../assets/fonts/syne-latin.woff2",
+  display: "swap",
 });
 
-const inter = Inter({
+const inter = localFont({
   variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  src: "../../../assets/fonts/inter-latin.woff2",
+  display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  src: "../../../assets/fonts/jetbrains-mono-latin.woff2",
+  display: "swap",
 });
 
 export function generateStaticParams() {

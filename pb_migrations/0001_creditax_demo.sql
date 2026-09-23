@@ -168,6 +168,17 @@ CREATE TABLE IF NOT EXISTS invites (
   accepted_at DATETIME
 );
 
+-- ===== webhooks (async chat delivery — P1 stub; Track B worker consumes) ==
+CREATE TABLE IF NOT EXISTS webhooks (
+  id TEXT PRIMARY KEY,
+  url TEXT NOT NULL,
+  user_id TEXT,
+  events TEXT,
+  active INTEGER DEFAULT 1,
+  demo_seed INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ===== connectors (external AI connector links) ===========================
 CREATE TABLE IF NOT EXISTS connectors (
   id TEXT PRIMARY KEY,

@@ -17,6 +17,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CountUp } from '@/components/ui/CountUp';
+import { QuickCalculator } from '@/components/marketing/QuickCalculator';
 
 /** Semi-circular gauge with animated draw + count-up figure. */
 function Gauge({
@@ -238,6 +239,11 @@ export default function DashboardPage() {
           ))}
         </div>
       </Card>
+
+      {/* P2 — Quick tax calculator (F-06 / demo scope 5) */}
+      <div className="mb-6">
+        <QuickCalculator />
+      </div>
 
       {/* Activity Card */}
       <Card className="p-6 md:p-7">

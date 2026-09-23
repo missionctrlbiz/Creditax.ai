@@ -2,7 +2,7 @@
 
 import { useState, useRef, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -34,6 +34,8 @@ interface CanvasCard {
   content: string;
   sources?: string[];
   added?: boolean;
+  /** How the answer was produced (P2 Track A honesty): live RAG vs offline fallback. */
+  demoSeed?: boolean;
 }
 
 interface LibraryDoc {
@@ -119,6 +121,8 @@ export default function ChatCanvasPage() {
   ]);
   const [draft, setDraft] = useState('');
   const [libraryOpen, setLibraryOpen] = useState(true);
+  const [thinking, setThinking] = useState(false);
+  const locale = useLocale();
   const threadRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(0);
   const nextId = () => `c${++idRef.current}`;
@@ -129,15 +133,50 @@ export default function ChatCanvasPage() {
     });
   }
 
-  function ask(text: string, opts: { referral?: boolean } = {}) {
+  /**
+   * P2: ask the grounded agent. Tries the live RAG endpoint first
+   * (`/api/v1/chat`); if it is unreachable (offline demo), it falls back to
+   * the CANNED set so the flow still completes. The answer card records how
+   * it was produced (demoSeed) for the Track A honesty label.
+   */
+  async function ask(text: string, opts: { referral?: boolean } = {}) {
     const lower = text.toLowerCase();
     const hit = CANNED.find((c) => c.match.some((m) => lower.includes(m)));
-    const reply = hit ? hit : { reply: FALLBACK, sources: FALLBACK_SOURCES, referral: true };
+    const canned: { reply: string; sources: string[]; referral?: boolean } = hit
+      ? hit
+      : { reply: FALLBACK, sources: FALLBACK_SOURCES, referral: true };
+
+    let reply = canned;
+    let demoSeed = true;
+
+    try {
+      const res = await fetch('/api/v1/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: text, locale }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          answer?: string;
+          citations?: string[];
+          confidence?: number;
+          demo_seed?: boolean;
+        };
+        if (data.answer) {
+          reply = { reply: data.answer, sources: data.citations ?? [] };
+          demoSeed = !!data.demo_seed;
+        }
+      }
+    } catch {
+      // Network down — keep the canned fallback so the demo never dead-ends.
+    }
+
     const answer: CanvasCard = {
       id: nextId(),
       kind: 'answer',
       content: reply.reply,
       sources: reply.sources,
+      demoSeed,
     };
     setCards((prev) => [
       ...prev,
@@ -151,18 +190,22 @@ export default function ChatCanvasPage() {
         : []),
     ]);
     setDraft('');
+    setThinking(false);
     scrollThread();
   }
 
   function send(e: FormEvent) {
     e.preventDefault();
     const text = draft.trim();
-    if (!text) return;
-    ask(text);
+    if (!text || thinking) return;
+    setThinking(true);
+    void ask(text);
   }
 
   function attach(doc: LibraryDoc) {
-    ask(`Use ${doc.name} for this calculation.`, { referral: true });
+    if (thinking) return;
+    setThinking(true);
+    void ask(`Use ${doc.name} for this calculation.`, { referral: true });
   }
 
   return (
@@ -410,12 +453,38 @@ export default function ChatCanvasPage() {
                               {s}
                             </span>
                           ))}
+                          {card.demoSeed && (
+                            <span
+                              className="px-2 py-0.5 rounded-badge bg-surface-inset border border-border-subtle text-text-muted text-[10px] font-medium"
+                              title="Answered from the offline demo knowledge base (no live LLM)"
+                            >
+                              {t('demoAnswer')}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
                   </motion.div>
                 );
               })}
+
+              {thinking && (
+                <div className="self-start flex items-start gap-2.5" aria-live="polite">
+                  <span className="w-7 h-7 rounded-full bg-brand-primary text-text-inverse grid place-items-center shrink-0">
+                    <Bot size={13} />
+                  </span>
+                  <div className="rounded-2xl rounded-bl-md bg-surface-overlay border border-border-default px-4 py-3">
+                    <span className="text-sm text-text-muted flex items-center gap-2">
+                      <span className="inline-flex gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
+                      </span>
+                      {t('thinkingHint')}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Composer — always reachable, docked beneath the canvas */}
