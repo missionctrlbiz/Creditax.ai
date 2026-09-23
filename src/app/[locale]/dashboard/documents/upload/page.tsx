@@ -131,17 +131,42 @@ export default function DocumentUploadPage() {
     // Simulate extraction per queued file
     newDocs.forEach((doc) => {
       let progress = 10;
+      // P3: ask the live extractor for the real fields; fall back to the
+      // simulated values so the click-through still completes offline.
+      const settle = (amountLabel: string, category: string, status: DocumentFile['status'], warning?: string) => {
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === doc.id
+              ? { ...d, status, progress: undefined, progressLabel: undefined, amount: amountLabel, category, warning }
+              : d
+          )
+        );
+      };
+      fetch('/api/v1/documents/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: doc.name, userId: 'demo' }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && typeof data.amount === 'number') {
+            const label = `₦${data.amount.toLocaleString('en-NG')}`;
+            settle(
+              data.status === 'needs-review' ? `${label} (unconfirmed)` : label,
+              data.category ?? 'Operations',
+              data.status === 'needs-review' ? 'needs-review' : 'extracted',
+              data.warning
+            );
+            return;
+          }
+          settle('₦125,000', 'Operations', 'extracted'); // offline fallback
+        })
+        .catch(() => settle('₦125,000', 'Operations', 'extracted'));
+
       const interval = setInterval(() => {
         progress += 15;
         if (progress >= 100) {
           clearInterval(interval);
-          setDocuments((prev) =>
-            prev.map((d) =>
-              d.id === doc.id
-                ? { ...d, status: 'extracted', progress: undefined, progressLabel: undefined, amount: '₦125,000', category: 'Operations' }
-                : d
-            )
-          );
         } else {
           setDocuments((prev) =>
             prev.map((d) =>

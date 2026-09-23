@@ -190,6 +190,21 @@ CREATE TABLE IF NOT EXISTS connectors (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ===== documents (processed receipts/invoices/tax forms — doc-processing) =
+CREATE TABLE IF NOT EXISTS documents (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'needs-review',  -- extracted | needs-review | processing
+  amount REAL DEFAULT 0,
+  category TEXT,
+  period TEXT,
+  group TEXT,
+  confidence REAL DEFAULT 0,
+  demo_seed INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ===== reports ============================================================
 CREATE TABLE IF NOT EXISTS reports (
   id TEXT PRIMARY KEY,
@@ -200,7 +215,7 @@ CREATE TABLE IF NOT EXISTS reports (
   size TEXT,
   file_path TEXT,             -- PB file reference
   download_url TEXT,
-  demo_seed INTEGER DEFAULT 0,
+  demo_seed INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
