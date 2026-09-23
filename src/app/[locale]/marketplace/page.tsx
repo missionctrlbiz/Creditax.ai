@@ -210,7 +210,35 @@ export default function MarketplacePage() {
     });
   };
 
-  const showMapToast = () => {
+  // marketplace P5: ask the live geo-search endpoint (Lagos Island origin) for
+  // the nearest verified pro; fall back to the demo toast when offline.
+  const showMapToast = async () => {
+    try {
+      const res = await fetch('/api/v1/marketplace/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verifiedOnly: true,
+          lat: 6.4281,
+          lng: 3.4214, // Victoria Island
+          radiusKm: 25,
+          topK: 1,
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const top = d.results?.[0];
+        if (top) {
+          toast('Near you', {
+            description: `Nearest verified pro: ${top.name}${top.distanceKm ? ` · ${top.distanceKm.toFixed(1)} km (${top.location.city})` : ''}.`,
+            icon: <Locate className="w-4 h-4 text-brand-action" />,
+          });
+          return;
+        }
+      }
+    } catch {
+      /* offline — fall through to the demo toast */
+    }
     toast(MAP_TOAST_TITLE, {
       description: MAP_TOAST_BODY,
       icon: <Locate className="w-4 h-4 text-brand-action" />,

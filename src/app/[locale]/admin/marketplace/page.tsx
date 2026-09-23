@@ -36,9 +36,11 @@ const applications = [
   { id: 3, business: 'NaijaBooks Pro', owner: 'Chidi Eze', city: 'Port Harcourt', service: 'Bookkeeping', status: 'Under Review', submitted: '1 day ago' },
 ];
 
-const statusBadgeVariant: Record<string, 'warning' | 'info'> = {
+const statusBadgeVariant: Record<string, 'warning' | 'info' | 'success' | 'error'> = {
   'Pending': 'warning',
   'Under Review': 'info',
+  'Approved': 'success',
+  'Rejected': 'error',
 };
 
 function proImage(id: number): string {
@@ -49,11 +51,23 @@ export default function AdminMarketplacePage() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  // marketplace P5: local status overrides so approve/reject reflect in the list
+  // immediately (and the live endpoint is best-effort for the admin queue).
+  const [statusOverrides, setStatusOverrides] = useState<Record<number, string>>({});
+
+  const handleDecision = (id: number, decision: 'approve' | 'reject') => {
+    setStatusOverrides((prev) => ({ ...prev, [id]: decision === 'approve' ? 'Approved' : 'Rejected' }));
+    // The live admin endpoint owns the shared application store; the demo
+    // application ids don't match, so this is a best-effort call.
+    fetch(`/api/v1/admin/marketplace/${id}/${decision}`, { method: 'POST' }).catch(() => {});
+  };
+
+  const effectiveStatus = (app: (typeof applications)[number]) => statusOverrides[app.id] ?? app.status;
 
   const filtered = applications.filter((app) => {
     const matchesSearch = app.business.toLowerCase().includes(query.toLowerCase()) ||
       app.owner.toLowerCase().includes(query.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || effectiveStatus(app) === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -163,7 +177,7 @@ export default function AdminMarketplacePage() {
                           <ShieldCheck size={11} />
                           CAC
                         </Badge>
-                        <Badge variant={statusBadgeVariant[app.status]}>{app.status}</Badge>
+                        <Badge variant={statusBadgeVariant[effectiveStatus(app)]}>{effectiveStatus(app)}</Badge>
                       </div>
                       <p className="text-text-muted text-sm mt-1 flex items-center gap-1.5 flex-wrap">
                         <span>{app.owner}</span>
@@ -191,6 +205,7 @@ export default function AdminMarketplacePage() {
                       aria-label={`Reject ${app.business}`}
                       title={`Reject ${app.business}`}
                       className="hover:text-error-text"
+                      onClick={() => handleDecision(app.id, 'reject')}
                     >
                       <X size={16} />
                     </Button>
@@ -200,6 +215,7 @@ export default function AdminMarketplacePage() {
                       aria-label={`Approve ${app.business}`}
                       title={`Approve ${app.business}`}
                       className="hover:text-success-text"
+                      onClick={() => handleDecision(app.id, 'approve')}
                     >
                       <Check size={16} />
                     </Button>

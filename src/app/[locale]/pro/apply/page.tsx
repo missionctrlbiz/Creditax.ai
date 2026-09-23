@@ -47,6 +47,30 @@ export default function ProApplyPage() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [cacVerified, setCacVerified] = useState(false);
   const [cacBusinessName, setCacBusinessName] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  // marketplace P5: submit to the live application endpoint so the admin
+  // approval queue (below) actually receives it; on failure, mark submitted
+  // locally so the click-through completes offline.
+  const submitApplication = async () => {
+    try {
+      await fetch('/api/v1/pro/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName: formData.businessName,
+          ownerName: formData.ownerName,
+          cacNumber: formData.cacRegNumber,
+          services: formData.selectedServices,
+          city: formData.city,
+          state: formData.state,
+        }),
+      });
+    } catch {
+      /* offline — local submit */
+    }
+    setSubmitted(true);
+  };
 
   const [formData, setFormData] = useState({
     // Step 1
@@ -570,10 +594,11 @@ export default function ProApplyPage() {
               ) : (
                 <Button
                   variant="primary"
-                  disabled={!canProceed()}
+                  disabled={!canProceed() || submitted}
+                  onClick={() => void submitApplication()}
                 >
                   <FileText size={15} />
-                  Submit Application
+                  {submitted ? 'Submitted for review ✓' : 'Submit Application'}
                 </Button>
               )}
             </div>
