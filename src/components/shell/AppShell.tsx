@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
-  Bell,
   Calculator,
   CreditCard,
   FileText,
@@ -38,6 +37,7 @@ import {
 import { AppLogo } from '@/components/shared/AppLogo';
 import { AccountMenu } from '@/components/shared/AccountMenu';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import { getSession, type PortalRole } from '@/lib/mock-auth';
 import { useTheme } from '@/providers/ThemeProvider';
 import { cn } from '@/lib/utils';
@@ -353,14 +353,8 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
-          <button
-            type="button"
-            aria-label={t('shell.notifications')}
-            className="relative p-2 rounded-btn text-text-secondary hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
-          >
-            <Bell size={17} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-action border border-surface-raised" />
-          </button>
+          {/* P3 F-08 — live notification bell (feed + filing-deadline countdowns) */}
+          <NotificationBell />
 
           <div className="flex items-center gap-2.5 pl-1 border-l border-border-subtle ml-1">
             <div className="hidden sm:flex flex-col items-end leading-tight mr-0.5">

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p3-docs-skills",
+  "current_phase": "p4-money",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -205,12 +205,12 @@
     },
     {
       "id": "p3-docs-skills",
-      "status": "todo",
+      "status": "reviewed_pass",
       "attempts": 0,
       "items": {
-        "deadline-notifications": "todo",
-        "pro-referral-card": "todo",
-        "skills-v1-chips": "todo"
+        "deadline-notifications": "done",
+        "pro-referral-card": "done",
+        "skills-v1-chips": "done"
       },
       "exit_criteria": [
         "F-08 filing-deadline alerts + doc-processed events into the bell (F-08)",
@@ -218,11 +218,23 @@
         "F-20 four Skill chips (WHT recovery, TCC readiness, notice explainer, invoice WHT check) each as a canvas result card with fixed I/O, credit cost, tier gate (F-20)",
         "npm run lint passes; demo_seed honesty maintained"
       ],
-      "last_updated": "2026-09-23T17:35:00+01:00"
+      "last_updated": "2026-09-23T18:12:00+01:00",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T18:12:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox; re-run in full-access)"
+        },
+        "honesty_check": "pass (demo_seed type-enforced on all Skill/Referral/Notification shapes; no fake OCR/live data)",
+        "note": "Reviewer-flagged fix applied: referral now reveals contact for Plus tier (pricing-and-access §2). 4 skill chips + live bell + referral card wired into chat canvas."
+      }
     },
     {
       "id": "p4-money",
-      "status": "todo",
+      "status": "in_progress",
       "attempts": 0,
       "items": {
         "quota-engine": "todo",

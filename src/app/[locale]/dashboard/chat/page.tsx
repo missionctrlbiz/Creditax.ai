@@ -27,15 +27,28 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { SKILLS, runSkill as runSkillLocal, type SkillMeta, type SkillResult } from '@/ai/skills';
+import { buildReferralCard, type ReferralCard } from '@/ai/referral';
+import { fmtNaira } from '@/ai/tax-rules';
+import type {
+  WhtRecoveryResult,
+  TccResult,
+  NoticeExplainerResult,
+  InvoiceWhtResult,
+} from '@/ai/skills';
 
 interface CanvasCard {
   id: string;
-  kind: 'user' | 'answer' | 'filing' | 'referral';
+  kind: 'user' | 'answer' | 'filing' | 'referral' | 'skill';
   content: string;
   sources?: string[];
   added?: boolean;
   /** How the answer was produced (P2 Track A honesty): live RAG vs offline fallback. */
   demoSeed?: boolean;
+  /** P3 F-20: skill chip → canvas result card payload. */
+  skill?: SkillResult;
+  /** P3 F-09: live verified-pro referral (masked → revealed by tier). */
+  referral?: ReferralCard;
 }
 
 interface LibraryDoc {
@@ -108,6 +121,141 @@ const FALLBACK_SOURCES = ['Demo set'];
 
 const FILING_STEPS = ['Review figures', 'Attach documents', 'Add to 2025 filing'];
 
+/** P3 F-20 — render a Skill's fixed I/O contract as a pinned canvas card. */
+function SkillCard({ card }: { card: CanvasCard }) {
+  const s = card.skill;
+  if (!s) {
+    return (
+      <motion.div
+        key={card.id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="self-start w-full max-w-[440px] rounded-card border border-border-default bg-surface-overlay p-4"
+      >
+        <p className="text-sm font-semibold text-text-primary">{card.content}</p>
+        <p className="text-[11px] text-text-muted mt-1">This Skill needs more input — try the chat above.</p>
+      </motion.div>
+    );
+  }
+  return (
+    <motion.div
+      key={card.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="self-start w-full max-w-[460px] rounded-card border border-brand-primary-border bg-brand-primary-bg/40 p-4"
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary mb-2">
+        {card.content}
+      </p>
+      {renderSkillBody(s)}
+      {s.demo_seed && (
+        <p className="text-[10px] text-text-muted mt-2">demo_seed · output is illustrative, not live data</p>
+      )}
+    </motion.div>
+  );
+}
+
+/** Branch the skill body by its concrete result type. */
+function renderSkillBody(s: SkillResult) {
+  if (s.skill === 'wht-recovery') {
+    const r = s as WhtRecoveryResult;
+    return (
+      <div>
+        <div className="flex items-baseline justify-between">
+          <p className="text-2xl font-bold text-text-primary">{fmtNaira(r.totalUnclaimed)}</p>
+          <span className="text-[11px] text-text-muted">unclaimed · {r.unclaimedPeriod}</span>
+        </div>
+        <p className="text-[12px] text-text-secondary mt-1">{r.vendor}</p>
+        <ul className="mt-2 space-y-1">
+          {r.items.map((it) => (
+            <li key={it.period} className="flex items-center justify-between text-[12px] text-text-secondary">
+              <span>{it.period} · {it.client}</span>
+              <span className="font-medium text-text-primary">
+                {fmtNaira(it.amount)} · {it.status.replace(/_/g, ' ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[12px] text-text-secondary mt-2">{r.nextAction}</p>
+      </div>
+    );
+  }
+  if (s.skill === 'tcc-readiness') {
+    const r = s as TccResult;
+    return (
+      <div>
+        <div className="flex items-baseline gap-2">
+          <p className="text-2xl font-bold text-text-primary">{r.readiness}%</p>
+          <span className="text-[11px] text-text-muted">ready</span>
+        </div>
+        <p className="text-[12px] text-text-secondary mt-1">{r.purpose}</p>
+        <div className="mt-2 h-2 rounded-full bg-surface-inset overflow-hidden">
+          <div className="h-full rounded-full bg-brand-action" style={{ width: `${r.readiness}%` }} />
+        </div>
+        {r.missingDocs.length > 0 && (
+          <ul className="mt-2 space-y-0.5">
+            {r.missingDocs.map((d) => (
+              <li key={d} className="text-[12px] text-text-secondary">
+                <span className="text-brand-action mr-1">•</span> {d}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-[12px] text-text-secondary mt-2">{r.deadline}</p>
+      </div>
+    );
+  }
+  if (s.skill === 'notice-explainer') {
+    const r = s as NoticeExplainerResult;
+    return (
+      <div>
+        <p className="text-[12px] text-text-secondary leading-relaxed">{r.plainLanguage}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[12px] font-medium text-brand-primary">
+            Due {r.deadline} · {r.daysLeft}d left
+          </span>
+        </div>
+        <ul className="mt-1.5 space-y-0.5">
+          {r.actions.map((a) => (
+            <li key={a} className="text-[12px] text-text-secondary">
+              <span className="text-brand-action mr-1">→</span> {a}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+  if (s.skill === 'invoice-wht-check') {
+    const r = s as InvoiceWhtResult;
+    return (
+      <div>
+        <div className="grid grid-cols-2 gap-2 text-[12px]">
+          <div>
+            <p className="text-text-muted">Gross</p>
+            <p className="font-medium text-text-primary">{fmtNaira(r.gross)}</p>
+          </div>
+          <div>
+            <p className="text-text-muted">Withheld</p>
+            <p className="font-medium text-text-primary">
+              {fmtNaira(r.witheld)} ({Math.round(r.rate * 100)}%)
+            </p>
+          </div>
+          <div>
+            <p className="text-text-muted">Net to vendor</p>
+            <p className="font-medium text-text-primary">{fmtNaira(r.netToVendor)}</p>
+          </div>
+          <div>
+            <p className="text-text-muted">Code</p>
+            <p className="font-medium text-brand-primary">{r.whtCode}</p>
+          </div>
+        </div>
+        <p className="text-[12px] text-text-secondary mt-2">{r.verdict}</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function ChatCanvasPage() {
   const t = useTranslations('chat');
   const td = useTranslations('dashboard');
@@ -148,6 +296,7 @@ export default function ChatCanvasPage() {
 
     let reply = canned;
     let demoSeed = true;
+    let liveConfidence: number | undefined;
 
     try {
       const res = await fetch('/api/v1/chat', {
@@ -165,6 +314,7 @@ export default function ChatCanvasPage() {
         if (data.answer) {
           reply = { reply: data.answer, sources: data.citations ?? [] };
           demoSeed = !!data.demo_seed;
+          liveConfidence = data.confidence;
         }
       }
     } catch {
@@ -178,18 +328,80 @@ export default function ChatCanvasPage() {
       sources: reply.sources,
       demoSeed,
     };
+
+    // P3 F-09 — live verified-pro referral. Explicit intent (opts/canned) or a
+    // detected high-stakes / low-confidence question surfaces a verified pro.
+    const explicit = opts.referral || reply.referral;
+    const detected = !explicit && buildReferralCard({ text, confidence: liveConfidence, tier: 'free' }) !== null;
+    const liveReferral = explicit || detected ? buildReferralCard({ text, confidence: liveConfidence, tier: 'free' }) : null;
+
     setCards((prev) => [
       ...prev,
       { id: nextId(), kind: 'user', content: text },
       answer,
       // Filing settings & actions surface as a canvas card (roles-and-experience.md §3.2.4)
       { id: nextId(), kind: 'filing', content: JSON.stringify(FILING_STEPS) },
-      // Referral trigger (§3.2.5) — low-confidence or explicit asks
-      ...(opts.referral || reply.referral
-        ? [{ id: nextId(), kind: 'referral' as const, content: 'Adaeze Consulting Ltd' }]
-        : []),
+      // Referral trigger (§3.2.5) — live card (masked for free tier) or static fallback
+      ...(liveReferral
+        ? [{ id: nextId(), kind: 'referral' as const, content: liveReferral.pro.name, referral: liveReferral }]
+        : explicit
+          ? [{ id: nextId(), kind: 'referral' as const, content: 'Adaeze Consulting Ltd' }]
+          : []),
     ]);
     setDraft('');
+    setThinking(false);
+    scrollThread();
+  }
+
+  /**
+   * P3 F-20 — run a Skill chip. Tries the live API first (so the P4 quota engine
+   * can meter it later); falls back to the deterministic local module when the
+   * network is down so the demo never dead-ends. Pushes a `skill` result card.
+   */
+  async function runSkillChip(skill: SkillMeta, input: { amount?: number; paymentType?: string; vendor?: string; purpose?: string; notice?: string }) {
+    if (thinking) return;
+    setThinking(true);
+    let result: SkillResult | null = null;
+    let upgradedTo: string | undefined;
+    let blockedReason: string | undefined;
+    try {
+      const res = await fetch(`/api/v1/skills/${skill.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'free', ...input }),
+      });
+      const data = await res.json();
+      if (res.ok) result = data.result as SkillResult;
+      else {
+        upgradedTo = data.upgrade_to;
+        blockedReason = data.error;
+      }
+    } catch {
+      // Offline — deterministic local run (same contract, demo_seed).
+      const local = runSkillLocal(skill.id, input, 'free');
+      if (local.ok) result = local.result;
+      else blockedReason = local.reason;
+    }
+
+    const userText =
+      skill.id === 'invoice-wht-check'
+        ? `Check WHT on a ${input.paymentType ?? 'payment'} of ${input.amount ?? 0}`
+        : skill.oneLiner;
+
+    const newCards: CanvasCard[] = [{ id: nextId(), kind: 'user', content: userText }];
+    if (result) {
+      newCards.push({ id: nextId(), kind: 'skill', content: skill.label, skill: result, demoSeed: true });
+    } else if (upgradedTo) {
+      newCards.push({
+        id: nextId(),
+        kind: 'skill',
+        content: `${skill.label} — upgrade required`,
+        demoSeed: true,
+      });
+    } else if (blockedReason) {
+      newCards.push({ id: nextId(), kind: 'skill', content: `${skill.label} — ${blockedReason}`, demoSeed: true });
+    }
+    setCards((prev) => [...prev, ...newCards]);
     setThinking(false);
     scrollThread();
   }
@@ -356,6 +568,7 @@ export default function ChatCanvasPage() {
                   );
                 }
                 if (card.kind === 'referral') {
+                  const live = card.referral;
                   return (
                     <motion.div
                       key={card.id}
@@ -368,6 +581,11 @@ export default function ChatCanvasPage() {
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                           Verified pro
                         </p>
+                        {live && (
+                          <span className="ml-auto text-[10px] text-text-muted">
+                            {live.contact.masked ? 'masked' : 'full contact'} · {live.contact.reason}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 mb-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -378,26 +596,49 @@ export default function ChatCanvasPage() {
                           height={36}
                           className="w-9 h-9 rounded-full object-cover border border-border-subtle"
                         />
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-text-primary truncate">{card.content}</p>
-                          <p className="text-[11px] text-text-muted">Lagos Island · 4.9 ★ (127)</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-text-primary truncate">
+                            {live ? live.pro.name : card.content}
+                          </p>
+                          <p className="text-[11px] text-text-muted">
+                            {live ? `${live.pro.city}, ${live.pro.state}` : 'Lagos Island'} ·{' '}
+                            {live ? `${live.pro.rating} ★ (${live.pro.reviewCount})` : '4.9 ★ (127)'}
+                          </p>
                         </div>
-                        <Link href="/marketplace/adaeze-consulting" className="ml-auto shrink-0">
+                        <Link
+                          href={live ? `/marketplace/${live.pro.slug}` : '/marketplace/adaeze-consulting'}
+                          className="ml-auto shrink-0"
+                        >
                           <Badge variant="brand">View</Badge>
                         </Link>
                       </div>
-                      {/* Contact actions — demo affordances */}
-                      <div className="flex gap-2">
-                        <Button variant="secondary" size="sm" aria-label="Call pro (demo)">
-                          <Phone size={13} />
-                        </Button>
-                        <Button variant="secondary" size="sm" aria-label="Message pro (demo)">
-                          <MessageCircle size={13} />
-                        </Button>
+                      {/* Contact actions — masked for free tier, revealed for paid/login (F-09) */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {live && live.contact.masked ? (
+                          <span className="text-[11px] text-text-muted">
+                            Phone <span className="text-text-primary font-medium">+234••• •••0••</span>
+                            <span className="ml-2">
+                              — full contact on Plus (₦5,000/mo) or when logged in
+                            </span>
+                          </span>
+                        ) : (
+                          <>
+                            <Button variant="secondary" size="sm" aria-label="Call pro (demo)">
+                              <Phone size={13} /> {live?.contact.phone ?? '+2348011000001'}
+                            </Button>
+                            <Button variant="secondary" size="sm" aria-label="Message pro (demo)">
+                              <MessageCircle size={13} /> {live?.contact.whatsapp ?? 'WhatsApp'}
+                            </Button>
+                          </>
+                        )}
                         <span className="text-[10px] text-text-muted self-center">{t('demoNote')}</span>
                       </div>
                     </motion.div>
                   );
+                }
+                // P3 F-20 — Skill result card (canvas pinned output)
+                if (card.kind === 'skill') {
+                  return <SkillCard key={card.id} card={card} />;
                 }
                 // answer card — rich markdown
                 return (
@@ -489,23 +730,31 @@ export default function ChatCanvasPage() {
 
             {/* Composer — always reachable, docked beneath the canvas */}
             <form onSubmit={send} className="mt-4 pt-4 border-t border-border-subtle">
+              {/* P3 F-20 — Skills v1 chip rail (replaces the 4 static quick-asks).
+                  Tapping a skill runs it immediately with its demo-seed inputs
+                  (feature-specs demo beats); each has a credit cost + tier gate. */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 pr-1">
-                  {t('chipsLabel')}:
+                  {t('skillsLabel')}:
                 </span>
-                {[
-                  { key: 'chipVat', q: 'What is the VAT rate?' },
-                  { key: 'chipPaye', q: 'Explain PAYE reliefs' },
-                  { key: 'chipWht', q: 'What are WHT rates?' },
-                  { key: 'chipTin', q: 'How do I get a TIN?' },
-                ].map((chip) => (
+                {SKILLS.map((skill) => (
                   <button
-                    key={chip.key}
+                    key={skill.id}
                     type="button"
-                    onClick={() => ask(chip.q, { referral: chip.key === 'chipTin' })}
+                    onClick={() =>
+                      void runSkillChip(skill, {
+                        ...(skill.id === 'invoice-wht-check'
+                          ? { amount: 240_000, paymentType: 'Goods / services' }
+                          : skill.id === 'wht-recovery'
+                            ? { vendor: 'Zenith Supplies Ltd' }
+                            : {}),
+                      })
+                    }
+                    title={skill.oneLiner}
                     className="shrink-0 px-3 py-1.5 rounded-full border border-border-subtle bg-surface-raised text-[12px] font-medium text-text-secondary hover:text-text-primary hover:border-brand-primary-border transition-colors cursor-pointer"
                   >
-                    {t(chip.key)}
+                    {skill.label}
+                    <span className="ml-1.5 text-[10px] text-text-muted">· {skill.costCredits}cr</span>
                   </button>
                 ))}
               </div>

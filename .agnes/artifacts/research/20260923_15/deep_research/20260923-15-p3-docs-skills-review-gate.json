@@ -1,0 +1,83 @@
+{
+  "kind": "agnes_artifact",
+  "artifact_type": "research_markdown_report",
+  "research_kind": "deep_research",
+  "mode": "deep_research",
+  "session_id": "20260923_15",
+  "title": "Independent review gate — creditax-ai phase p3-docs-skills",
+  "local_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_15/deep_research/20260923-15-p3-docs-skills-review-gate.md",
+  "manifest_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_15/deep_research/20260923-15-p3-docs-skills-review-gate.json",
+  "repo_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/work/research/20260923_15/deep_research/repo",
+  "preview_uri": "ui://agnes-research/deep_research/20260923-15-p3-docs-skills-review-gate",
+  "sources_count": 11,
+  "evidence_count": 0,
+  "conflicts_count": 0,
+  "blocked_sources_count": 0,
+  "confidence": "medium",
+  "quality_warnings": [
+    "Deep research report has no structured evidence ledger; important claims may be hard to audit.",
+    "Requested confidence is high, but no structured evidence was provided; confidence was reduced.",
+    "9 source(s) are missing URLs in the manifest."
+  ],
+  "created_at": "2026-09-23T17:28:35.614830+00:00",
+  "sources": [
+    {
+      "title": "progress/STATE.json",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/STATE.json",
+      "note": "phase p3-docs-skills items + exit_criteria"
+    },
+    {
+      "title": "progress/RUNBOOK.md",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/RUNBOOK.md",
+      "note": "Track A honesty rules"
+    },
+    {
+      "title": "src/ai/skills.ts",
+      "url": null,
+      "note": "F-20 skill definitions, tier gate, deterministic builders, demo_seed"
+    },
+    {
+      "title": "src/ai/referral.ts",
+      "url": null,
+      "note": "F-09 referral trigger + contact mask/reveal"
+    },
+    {
+      "title": "src/ai/notifications.ts",
+      "url": null,
+      "note": "F-08 bell feed + filing deadlines"
+    },
+    {
+      "title": "src/app/api/v1/notifications/route.ts",
+      "url": null,
+      "note": "GET feed + POST event ingestion"
+    },
+    {
+      "title": "src/app/api/v1/referral/route.ts",
+      "url": null,
+      "note": "POST referral card, tier validation"
+    },
+    {
+      "title": "src/app/api/v1/skills/route.ts + [id]/route.ts",
+      "url": null,
+      "note": "skill list + run, 403/upgrade_to gate"
+    },
+    {
+      "title": "src/app/[locale]/dashboard/chat/page.tsx",
+      "url": null,
+      "note": "chip rail, SkillCard, renderSkillBody, referral card, offline fallback"
+    },
+    {
+      "title": "src/components/shared/NotificationBell.tsx + src/components/shell/AppShell.tsx",
+      "url": null,
+      "note": "bell UI + shell wiring"
+    },
+    {
+      "title": "research/pricing-and-access.md",
+      "url": null,
+      "note": "Marketplace contact-reveal tier table (Plus = Full)"
+    }
+  ],
+  "evidence": [],
+  "conflicts": [],
+  "blocked_sources": []
+}
