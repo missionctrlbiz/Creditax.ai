@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p11-b2b-dev-status",
+  "current_phase": "p12-demo-polish",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -450,20 +450,31 @@
     },
     {
       "id": "p11-b2b-dev-status",
-      "status": "todo",
-      "attempts": 0,
+      "status": "reviewed_pass",
+      "attempts": 1,
       "items": {
-        "status-page-live": "todo",
-        "usage-pricing-consistent": "todo",
-        "dev-quickstart-sandbox": "todo",
-        "api-keys-live": "todo"
+        "status-page-live": "done",
+        "usage-pricing-consistent": "done",
+        "dev-quickstart-sandbox": "done",
+        "api-keys-live": "done"
       },
       "exit_criteria": [
         "/status all-green + pricing/usage consistent (demo scope 10), fetched not hardcoded",
         "developers quickstart/sandbox/reference wired to the api-keys + webhooks stores",
         "pricing ↔ usage ↔ quota page numbers agree; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:45:00+01:00"
+      "last_updated": "2026-09-23T22:19:28.730Z",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T22:23:36.226Z",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "not_gated (p11 exit criteria = tsc+lint)"
+        },
+        "note": "Independent gate verified all 3 exit criteria: (1) /status all-green AND fetched via new /api/v1/status route (5 services operational, all-resolved incidents, demo_seed), page live badge + all-resolved fallback; (2) dev story wired to real stores — /dashboard/keys live, sandbox hydrates test key + rotate endpoint, quickstart live sandbox key, webhooks list+save via /api/v1/webhooks; reference is static docs (allowed); (3) pricing/usage/quota numbers agree (TIER_PLANS ₦0/₦5,000/₦25,000, TIER_CAPS free 5/5/2+60 lifetime, plus 100/50/20+5 BVN)."
+      }
     },
     {
       "id": "p12-demo-polish",

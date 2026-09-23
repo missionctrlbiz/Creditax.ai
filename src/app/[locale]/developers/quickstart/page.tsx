@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Clock, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import type { ApiKeyRecord } from '@/ai/api-keys';
 
 const steps = [
   {
@@ -128,6 +129,28 @@ type Language = 'bash' | 'javascript' | 'python' | 'go';
 export default function QuickstartPage() {
   const [activeLanguage, setActiveLanguage] = useState<Language>('javascript');
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
+  // P11 — the quickstart's "Get API key" step shows the live sandbox key from
+  // the api-keys store (demo_seed), not a hardcoded literal.
+  const [sandboxKey, setSandboxKey] = useState<ApiKeyRecord | null>(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/api-keys')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { keys?: ApiKeyRecord[] } | null) => {
+        if (!active || !d?.keys) return;
+        const test = d.keys.find((k) => k.environment === 'test') ?? d.keys[0];
+        if (test) {
+          setSandboxKey(test);
+          setLive(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const copyToClipboard = (text: string, blockId: string) => {
     navigator.clipboard.writeText(text);
@@ -144,10 +167,32 @@ export default function QuickstartPage() {
     <div className="flex flex-col gap-8">
       {/* Page header */}
       <div>
-        <h1>Quickstart</h1>
+        <div className="flex items-center gap-2">
+          <h1>Quickstart</h1>
+          {live && <Badge variant="success">live · demo_seed</Badge>}
+        </div>
         <p className="mt-2 max-w-2xl text-lg text-text-secondary">
           Make your first Creditax.ai API call in under 5 minutes.
         </p>
+        {sandboxKey && (
+          <div className="mt-3 flex items-center gap-2 rounded-btn border border-border-subtle bg-surface-overlay px-3 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+              Your sandbox key
+            </span>
+            <code className="font-mono text-[13px] text-text-primary">{sandboxKey.key}</code>
+            <button
+              type="button"
+              onClick={() => copyToClipboard(sandboxKey.key, 'quickstart-key')}
+              className="text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label="Copy sandbox key"
+            >
+              <Copy size={14} />
+            </button>
+            {copiedBlock === 'quickstart-key' && (
+              <span className="text-[11px] text-success-text">copied</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">

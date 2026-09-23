@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import type { ApiKeyRecord } from '@/ai/api-keys';
 
 const capabilities = [
   {
@@ -59,9 +60,32 @@ const testIncomes = [
 
 export default function SandboxPage() {
   const [envMode, setEnvMode] = useState<'sandbox' | 'production'>('sandbox');
-  const [apiKey, setApiKey] = useState('sk_sandbox_****************************2b91');
+  // P11 — the sandbox key hydrates from the api-keys store (the test-environment
+  // key), not a hardcoded literal; rotate calls the real rotate endpoint.
+  const [testKey, setTestKey] = useState<ApiKeyRecord | null>(null);
+  const [live, setLive] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/api-keys')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { keys?: ApiKeyRecord[] } | null) => {
+        if (!active || !d?.keys) return;
+        const test = d.keys.find((k) => k.environment === 'test') ?? d.keys[0];
+        if (test) {
+          setTestKey({ ...test, limit: Number(test.limit ?? Infinity) });
+          setLive(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const apiKey = testKey?.key ?? 'sk_test_****************************2b91';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -69,9 +93,15 @@ export default function SandboxPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  /** P11 — rotate the sandbox key through the real api-keys rotate endpoint. */
   const rotateKey = () => {
-    const randomPart = Math.random().toString(36).substring(2, 10);
-    setApiKey(`sk_sandbox_****************************${randomPart.slice(-4)}`);
+    if (!testKey) return;
+    fetch(`/api/v1/api-keys/${testKey.id}/rotate`, { method: 'POST' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { key?: ApiKeyRecord } | null) => {
+        if (d?.key) setTestKey({ ...d.key, limit: Number(d.key.limit ?? Infinity) });
+      })
+      .catch(() => {});
   };
 
   return (
@@ -131,15 +161,24 @@ export default function SandboxPage() {
         </div>
       </Card>
 
-      {/* API key */}
+      {/* API key — P11: hydrated from the api-keys store (test-env key) */}
       <section>
-        <h2 className="mb-4">Your Sandbox API Key</h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2>Your Sandbox API Key</h2>
+          {live && <Badge variant="success">live · demo_seed</Badge>}
+        </div>
         <Card className="p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0 flex-1">
               <code className="block break-all font-mono text-lg text-text-primary">
-                {showKey ? apiKey : 'sk_sandbox_****************************••••'}
+                {showKey ? apiKey : testKey?.key ?? 'sk_test_****************************••••'}
               </code>
+              {testKey && (
+                <p className="mt-1 text-[12px] text-text-muted">
+                  {testKey.name} · {testKey.environment} ·{' '}
+                  {testKey.usage.toLocaleString('en-NG')} / {testKey.limit === Infinity ? 'unlimited' : testKey.limit.toLocaleString('en-NG')} requests
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => copyToClipboard(apiKey)}>
@@ -155,7 +194,7 @@ export default function SandboxPage() {
                   </>
                 )}
               </Button>
-              <Button variant="ghost" size="sm" onClick={rotateKey}>
+              <Button variant="ghost" size="sm" onClick={rotateKey} disabled={!testKey}>
                 <RotateCw size={16} aria-hidden />
                 Rotate
               </Button>

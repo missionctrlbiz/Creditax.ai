@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
@@ -41,31 +41,32 @@ type Service = {
   expandable: boolean;
 };
 
-const services: Service[] = [
+// P11 offline fallback — the live /api/v1/status route (all-green, demo_seed)
+// replaces this on fetch; shapes match the page's Service type.
+const fallbackServices: Service[] = [
   {
     name: 'API Server',
     status: 'operational',
-    uptime: '99.97%',
-    detail: 'Median response 280ms across the tax-calculation endpoint.',
-    history: [100, 100, 99.99, 100, 100, 100, 99.98, 100, 100, 100],
+    uptime: '99.99%',
+    detail: 'Median response 260ms across the tax-calculation endpoint.',
+    history: [100, 100, 99.99, 100, 100, 100, 99.99, 100, 100, 100],
     expandable: false,
   },
   {
     name: 'RAG Chat Engine',
     status: 'operational',
-    uptime: '99.91%',
+    uptime: '99.96%',
     detail: 'Grounded answers from the tax corpus, cited on every response.',
     history: [100, 99.95, 100, 100, 99.9, 100, 100, 100, 100, 100],
     expandable: false,
   },
   {
     name: 'Document Processing',
-    status: 'degraded',
-    uptime: '99.89%',
-    detail:
-      'Elevated latency on PDF extraction since 14:22 UTC. Uploads still complete, just slower.',
-    history: [100, 100, 100, 99.8, 96.4, 93.1, 94.2, 97.5, 98.1, 99.2],
-    expandable: true,
+    status: 'operational',
+    uptime: '99.94%',
+    detail: 'Receipt / invoice extraction pipeline healthy.',
+    history: [100, 100, 100, 99.9, 100, 99.95, 100, 100, 99.97, 100],
+    expandable: false,
   },
   {
     name: 'Auth System',
@@ -78,9 +79,9 @@ const services: Service[] = [
   {
     name: 'Marketplace API',
     status: 'operational',
-    uptime: '99.82%',
+    uptime: '99.98%',
     detail: 'Professional listings and verification statuses live.',
-    history: [100, 99.9, 100, 99.6, 100, 100, 99.7, 100, 100, 100],
+    history: [100, 99.9, 100, 99.96, 100, 100, 99.97, 100, 100, 100],
     expandable: false,
   },
 ];
@@ -94,15 +95,9 @@ type Incident = {
   note: string;
 };
 
-const incidents: Incident[] = [
-  {
-    title: 'Elevated Document Processing Latency',
-    status: 'investigating',
-    kind: 'warning',
-    date: 'June 12, 2025 · 14:22 UTC',
-    duration: 'ongoing',
-    note: 'Queue depth rose after a batch of large PDF uploads. Mitigation in progress.',
-  },
+// P11 offline fallback — the live /api/v1/status route replaces this on fetch.
+// All-resolved: the demo board is all-green (demo scope 10).
+const fallbackIncidents: Incident[] = [
   {
     title: 'RAG Chat Intermittent Timeouts',
     status: 'resolved',
@@ -135,7 +130,28 @@ const staggerContainer = {
 };
 
 export default function StatusPage() {
-  const [expandedService, setExpandedService] = useState<string | null>('Document Processing');
+  const [expandedService, setExpandedService] = useState<string | null>(null);
+  // P11 — the status board is all-green and *fetched*, not hardcoded
+  // (demo scope 10). Offline, the all-green fallback services keep it green.
+  const [services, setServices] = useState<Service[]>(fallbackServices);
+  const [incidents, setIncidents] = useState<Incident[]>(fallbackIncidents);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { services?: Service[]; incidents?: Incident[] } | null) => {
+        if (!active || !d?.services?.length) return;
+        setServices(d.services.map((s) => ({ ...s, history: s.history ?? [], expandable: false })));
+        if (d.incidents) setIncidents(d.incidents);
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const operationalCount = services.filter((s) => s.status === 'operational').length;
   const affected = services.filter((s) => s.status !== 'operational');
@@ -163,9 +179,9 @@ export default function StatusPage() {
           >
             <span className="inline-flex items-center gap-1.5">
               <Activity className="w-4 h-4 text-brand-action" />
-              Demo snapshot — June 12, 2025 · 02:00 UTC
+              {live ? `All services operational — ${operationalCount}/${services.length}` : 'Demo snapshot — all services operational'}
             </span>
-            <Badge variant="info">Demo build</Badge>
+            {live ? <Badge variant="success">live · demo_seed</Badge> : <Badge variant="info">Demo build</Badge>}
           </motion.div>
           <motion.p variants={fadeInUp} className="mt-3 text-[13px] text-text-muted max-w-[640px]">
             This board is sample data for the demo build. Figures below are illustrative and

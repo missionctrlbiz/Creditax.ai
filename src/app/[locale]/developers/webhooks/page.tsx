@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
@@ -21,8 +21,24 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import type { WebhookEndpoint } from '@/ai/webhooks-store';
 
-const webhookEndpoints = [
+/** Display shape for a webhook endpoint card (delivery stats are demo samples). */
+interface EndpointDisplay {
+  id: string;
+  url: string;
+  status: 'active' | 'failed';
+  events: string[];
+  lastTriggered: string;
+  successRate: number;
+  avgResponse: string;
+  lastError?: string;
+  consecutiveFailures?: number;
+  secret?: string;
+}
+
+// P11 offline fallback — the live /api/v1/webhooks store replaces this on fetch.
+const FALLBACK_ENDPOINTS: EndpointDisplay[] = [
   {
     id: '1',
     url: 'https://api.zenithfoods.ng/webhooks/creditax',
@@ -70,6 +86,39 @@ export default function WebhooksPage() {
   const [signingSecret, setSigningSecret] = useState('whsec_••••••••••••••••••••••••');
   const [showSecret, setShowSecret] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
+  // P11 — the endpoint list hydrates from the webhooks store; the add panel
+  // persists new endpoints through the create endpoint (demo_seed).
+  const [endpoints, setEndpoints] = useState(FALLBACK_ENDPOINTS);
+  const [live, setLive] = useState(false);
+  const [savedEndpoint, setSavedEndpoint] = useState<WebhookEndpoint | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/webhooks')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { endpoints?: WebhookEndpoint[] } | null) => {
+        if (!active || !d?.endpoints?.length) return;
+        // Map the store records into the card shape (delivery stats stay a
+        // demo sample; the registry fields are live).
+        setEndpoints(
+          d.endpoints.map((w) => ({
+            id: w.id,
+            url: w.url,
+            status: w.active ? 'active' : 'failed',
+            events: w.events,
+            lastTriggered: 'just now',
+            successRate: 99.1,
+            avgResponse: '234ms',
+            secret: w.secret,
+          }))
+        );
+        setLive(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const toggleEvent = (eventId: string) => {
     setSelectedEvents((prev) =>
@@ -90,15 +139,59 @@ export default function WebhooksPage() {
     setTimeout(() => setCopiedSecret(false), 2000);
   };
 
+  /** P11 — persist a new endpoint through the webhooks store, then show it. */
+  const saveEndpoint = () => {
+    if (!endpointUrl.trim()) return;
+    fetch('/api/v1/webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: endpointUrl.trim(), userId: 'demo', events: selectedEvents }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { endpoint?: WebhookEndpoint } | null) => {
+        if (d?.endpoint) {
+          setSavedEndpoint(d.endpoint);
+          setEndpoints((prev) => [
+            ...prev,
+            {
+              id: d.endpoint!.id,
+              url: d.endpoint!.url,
+              status: 'active',
+              events: d.endpoint!.events,
+              lastTriggered: 'just now',
+              successRate: 100,
+              avgResponse: '—',
+            },
+          ]);
+        }
+        setEndpointUrl('');
+        setShowAddPanel(false);
+      })
+      .catch(() => {
+        /* offline — the demo still closes the panel */
+        setEndpointUrl('');
+        setShowAddPanel(false);
+      });
+  };
+
   return (
     <div className="flex flex-col gap-8">
       {/* Page heading */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1>Webhooks</h1>
+          <div className="flex items-center gap-2">
+            <h1>Webhooks</h1>
+            {live && <Badge variant="success">live · demo_seed</Badge>}
+          </div>
           <p className="mt-2 max-w-2xl text-base text-text-secondary">
             Receive real-time notifications when events occur in your account.
           </p>
+          {savedEndpoint && (
+            <p className="mt-1.5 text-[13px] text-success-text">
+              Endpoint <span className="font-mono">{savedEndpoint.url}</span> registered — delivery
+              runs on the Track B background worker.
+            </p>
+          )}
         </div>
         <Button variant="primary" size="md" onClick={() => setShowAddPanel(true)} className="shrink-0">
           <Plus size={16} aria-hidden />
@@ -108,7 +201,7 @@ export default function WebhooksPage() {
 
       {/* Endpoint cards */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {webhookEndpoints.map((endpoint, index) => (
+        {endpoints.map((endpoint, index) => (
           <motion.div
             key={endpoint.id}
             initial={{ opacity: 0, y: 20 }}
@@ -195,10 +288,12 @@ export default function WebhooksPage() {
                     <TriangleAlert size={16} className="text-error-text shrink-0 mt-0.5" aria-hidden />
                     <div>
                       <p className="text-sm font-semibold text-error-text">
-                        {endpoint.consecutiveFailures} consecutive failures detected
+                        {endpoint.consecutiveFailures ? `${endpoint.consecutiveFailures} consecutive failures detected` : 'Delivery failing — endpoint not responding'}
                       </p>
                       <p className="text-xs text-error-text/80 mt-1">
-                        Last error: {endpoint.lastError}. Check your endpoint URL and server status.
+                        {endpoint.lastError
+                          ? `Last error: ${endpoint.lastError}. Check your endpoint URL and server status.`
+                          : 'Check your endpoint URL and server status.'}
                       </p>
                       <button
                         type="button"
@@ -394,7 +489,7 @@ export default function WebhooksPage() {
                       <Play size={18} aria-hidden />
                       Test Endpoint
                     </Button>
-                    <Button variant="primary" size="lg" fullWidth>
+                    <Button variant="primary" size="lg" fullWidth disabled={!endpointUrl.trim()} onClick={saveEndpoint}>
                       Save Endpoint
                       <Send size={18} aria-hidden />
                     </Button>
