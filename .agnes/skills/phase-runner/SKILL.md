@@ -19,6 +19,7 @@ Arguments ($ARGUMENTS): one of `run <phase-id>`, `advance`, `watchdog`. If empty
 ## Shared state
 
 - `progress/STATE.json` — single source of truth. Always re-read it first; never trust the prompt.
+- `progress/RUNBOOK.md` — the user's build-style runbook (their scope, Track A honesty rules, P0-first policy). Read it at the start of every run; it governs how phases are built. If a run argument names a specific phase, use that phase's section of the runbook as the scope.
 - `progress/CHANGELOG.md` — append one line per run: `date — phase — verdict — notes`.
 - `.agnes/work/sessions/` — write `YYYY-MM-DD-<phase>-<attempt>.md` session log: what was implemented, decisions, remaining items.
 - Read `research/project-roadmap.md` and AGENTS.md for phase definitions before working.
