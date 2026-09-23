@@ -90,11 +90,17 @@ export async function runRag(
   locale = 'en',
   topK = 5,
   history: RagTurn[] = [],
-  conversationId?: string
+  conversationId?: string,
+  contextText?: string
 ): Promise<RagResult> {
   const { chunks, embedding, demo_seed } = await retrieve(question, topK);
 
   const context = chunks.map((c) => `[Source: ${c.source} — ${c.section}]\n${c.text}`);
+  // P8 canvas — an attached document's extracted fields are pinned into the
+  // next turn as explicit context (labeled, not smuggled into retrieval).
+  if (contextText?.trim()) {
+    context.unshift(`[Context: attached document]\n${contextText.trim()}`);
+  }
   // Multi-turn: fold recent history into the LLM user message so the model
   // can reference prior answers without re-querying the store.
   const historyBlock = history.length > 0
@@ -107,9 +113,14 @@ export async function runRag(
     locale,
   });
 
+  const citations = [
+    ...(contextText?.trim() ? ['Attached document'] : []),
+    ...chunks.map((c) => `${c.source} — ${c.section}`),
+  ];
+
   return {
     answer: llm.answer,
-    citations: chunks.map((c) => `${c.source} — ${c.section}`),
+    citations,
     confidence: llm.confidence,
     providers: { embedding, llm: llm.provider },
     demo_seed: demo_seed || llm.provider === 'local-synthesizer',

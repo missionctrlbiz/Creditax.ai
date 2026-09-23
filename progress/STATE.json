@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p8-canvas-heart",
+  "current_phase": "p9-pro-portal",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -361,15 +361,15 @@
     },
     {
       "id": "p8-canvas-heart",
-      "status": "in_progress",
-      "attempts": 0,
+      "status": "reviewed_pass",
+      "attempts": 1,
       "items": {
-        "canvas-user-context": "todo",
-        "canvas-live-library": "todo",
-        "tier-aware-referral": "todo",
-        "live-quota-in-canvas": "todo",
-        "connector-context": "todo",
-        "locale-answers": "todo"
+        "canvas-user-context": "done",
+        "canvas-live-library": "done",
+        "tier-aware-referral": "done",
+        "live-quota-in-canvas": "done",
+        "connector-context": "done",
+        "locale-answers": "done"
       },
       "exit_criteria": [
         "Chat POST sends {userId, locale, tier} so server-side quota metering actually fires from the canvas (5th free chat → 403 upgrade wall renders)",
@@ -377,7 +377,18 @@
         "Referral reveal is tier-aware (reveals for Plus/Pro login; masked for free) — no more hardcoded tier 'free'",
         "Skill chips + connected apps shown as prompt-context on the canvas; localized agent answers EN/YO/HA/IG verified on the chat flow; tsc 0 + lint 0"
       ],
-      "last_updated": "2026-09-23T20:45:00+01:00"
+      "last_updated": "2026-09-23T21:07:24.528Z",
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-23T21:11:03.960Z",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "not_gated (p8 exit criteria = tsc+lint)"
+        },
+        "note": "Independent gate verified the canvas board structure (pan/zoom camera + world transform + positioned cards, NOT a chat thread), all 4 exit criteria against actual code (POST {userId,locale,tier,docId}; 403 wall from quota.meter; live library via seedDocumentsForUser; doc context into runRag; tier-aware referral; skill+connector chips; locale-aware LLM). Seed quotas u-consumer 4/5 day, 54/60 lifetime → the 5th free chat hits the wall on camera."
+      }
     },
     {
       "id": "p9-pro-portal",

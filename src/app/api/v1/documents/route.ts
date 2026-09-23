@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { processDocument, listDocuments } from '@/ai/documents';
+import { processDocument, seedDocumentsForUser } from '@/ai/documents';
 
 /**
  * POST /api/v1/documents/upload — process an uploaded document.
@@ -29,10 +29,13 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/v1/documents?userId=demo — list processed documents.
+ * P8: demo seed accounts are lazily seeded with the fixture docs (from the
+ * store, not a static array) so the canvas library reflects live data.
  */
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get('userId') ?? 'demo';
-  return NextResponse.json({ userId, documents: listDocuments(userId), demo_seed: true });
+  const documents = seedDocumentsForUser(userId);
+  return NextResponse.json({ userId, documents, demo_seed: true });
 }
 
 export const dynamic = 'force-dynamic';

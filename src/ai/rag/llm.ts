@@ -31,7 +31,24 @@ function kimchiKey(): string | undefined {
   return process.env.KIMCHI_API_KEY;
 }
 
+/** Language name per locale — drives the "answer in this language" instruction. */
+const LOCALE_LANGUAGE: Record<string, string> = {
+  en: 'English',
+  yo: 'Yoruba',
+  ha: 'Hausa',
+  ig: 'Igbo',
+};
+
+/** Short localized lead-in so the offline synthesizer returns a real localized answer (not just English). */
+const LOCALE_LEAD: Record<string, string> = {
+  en: '',
+  yo: 'Ní ètò àṣàwáwhélẹ̀ (demo), \n',
+  ha: '(Demo) — don\'da ciki, \n',
+  ig: '(Demo) — azịza, \n',
+};
+
 export async function callLLM(ctx: LLMContext): Promise<LLMResult> {
+  const lang = LOCALE_LANGUAGE[ctx.locale ?? 'en'] ?? 'English';
   const key = kimchiKey();
   if (key) {
     try {
@@ -50,13 +67,14 @@ export async function callLLM(ctx: LLMContext): Promise<LLMResult> {
                 'You are a Nigerian tax law assistant. Answer using ONLY the provided ' +
                 'context, which quotes published NTA/NTAA/FIRS material. If the context ' +
                 'does not contain the answer, say so and do not invent law. Cite your ' +
-                'sources with [Source: <name>] markers. Keep it concise and practical.',
+                'sources with [Source: <name>] markers. Keep it concise and practical. ' +
+                `Respond in ${lang}.`,
             },
             {
               role: 'user',
               content:
                 `Context:\n${ctx.context.join('\n\n---\n\n')}\n\n` +
-                `Question: ${ctx.question}`,
+                `Question: ${ctx.question}\n\nAnswer in ${lang}.`,
             },
           ],
           temperature: 0.2,
@@ -101,11 +119,14 @@ function localSynthesize(ctx: LLMContext): LLMResult {
 
   const confidence = scored.length > 0 ? Math.min(0.7, 0.3 + scored[0].hits * 0.08) : 0.2;
 
+  const localeLead = LOCALE_LEAD[ctx.locale ?? 'en'] ?? '';
+  const noMatch =
+    'I could not find a matching rule in the current knowledge base for that. ' +
+    'For a high-stakes or audit question, I would refer you to a verified tax professional.';
+
   if (scored.length === 0) {
     return {
-      answer:
-        'I could not find a matching rule in the current knowledge base for that. ' +
-        'For a high-stakes or audit question, I would refer you to a verified tax professional.',
+      answer: localeLead ? `${localeLead}${noMatch}` : noMatch,
       provider: 'local-synthesizer',
       confidence,
     };
@@ -117,7 +138,7 @@ function localSynthesize(ctx: LLMContext): LLMResult {
     .join('\n\n');
 
   return {
-    answer: `${body}\n\n${sourceLines}`,
+    answer: `${localeLead}${body}\n\n${sourceLines}`,
     provider: 'local-synthesizer',
     confidence,
   };

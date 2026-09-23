@@ -86,6 +86,38 @@ export function getDocument(id: string): ProcessedDocument | null {
   return docs.get(id) ?? null;
 }
 
+/** Demo seed user ids (from seedUsers) — the only accounts that get fixture docs. */
+const DEMO_USER_IDS = new Set(['u-consumer', 'u-pro', 'u-admin', 'u-author', 'demo']);
+
+/**
+ * P8 — lazily seed the demo fixture documents for a user on first read so the
+ * canvas library shows *live processed documents* (from the store), not a static
+ * array. Reuses the same deterministic extractor, so the figures match what the
+ * upload flow produces. Idempotent: only seeds when the user has no docs yet,
+ * and only for demo seed accounts (never a real Track B user).
+ */
+export function seedDocumentsForUser(userId: string): ProcessedDocument[] {
+  if (!DEMO_USER_IDS.has(userId)) return listDocuments(userId);
+  const existing = listDocuments(userId);
+  if (existing.length > 0) return existing;
+  const fixtures = [
+    { name: 'PAYE_Certificate_2024.pdf' },
+    { name: 'Bank_Statement_May2025.pdf' },
+    { name: 'Generator_Fuel_Receipt.jpg' },
+    { name: 'VAT_Invoice_Zenith_Jun2025.pdf' },
+  ];
+  const now = new Date().toISOString();
+  for (const f of fixtures) {
+    const doc: ProcessedDocument = {
+      ...extractDocument({ id: nextId('doc'), name: f.name }),
+      user_id: userId,
+      created_at: now,
+    };
+    docs.set(doc.id, doc);
+  }
+  return listDocuments(userId);
+}
+
 export function listDocuments(userId = 'demo'): ProcessedDocument[] {
   return [...docs.values()].filter((d) => d.user_id === userId);
 }

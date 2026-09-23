@@ -3,6 +3,8 @@ import { runRag, type RagResult, type RagTurn } from '@/ai/rag';
 import { getConversationStore } from '@/ai/rag/conversations';
 import { registerChatWebhook } from '@/ai/rag/webhooks';
 import { meter, type MeteredAction, type Tier } from '@/ai/quota';
+import { getDocument } from '@/ai/documents';
+import { fmtNaira } from '@/ai/tax-rules';
 
 /**
  * POST /api/v1/chat — grounded tax answer (P2 base + P1 multi-turn / async).
@@ -15,7 +17,9 @@ import { meter, type MeteredAction, type Tier } from '@/ai/quota';
  *     conversationId?: string,        // P1: load recent turns for context
  *     userId?: string,                // P1: scope + persist the conversation
  *     history?: { role: 'user'|'assistant', text: string }[],  // P1: explicit context
- *     webhookUrl?: string             // P1: register an async delivery stub
+ *     webhookUrl?: string,          // P1: register an async delivery stub
+ *     docId?: string,               // P8: id of an attached (live) document to pin as context
+ *     loggedIn?: boolean           // P8: tier-aware referral reveal (pricing §2)
  *   }
  *
  * Returns: RagResult + `conversationId` (when P1 context was applied) +
@@ -36,6 +40,8 @@ export async function POST(req: NextRequest) {
     meteredAction?: MeteredAction;
     history?: RagTurn[];
     webhookUrl?: string;
+    docId?: string;
+    loggedIn?: boolean;
   };
   try {
     body = await req.json();
@@ -87,7 +93,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const result: RagResult = await runRag(question, locale, topK, history, conversationId);
+  // P8 canvas — an attached document's extracted fields are pinned into the
+  // next turn as labeled context. The client sends a live doc id from the
+  // library; we resolve it server-side so the attachment is real, not a constant.
+  let docContext: string | undefined;
+  if (body.docId) {
+    const doc = getDocument(body.docId);
+    if (doc) {
+      docContext =
+        `${doc.name} (${doc.format}, ${doc.group}) · status ${doc.status}` +
+        (doc.amount != null ? ` · amount ${fmtNaira(doc.amount)}` : '') +
+        (doc.category ? ` · category ${doc.category}` : '') +
+        (doc.period ? ` · period ${doc.period}` : '') +
+        (doc.warning ? ` · ${doc.warning}` : '');
+    }
+  }
+
+  const result: RagResult = await runRag(question, locale, topK, history, conversationId, docContext);
 
   // P1: persist the exchange so the next turn has real context.
   if (conversationId && body.userId) {

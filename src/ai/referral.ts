@@ -95,10 +95,13 @@ export function buildReferralCard(input: {
   confidence?: number;
   tier?: Tier;
   loggedIn?: boolean;
+  /** Force a referral even when intent is not high-stakes (explicit / canned cases). */
+  force?: boolean;
 }): ReferralCard | null {
   const { refer, reason } = shouldRefer(input.text, input.confidence);
   const pro = pickProFor(input.text);
-  if (!refer || !pro) return null;
+  if (!pro) return null;
+  if (!refer && !input.force) return null;
 
   // Paid tiers (Plus / Professional / Enterprise) see full contact details.
   // pricing-and-access.md §2: Free = masked, Plus/Pro = Full, Ent = priority.

@@ -1,0 +1,82 @@
+{
+  "kind": "agnes_artifact",
+  "artifact_type": "research_markdown_report",
+  "research_kind": "deep_research",
+  "mode": "deep_research",
+  "session_id": "20260923_29",
+  "title": "P8 canvas-heart — independent review gate (pass)",
+  "local_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_29/deep_research/20260923-29-p8-canvas-heart-review-gate.md",
+  "manifest_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_29/deep_research/20260923-29-p8-canvas-heart-review-gate.json",
+  "repo_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/work/research/20260923_29/deep_research/repo",
+  "preview_uri": "ui://agnes-research/deep_research/20260923-29-p8-canvas-heart-review-gate",
+  "sources_count": 11,
+  "evidence_count": 0,
+  "conflicts_count": 0,
+  "blocked_sources_count": 0,
+  "confidence": "medium",
+  "quality_warnings": [
+    "Deep research report has no structured evidence ledger; important claims may be hard to audit.",
+    "Requested confidence is high, but no structured evidence was provided; confidence was reduced."
+  ],
+  "created_at": "2026-09-23T21:10:03.006228+00:00",
+  "sources": [
+    {
+      "title": "progress/STATE.json",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/STATE.json",
+      "note": null
+    },
+    {
+      "title": "progress/RUNBOOK.md",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/RUNBOOK.md",
+      "note": null
+    },
+    {
+      "title": "src/app/[locale]/dashboard/chat/page.tsx",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/[locale]/dashboard/chat/page.tsx",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/chat/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/chat/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/quota.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/quota.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/documents.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/documents.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/documents/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/documents/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/referral.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/referral.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/rag/index.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/rag/index.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/rag/llm.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/rag/llm.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/connectors/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/connectors/route.ts",
+      "note": null
+    }
+  ],
+  "evidence": [],
+  "conflicts": [],
+  "blocked_sources": []
+}
