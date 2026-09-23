@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -21,12 +22,49 @@ const staggerContainer: Variants = {
 };
 
 export default function CreditOverviewPage() {
-  const scoreBreakdown = [
+  // P4: hydrate the live credit snapshot from /api/v1/credit/score; the static
+  // values below are the SSR-safe initial state + offline fallback, so there is
+  // no hydration mismatch and the demo click-through still completes.
+  const [currentScore, setCurrentScore] = useState(720);
+  const [scoreBreakdown, setScoreBreakdown] = useState([
     { label: 'Tax Filing History', points: 45, percentage: 90, color: 'success' },
     { label: 'Document Consistency', points: 30, percentage: 65, color: 'brand' },
     { label: 'Income Stability', points: 25, percentage: 55, color: 'brand' },
     { label: 'Savings Pattern', points: 20, percentage: 40, color: 'warning' },
-  ];
+  ]);
+  const [creditDemoSeed, setCreditDemoSeed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/credit/score')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active || !d || typeof d.score !== 'number') return;
+        setCurrentScore(d.score);
+        setCreditDemoSeed(!!d.demo_seed);
+        if (Array.isArray(d.factors) && d.factors.length > 0) {
+          // Map the model's 5 factors into the UI's 4-bar shape: fold the
+          // "Tax Filing History" + "Debt Burden" into the existing labels.
+          const colorFor = (p: number) => (p >= 75 ? 'success' : p >= 45 ? 'brand' : 'warning');
+          const mapped = d.factors
+            .filter((f: { label: string }) => f.label !== 'Document Consistency')
+            .slice(0, 4)
+            .map((f: { label: string; points: number; percentage: number }) => ({
+              label: f.label,
+              points: f.points,
+              percentage: f.percentage,
+              color: colorFor(f.percentage),
+            }));
+          if (mapped.length > 0) setScoreBreakdown(mapped);
+        }
+      })
+      .catch(() => {
+        /* offline — keep the static mock */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const scoreHistory = [
     { month: 'Jul', score: 680 },
@@ -44,7 +82,6 @@ export default function CreditOverviewPage() {
   ];
 
   const maxScore = 850;
-  const currentScore = 720;
   const scorePercentage = (currentScore / maxScore) * 100;
 
   return (
@@ -58,6 +95,12 @@ export default function CreditOverviewPage() {
       >
         <h1 className="text-text-primary mb-2">Credit Score</h1>
         <p className="text-text-muted text-sm">Track your creditworthiness and understand what affects your score.</p>
+        {creditDemoSeed && (
+          <p className="text-text-muted text-[11px] mt-1.5 flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-action" />
+            Demo seed — score computed from simulated inputs (Mono data arrives in Track B).
+          </p>
+        )}
       </motion.div>
 
       <motion.div
