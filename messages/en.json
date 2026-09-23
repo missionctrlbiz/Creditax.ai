@@ -230,6 +230,7 @@
   },
   "dashboard": {
     "welcome": "Welcome back",
+    "tagline": "Tax compliance made simple. Credit made accessible.",
     "date": "Thursday, 12 June 2026",
     "taxHealth": "Tax health score",
     "creditScore": "Credit score",

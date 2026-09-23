@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell, PRO_NAV, type NavItem } from '@/components/shell/AppShell';
-import { getSession } from '@/lib/mock-auth';
+import { getSession } from '@/lib/auth';
+import type { UnifiedSession } from '@/lib/auth';
 
 function titleFromPath(pathname: string, nav: NavItem[]): string {
   const match = nav
@@ -15,17 +16,25 @@ function titleFromPath(pathname: string, nav: NavItem[]): string {
 
 export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // P1 role-gate: only the Tax Pro role lives here.
+  // P7 role-gate: single session source (pb-auth with mock fallback via
+  // src/lib/auth.ts). Only the Tax Pro role lives here.
   const [gate, setGate] = useState<'loading' | 'ok' | 'bounced'>('loading');
+  const [session, setSession] = useState<UnifiedSession | null>(null);
+
   useEffect(() => {
-    const s = getSession();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGate(s.role === 'pro' ? 'ok' : 'bounced');
+    let active = true;
+    getSession().then((s) => {
+      if (!active) return;
+      setSession(s);
+      setGate(s.role === 'tax_pro' ? 'ok' : 'bounced');
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (gate === 'bounced') {
-    const s = getSession();
-    const home = s.role === 'admin' || s.role === 'author' ? '/admin/dashboard' : '/dashboard';
+    const home = session && session.role !== 'admin' && session.role !== 'author' ? '/dashboard' : '/admin/dashboard';
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-text-secondary">This portal is for <b>Tax Professionals</b>.</p>

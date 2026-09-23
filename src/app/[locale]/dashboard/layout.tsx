@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell, PERSONAL_NAV, type NavItem } from '@/components/shell/AppShell';
-import { getSession } from '@/lib/mock-auth';
+import { getSession } from '@/lib/auth';
+import type { UnifiedSession } from '@/lib/auth';
 
 function titleFromPath(pathname: string, nav: NavItem[]): string {
   const match = nav
@@ -15,19 +16,26 @@ function titleFromPath(pathname: string, nav: NavItem[]): string {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // P1 role-gate: only the consumer role lives here; pro/admin/author bounce
-  // to their own board. Rendered after mount so SSR and client stay in sync.
+  // P7 role-gate: single session source (pb-auth with mock fallback via
+  // src/lib/auth.ts). Role + tier resolve from the same object.
+  // consumer (or unsigned) stays here; pro/admin/author bounce to their board.
   const [gate, setGate] = useState<'loading' | 'ok' | 'bounced'>('loading');
+  const [session, setSession] = useState<UnifiedSession | null>(null);
+
   useEffect(() => {
-    const s = getSession();
-    // author/admin/pro have their own boards; consumer (or unsigned) stays here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGate(s.role === 'pro' || s.role === 'admin' ? 'bounced' : 'ok');
+    let active = true;
+    getSession().then((s) => {
+      if (!active) return;
+      setSession(s);
+      setGate(s.role === 'tax_pro' || s.role === 'admin' || s.role === 'author' ? 'bounced' : 'ok');
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (gate === 'bounced') {
-    const s = getSession();
-    const home = s.role === 'pro' ? '/pro/dashboard' : '/admin/dashboard';
+    const home = session?.role === 'tax_pro' ? '/pro/dashboard' : '/admin/dashboard';
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-text-secondary">This dashboard is for the <b>Personal</b> portal.</p>

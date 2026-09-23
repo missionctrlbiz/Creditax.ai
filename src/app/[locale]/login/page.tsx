@@ -9,18 +9,18 @@ import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { LogoGraphic } from '@/components/shared/LogoGraphic';
-import { setSession, ROLE_HOME, type PortalRole } from '@/lib/mock-auth';
+import { signIn, ROLE_HOME, type DemoRole } from '@/lib/auth';
 import { recordLogin } from '@/lib/pocketbase';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<PortalRole>('personal');
+  const [role, setRole] = useState<DemoRole>('consumer');
   const [submitting, setSubmitting] = useState(false);
 
-  const ROLES: { value: PortalRole; title: string; description: string }[] = [
-    { value: 'personal', title: t('personal'), description: t('personalDesc') },
-    { value: 'pro', title: t('pro'), description: t('proDesc') },
+  const ROLES: { value: DemoRole; title: string; description: string }[] = [
+    { value: 'consumer', title: t('personal'), description: t('personalDesc') },
+    { value: 'tax_pro', title: t('pro'), description: t('proDesc') },
     { value: 'admin', title: t('admin'), description: t('adminDesc') },
     { value: 'author', title: t('author'), description: t('authorDesc') },
   ];
@@ -31,8 +31,9 @@ export default function LoginPage() {
     setSubmitting(true);
     const loginEmail = email || 'demo@creditax.ai';
     await recordLogin(loginEmail, role);
-    setSession(role, loginEmail);
-    window.location.href = ROLE_HOME[role];
+    const result = await signIn(role, loginEmail);
+    // Use the resolved home (PocketBase may re-map the role) with the static map as fallback.
+    window.location.href = result.home || ROLE_HOME[role];
   };
 
   return (

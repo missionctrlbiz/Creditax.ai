@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 @theme {
+  /* ── FONT DEFINITIONS (P7) ── */
+  --font-inter: 'Inter', var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-syne: 'Syne', var(--font-display), sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', var(--font-mono), ui-monospace, monospace;
+
+  /* ── COLOR SEMANTICS ── */
   --color-surface-base: var(--color-surface-base);
   --color-surface-raised: var(--color-surface-raised);
   --color-surface-overlay: var(--color-surface-overlay);
@@ -244,6 +250,24 @@
   --shadow-btn-action: 0 4px 14px rgba(18,132,60,0.30);
   --shadow-btn-brand:  0 4px 12px rgba(13,115,119,0.25);
   --ambient-glow: radial-gradient(ellipse at top, rgba(13,115,119,0.08) 0%, transparent 60%);
+}
+
+@layer utilities {
+  /* ── P7 shared layout utility ── */
+  /* Bounded content column for page-level layouts. Override per-screen with
+     inline max-width where a wider/narrower measure is needed. */
+  .container {
+    width: 100%;
+    max-width: var(--container-max, 72rem);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 64rem) {
+    .container {
+      padding-inline: 2rem;
+    }
+  }
 }
 
 @layer base {
