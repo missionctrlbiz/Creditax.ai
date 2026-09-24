@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p16-key-sweep",
+  "current_phase": "none (chain complete — all phases reviewed_pass)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -629,19 +629,19 @@
     },
     {
       "id": "p16-key-sweep",
-      "status": "in_progress",
+      "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
       "attempts": 1,
       "scope": "Full key-map sweep: audit every key in .env and plug each into where it belongs, or explicitly mark it unused/Track-B. See progress/KEY-MAP.md (the authoritative key -> usage map). This is the catch-all mapping phase after the specific p13-p15 wirings.",
       "items": {
-        "key-audit": "todo",
-        "mapbox-slot": "todo",
-        "b2-storage": "todo",
-        "cloudinary-images": "todo",
-        "trigger-jobs": "todo",
-        "resend-twilio-comms": "todo",
-        "paystack-flutterwave-payments": "todo",
-        "unused-keys-triaged": "todo"
+        "key-audit": "done",
+        "mapbox-slot": "done",
+        "b2-storage": "done",
+        "cloudinary-images": "done",
+        "trigger-jobs": "done",
+        "resend-twilio-comms": "done",
+        "paystack-flutterwave-payments": "done",
+        "unused-keys-triaged": "done"
       },
       "exit_criteria": [
         "Every key in .env appears in progress/KEY-MAP.md with status: wired / sandboxed / unused-track-B and the exact file(s) it plugs into",
@@ -649,8 +649,19 @@
         "No secret is ever committed (.env stays gitignored; only .env.example tracked); a key-audit log records each decision; lint 0",
         "Runbook + STATE notes record the final key -> usage map so later runs know what is live vs mock"
       ],
-      "last_review": null,
-      "last_updated": "2026-09-24T00:42:00+01:00"
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-24T07:10:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox)"
+        },
+        "honesty_check": "pass (no live key value in any tracked file; .env gitignored; only .env.example placeholders + public demo CREDITAX_API_KEY; B2/Cloudinary/Trigger/Resend/Twilio honestly unused-track-B — zero code consumers, verified by grep)",
+        "note": "Catch-all sweep: all 38 .env keys triaged (wired/sandboxed/reserved/unused-track-B) in KEY-MAP.md + new progress/KEY-AUDIT.md decision log. Two false P7/P4 claims corrected in code: RATE_LIMIT_PER_MINUTE now read by rate-limit.ts configuredRpmLimit(); AUTH_SESSION_SECRET demoted wired->reserved (zero consumers). P16 wirings: status route surfaces CREDITAX_ENV; PB URL chain (pb-features/pocketbase/pb-auth) honors NEXT_PUBLIC_POCKETBASE_FALLBACK_URL. No new deps; Track B integrations documented, not faked."
+      },
+      "last_updated": "2026-09-24T07:10:00+01:00"
     }
   ],
   "gates": {

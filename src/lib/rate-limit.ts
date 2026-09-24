@@ -16,7 +16,16 @@
  */
 
 const DEFAULT_WINDOW_MS = 60_000;
-export const DEFAULT_RPM_LIMIT = 100;
+/**
+ * Per-key ceiling, operator-overridable via `RATE_LIMIT_PER_MINUTE`
+ * (P16 key-sweep: the constant now actually comes from the env manifest
+ * instead of being a hard-coded 100). Falls back to 100 when unset/invalid.
+ */
+function configuredRpmLimit(): number {
+  const raw = Number(process.env.RATE_LIMIT_PER_MINUTE);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 100;
+}
+export const DEFAULT_RPM_LIMIT = configuredRpmLimit();
 
 interface WindowState {
   start: number;

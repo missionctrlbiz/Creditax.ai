@@ -11,8 +11,12 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const allGreen = (base: number): number[] =>
     Array.from({ length: 10 }, (_, i) => Math.min(100, base + (i % 3) * 0.01 + 0.01));
+  // P16 — surface the running environment (CREDITAX_ENV) so operators can
+  // confirm demo vs staging vs prod at a glance. Falls back to 'demo'.
+  const environment = process.env.CREDITAX_ENV || 'demo';
   return NextResponse.json({
     overall: 'operational',
+    environment,
     services: [
       {
         name: 'API Server',

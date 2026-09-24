@@ -21,7 +21,7 @@ import {
   type PortalRole,
 } from '@/lib/mock-auth';
 import { ROLE_HOME } from '@/lib/seed/demoSeed';
-import { pocketbaseEnabled, probePocketBase } from '@/lib/pb-features';
+import { pocketbaseEnabled, probePocketBase, pocketbaseUrl } from '@/lib/pb-features';
 
 export type DemoRole = 'consumer' | 'tax_pro' | 'admin' | 'author';
 
@@ -87,9 +87,7 @@ export async function getP1Session(): Promise<P1Session> {
     const ok = await probePocketBase();
     if (ok) {
       try {
-        const pb: PocketBase = new PocketBase(
-          process.env.NEXT_PUBLIC_POCKETBASE_URL || process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
-        );
+        const pb: PocketBase = new PocketBase(pocketbaseUrl());
         if (pb.authStore.isValid) {
           const rec = pb.authStore.record as Record<string, unknown> | null;
           const role = ((rec?.role as DemoRole) ?? 'consumer') as DemoRole;
@@ -130,9 +128,7 @@ export async function loginAs(role: DemoRole, email: string): Promise<{ session:
     const ok = await probePocketBase();
     if (ok) {
       try {
-        const pb: PocketBase = new PocketBase(
-          process.env.NEXT_PUBLIC_POCKETBASE_URL || process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
-        );
+        const pb: PocketBase = new PocketBase(pocketbaseUrl());
         await pb.collection('users').authWithPassword(email, 'demo');
         const rec = pb.authStore.record as Record<string, unknown> | null;
         const resolved = ((rec?.role as DemoRole) ?? role) as DemoRole;
@@ -167,9 +163,7 @@ export async function loginAs(role: DemoRole, email: string): Promise<{ session:
  */
 export function logoutP1(): void {
   try {
-    const pb: PocketBase = new PocketBase(
-      process.env.NEXT_PUBLIC_POCKETBASE_URL || process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
-    );
+    const pb: PocketBase = new PocketBase(pocketbaseUrl());
     pb.authStore.clear();
   } catch {
     /* not on the PB path — ignore */
