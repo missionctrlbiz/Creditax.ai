@@ -10,10 +10,11 @@ File naming: `<section><n>-<slug>.png`, e.g. `B02-canvas-first-answer-desktop.pn
 Every capture MUST show the `demo_seed` badge or live badge where the data is
 simulated (Track A honesty rule).
 
-> **Capture status:** pending — dev server is required. Run in a full-access
-> environment (`npm run dev`, PocketBase up or mock fallback OK), then capture
-> each route below and save into this directory. Sections map 1:1 to the
-> 8-minute demo script beats (mvp-demo-plan §4).
+> **Capture status:** DONE (fa-5, 2026-09-24) — **37/37** real browser captures
+> (desktop 1440×900 + mobile 375×812 key flows) via
+> `scripts/capture-demo-screenshots.mjs` (Playwright + system Chrome against
+> `npm run dev`). See `CAPTURE-STATUS.md` for the per-id checklist. Sections
+> map 1:1 to the 8-minute demo script beats (mvp-demo-plan §4).
 
 ## A — Landing + Signup (beats 0–1)
 | # | Entry | Route | State to capture |
