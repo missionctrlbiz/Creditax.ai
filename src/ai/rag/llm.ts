@@ -1,12 +1,23 @@
 /**
- * P2 — LLM provider for the grounded answer step.
+ * P13 — LLM provider for the grounded answer step (canon-reconciled).
  *
- * Primary: Kimchi.dev (OpenAI-compatible, minimax-m2.7) using the KIMCHI_* env
- * vars already in .env. Fallback: a local "synthesizer" that composes a
- * useful answer from the top retrieved chunks + the deterministic tax rules
- * when Kimchi is unreachable / keyless — so the RAG demo always produces a
- * grounded, cited response. The provider used is returned so the caller can
- * tag responses with `llm_provider`.
+ * Provider order (OpenAI-compatible chat/completions, first live success wins):
+ *   1. LITELLM  — canonical primary per `.env.example` header + live .env
+ *                 ("LITELLM.dev primary, OpenAI-compatible"). Read from
+ *                 LITELLM_API_KEY / LITELLM_BASE_URL / LITELLM_MODEL.
+ *   2. KIMCHI   — legacy second leg (the committed P2 default). Read from
+ *                 KIMCHI_* . Kept as a fallback, not removed, so a working
+ *                 Kimchi key still answers if the LITELLM leg is down.
+ *   3. local-synthesizer — deterministic offline path that composes a
+ *                 useful, cited answer from the top retrieved chunks.
+ *
+ * The chosen provider + model are returned so the caller can tag responses
+ * with `llm_provider` / `llm_model` (P13 provider-health logging) and keep
+ * the demo_seed honesty flag truthful (true only on the local-synthesizer).
+ *
+ * Model resolution: LITELLM_MODEL → KIMCHI_MODEL → 'minimax-m2.7'. In the
+ * live .env, LITELLM_MODEL is empty and KIMCHI_MODEL is a model id that the
+ * LITELLM host actually serves, so the resolved model tracks the live key.
  */
 
 export interface LLMContext {
@@ -17,18 +28,58 @@ export interface LLMContext {
   locale?: string;
 }
 
+export type LLMProvider = 'litellm' | 'kimchi' | 'local-synthesizer';
+
 export interface LLMResult {
   answer: string;
-  provider: 'kimchi' | 'local-synthesizer';
+  provider: LLMProvider;
+  /** The concrete model id used (empty string for the local synthesizer). */
+  model: string;
   confidence: number; // 0..1 — heuristic in the local path
 }
 
-const KIMCHI_BASE =
-  process.env.KIMCHI_BASE_URL || 'https://llm.kimchi.dev/openai/v1';
-const KIMCHI_MODEL = process.env.KIMCHI_MODEL || 'minimax-m2.7';
+interface LLMEndpoint {
+  provider: Exclude<LLMProvider, 'local-synthesizer'>;
+  base: string;
+  model: string;
+  key: string;
+}
 
-function kimchiKey(): string | undefined {
-  return process.env.KIMCHI_API_KEY;
+function resolvedModel(): string {
+  return (
+    process.env.LITELLM_MODEL ||
+    process.env.KIMCHI_MODEL ||
+    'minimax-m2.7'
+  );
+}
+
+/** The live, key-backed LLM legs in canonical order. Keyless legs are skipped. */
+function llmEndpoints(): LLMEndpoint[] {
+  const model = resolvedModel();
+  const endpoints: LLMEndpoint[] = [];
+
+  const litellmKey = process.env.LITELLM_API_KEY;
+  if (litellmKey) {
+    endpoints.push({
+      provider: 'litellm',
+      base:
+        process.env.LITELLM_BASE_URL || 'https://llm.LITELLM.dev/openai/v1',
+      model,
+      key: litellmKey,
+    });
+  }
+
+  const kimchiKey = process.env.KIMCHI_API_KEY;
+  if (kimchiKey) {
+    endpoints.push({
+      provider: 'kimchi',
+      base: process.env.KIMCHI_BASE_URL || 'https://llm.kimchi.dev/openai/v1',
+      model: process.env.KIMCHI_MODEL || model,
+      key: kimchiKey,
+    });
+  }
+
+  return endpoints;
 }
 
 /** Language name per locale — drives the "answer in this language" instruction. */
@@ -47,50 +98,64 @@ const LOCALE_LEAD: Record<string, string> = {
   ig: '(Demo) — azịza, \n',
 };
 
-export async function callLLM(ctx: LLMContext): Promise<LLMResult> {
+async function callOpenAICompatible(
+  endpoint: LLMEndpoint,
+  ctx: LLMContext
+): Promise<string | null> {
   const lang = LOCALE_LANGUAGE[ctx.locale ?? 'en'] ?? 'English';
-  const key = kimchiKey();
-  if (key) {
-    try {
-      const res = await fetch(`${KIMCHI_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
+  const res = await fetch(`${endpoint.base.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${endpoint.key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: endpoint.model,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a Nigerian tax law assistant. Answer using ONLY the provided ' +
+            'context, which quotes published NTA/NTAA/FIRS material. If the context ' +
+            'does not contain the answer, say so and do not invent law. Cite your ' +
+            'sources with [Source: <name>] markers. Keep it concise and practical. ' +
+            `Respond in ${lang}.`,
         },
-        body: JSON.stringify({
-          model: KIMCHI_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a Nigerian tax law assistant. Answer using ONLY the provided ' +
-                'context, which quotes published NTA/NTAA/FIRS material. If the context ' +
-                'does not contain the answer, say so and do not invent law. Cite your ' +
-                'sources with [Source: <name>] markers. Keep it concise and practical. ' +
-                `Respond in ${lang}.`,
-            },
-            {
-              role: 'user',
-              content:
-                `Context:\n${ctx.context.join('\n\n---\n\n')}\n\n` +
-                `Question: ${ctx.question}\n\nAnswer in ${lang}.`,
-            },
-          ],
-          temperature: 0.2,
-          max_tokens: 900,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const text: string | undefined = data?.choices?.[0]?.message?.content;
-        if (text && text.trim()) {
-          return { answer: text.trim(), provider: 'kimchi', confidence: 0.9 };
-        }
+        {
+          role: 'user',
+          content:
+            `Context:\n${ctx.context.join('\n\n---\n\n')}\n\n` +
+            `Question: ${ctx.question}\n\nAnswer in ${lang}.`,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 900,
+    }),
+  });
+
+  if (!res.ok) {
+    // Surface the provider status but never leak the key into the log line.
+    console.warn(`[llm] ${endpoint.provider} ${res.status}, trying next leg`);
+    return null;
+  }
+
+  const data = await res.json();
+  const text: string | undefined = data?.choices?.[0]?.message?.content;
+  if (text && text.trim()) return text.trim();
+  console.warn(`[llm] ${endpoint.provider} returned no content, trying next leg`);
+  return null;
+}
+
+export async function callLLM(ctx: LLMContext): Promise<LLMResult> {
+  const endpoints = llmEndpoints();
+  for (const endpoint of endpoints) {
+    try {
+      const text = await callOpenAICompatible(endpoint, ctx);
+      if (text) {
+        return { answer: text, provider: endpoint.provider, model: endpoint.model, confidence: 0.9 };
       }
-      console.warn(`[llm] Kimchi ${res.status}, using local synthesizer`);
     } catch (err) {
-      console.warn('[llm] Kimchi unreachable, using local synthesizer', err);
+      console.warn(`[llm] ${endpoint.provider} unreachable, trying next leg`, err);
     }
   }
 
@@ -128,6 +193,7 @@ function localSynthesize(ctx: LLMContext): LLMResult {
     return {
       answer: localeLead ? `${localeLead}${noMatch}` : noMatch,
       provider: 'local-synthesizer',
+      model: '',
       confidence,
     };
   }
@@ -140,6 +206,7 @@ function localSynthesize(ctx: LLMContext): LLMResult {
   return {
     answer: `${localeLead}${body}\n\n${sourceLines}`,
     provider: 'local-synthesizer',
+    model: '',
     confidence,
   };
 }

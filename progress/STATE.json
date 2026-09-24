@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p13-llm-live",
+  "current_phase": "p14-mapbox-geo",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -51,7 +51,7 @@
         "npm run build and npm run lint pass"
       ],
       "note": "tax/calculate + tax/brackets routes already present from UI refactor. [b2b-platform: auth/verify + api-keys CRUD closed via b2b routes.] [FINAL SWEEP: rate-limit closed via src/lib/rate-limit.ts (in-memory fixed-window limiter, 100 req/min, Bearer-suffix keyed with IP fallback, wired into auth/verify, tax/calculate, tax/brackets, credit/score; admitted requests bump stored key usage via api-keys bumpUsage(); 429 = structured RateLimitExceeded + Retry-After). openapi-docs closed via public/openapi/v1.json (OpenAPI 3.0.3, full /api/v1/* surface, validated JSON) surfaced from the developer reference right-rail.]",
-            "last_review": {
+      "last_review": {
         "verdict": "pass",
         "reviewer": "phase-runner final sweep (parent session; gates tsc+lint)",
         "at": "2026-09-23T24:05:00+01:00",
@@ -534,31 +534,42 @@
     },
     {
       "id": "p13-llm-live",
-      "status": "queued",
+      "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
-      "attempts": 0,
+      "attempts": 1,
       "scope": "Plug real LLM/embedding provider keys from .env into the RAG pipeline so chat answers use live providers where a key exists, keeping the demo_seed offline fallback intact (never fake the flag). GROUNDING FIRST: reconcile the LLM provider three-way mismatch — .env.example + research/API-Research.md say LITELLM.dev is the canonical primary LLM, committed src/ai/rag/llm.ts reads KIMCHI_* vars, and the live .env has BOTH key sets. Decide the canonical provider from the docs, wire it, and record the decision in KEY-MAP.md.",
       "items": {
-        "llm-provider-reconcile": "todo",
-        "llm-provider-wiring": "todo",
-        "embeddings-cascade": "todo",
-        "hf-vertex-cascade-legs": "todo",
-        "demo_seed-fallback-intact": "todo",
-        "provider-health-log": "todo"
+        "llm-provider-reconcile": "done",
+        "llm-provider-wiring": "done",
+        "embeddings-cascade": "done",
+        "hf-vertex-cascade-legs": "done",
+        "demo_seed-fallback-intact": "done",
+        "provider-health-log": "done"
       },
       "exit_criteria": [
         "POST /api/v1/chat uses the canonical live LLM provider where a key exists, else falls back deterministically and still sets demo_seed truthfully; the LLM provider code-vs-manifest mismatch is resolved and recorded in progress/KEY-MAP.md",
         "Embeddings cascade matches the .env.example order (OpenRouter -> HF -> Vertex -> local-hash) with each leg implemented; the chosen provider is logged in the response metadata",
         "No demo_seed flag set true when a live provider actually answered; lint 0"
       ],
-      "last_review": null,
-      "last_updated": "2026-09-24T00:46:00+01:00"
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-24T05:45:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox; re-run in full-access)"
+        },
+        "honesty_check": "pass (live LITELLM answer → demo_seed:false; local-synthesizer path → true; dim-consistency prevents cross-provider 0-scores)",
+        "note": "Ground: LITELLM=canonical primary (live 200, model agnes/agnes-3.0-flash), KIMCHI=legacy second leg, model resolver LITELLM_MODEL→KIMCHI_MODEL→minimax-m2.7. Embeddings cascade OpenRouter→HF→Vertex→local-hash all legs implemented; Vertex runtime-skipped (unused-track-B) while VERTEX_* creds empty. Sticky provider lock + filterSameDimension keep query/corpus on one vector width. .env.example LITELLM_MODEL fixed (minimax absent from live catalog). Non-blocking: PROVIDER_DIMS.openrouter static 768 lags live 2048 (runtime dimension field keeps ranking honest); HF host-path must match HF_EMBED_MODEL."
+      },
+      "last_updated": "2026-09-24T05:45:00+01:00"
     },
     {
       "id": "p14-mapbox-geo",
-      "status": "queued",
+      "status": "in_progress",
       "gate": "gated_until_p12_complete",
-      "attempts": 0,
+      "attempts": 1,
       "scope": "Plug MAPBOX_ACCESS_TOKEN / NEXT_PUBLIC_MAPBOX_TOKEN into marketplace geocoding + map view ('near me'), replacing the simulated haversine/geo demo with real geocoded results where the key is present.",
       "items": {
         "mapbox-geocode": "todo",

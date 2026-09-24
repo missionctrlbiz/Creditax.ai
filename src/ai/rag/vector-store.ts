@@ -21,7 +21,7 @@ import { getPb } from '@/lib/pocketbase';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
 import { seedKbDocs } from '@/lib/seed/demoSeed';
 import { chunkMarkdown } from './chunker';
-import { embedTexts, embedQuery, providerFromVector, type EmbeddingProvider } from './embeddings';
+import { embedTexts, embedQuery, providerFromVector, filterSameDimension, type EmbeddingProvider } from './embeddings';
 import { rankBySimilarity } from './similarity';
 
 // ---------------------------------------------------------------------------
@@ -182,14 +182,35 @@ class SeededVectorStore implements VectorStore {
   async search(query: string, topK: number): Promise<VectorSearchResult> {
     this.init();
     const { embedded, provider, demo_seed } = await withEmbeddings(this.chunks);
-    const queryVec = (await embedQuery(query)).vectors[0];
-    const ranked = rankBySimilarity(queryVec, embedded);
+    // P13 — rank on the dominant corpus width so the query and every compared
+    // chunk agree on vector dimension. Cross-provider (mismatched-width)
+    // vectors are dropped rather than silently 0-scored into the top-k.
+    const targetDim = dominantDimension(embedded.map((c) => c.embedding));
+    const comparable = filterSameDimension(
+      embedded.map((c) => c.embedding),
+      targetDim
+    );
+    const rankedChunks = embedded.filter((c) => c.embedding.length === targetDim);
+    const queryVec = (await embedQuery(query, targetDim)).vectors[0];
+    const ranked = rankBySimilarity(queryVec, rankedChunks);
     return {
       results: ranked.slice(0, topK).map((r) => ({ ...r.item, score: r.score })),
       provider,
-      demo_seed,
+      // Any drop (comparable < corpus) or a local-hash query vector means the
+      // ranking fell back partly to the offline path → keep demo_seed honest.
+      demo_seed: demo_seed || comparable.dropped || queryVec.length === 0,
     };
   }
+}
+
+/** Most common non-empty vector width in the set (the corpus's working dim). */
+function dominantDimension(vectors: number[][]): number {
+  const counts = new Map<number, number>();
+  for (const v of vectors) if (v.length) counts.set(v.length, (counts.get(v.length) ?? 0) + 1);
+  let best = 0;
+  let bestCount = -1;
+  for (const [dim, count] of counts) if (count > bestCount) { best = dim; bestCount = count; }
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -270,12 +291,20 @@ class PocketBaseVectorStore implements VectorStore {
   async search(query: string, topK: number): Promise<VectorSearchResult> {
     const chunks = await this.listChunks();
     const { embedded, provider, demo_seed } = await withEmbeddings(chunks);
-    const queryVec = (await embedQuery(query)).vectors[0];
-    const ranked = rankBySimilarity(queryVec, embedded);
+    // P13 — same dimension-consistency rule as the seeded backend: rank on
+    // the dominant corpus width; drop cross-provider vectors, never 0-score them.
+    const targetDim = dominantDimension(embedded.map((c) => c.embedding));
+    const comparable = filterSameDimension(
+      embedded.map((c) => c.embedding),
+      targetDim
+    );
+    const rankedChunks = embedded.filter((c) => c.embedding.length === targetDim);
+    const queryVec = (await embedQuery(query, targetDim)).vectors[0];
+    const ranked = rankBySimilarity(queryVec, rankedChunks);
     return {
       results: ranked.slice(0, topK).map((r) => ({ ...r.item, score: r.score })),
       provider,
-      demo_seed,
+      demo_seed: demo_seed || comparable.dropped || queryVec.length === 0,
     };
   }
 }

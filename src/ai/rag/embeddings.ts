@@ -1,18 +1,33 @@
 /**
- * P2 — embeddings provider.
+ * P13 — embeddings provider cascade (canon-reconciled).
  *
- * Primary: OpenRouter (free `nvidia/nemotron-3-embed-1b:free`, 768-dim).
- * Fallback: a deterministic local hash-embedding (64-dim) so the RAG demo still
- * ranks chunks *meaningfully* when there is no network / no API key. The
- * fallback is clearly a degradation — it keeps the demo running and honest,
- * and every response is tagged with the provider used.
+ * Order (per `.env.example` "OpenRouter → Hugging Face → Vertex → local-hash"):
+ *   1. openrouter    — 768-dim, free nemotron-3-embed-1b (OPENROUTER_API_KEY)
+ *   2. huggingface   — 384-dim all-MiniLM-L6-v2 (HF_API_KEY + HF_EMBED_MODEL)
+ *   3. vertex        — 768-dim text-embedding-005 (VERTEX_AI_PROJECT_ID +
+ *                      VERTEX_AI_REGION + GOOGLE_APPLICATION_CREDENTIALS_PATH)
+ *   4. local-hash    — 128-dim deterministic offline fallback (no key needed)
+ *
+ * Every result is tagged with the live `provider` that produced it so the
+ * caller keeps the `demo_seed` honesty flag truthful (only local-hash sets
+ * it). A *process provider lock* records the last live provider that succeeded
+ * and biases subsequent calls toward it, so a chunk batch and its query stay
+ * on the same width. A `filterSameDimension` helper drops mismatched-width
+ * vectors so cross-provider rankings stay honest (cosine of unequal-length
+ * vectors is 0 and would silently poison the top-k).
+ *
+ * The Vertex leg is best-effort: when the GCP project / service-account JSON
+ * are not configured (the current .env leaves them empty) the leg is skipped
+ * and treated as unused-track-B — it never throws, it just does not run.
  */
+
+import { createPrivateKey, sign } from 'node:crypto';
 
 export type EmbeddingProvider =
   | 'openrouter'
-  | 'local-hash'
+  | 'huggingface'
   | 'vertex'
-  | 'huggingface';
+  | 'local-hash';
 
 export interface EmbedResult {
   vectors: number[][];
@@ -20,23 +35,272 @@ export interface EmbedResult {
   dimension: number;
 }
 
+/** Known width per provider (used for the dimension-consistency check). */
+export const PROVIDER_DIMS: Record<EmbeddingProvider, number> = {
+  openrouter: 768,
+  huggingface: 384,
+  vertex: 768,
+  'local-hash': 128,
+};
+
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/embeddings';
-const OPENROUTER_MODEL = 'nvidia/nemotron-3-embed-1b:free';
+const OPENROUTER_MODEL = process.env.OPENROUTER_EMBED_MODEL || 'nvidia/nemotron-3-embed-1b:free';
+
+// NOTE: the host path must match the model you set (HF Inference API legacy
+// URL form). Swapping HF_EMBED_MODEL to a different repo requires updating the
+// host path too; otherwise this leg returns null and the cascade continues.
+const HF_ENDPOINT = 'https://api-inference.huggingface.co/models/all-MiniLM-L6-v2';
+const HF_MODEL = process.env.HF_EMBED_MODEL || 'sentence-transformers/all-MiniLM-L6-v2';
 
 const LOCAL_DIM = 128;
 export { LOCAL_DIM };
 
 /** Heuristic provider inference from a stored vector (fallback only — prefer
- * the provider recorded at ingest time). Local-hash is 128-dim; OpenRouter
- * nemotron-3-embed-1b is 768-dim. */
+ * the provider recorded at ingest time). Widths: local-hash 128, huggingface
+ * 384, openrouter/vertex 768 (openrouter reported for the default live leg). */
 export function providerFromVector(v: number[] | null | undefined): EmbeddingProvider {
   if (!v || v.length === 0) return 'local-hash';
-  return v.length === LOCAL_DIM ? 'local-hash' : 'openrouter';
+  if (v.length === LOCAL_DIM) return 'local-hash';
+  if (v.length === PROVIDER_DIMS.huggingface) return 'huggingface';
+  return 'openrouter';
 }
 
-function localKey(): string | undefined {
-  return process.env.OPENROUTER_API_KEY;
+// ---------------------------------------------------------------------------
+// Process provider lock: remember the last live provider that succeeded so
+// subsequent calls bias toward it and keep the corpus on one width.
+// ---------------------------------------------------------------------------
+let lastLiveProvider: EmbeddingProvider | null = null;
+
+/** Test / reset hook — clear the sticky provider preference. */
+export function resetEmbeddingProviderLock(): void {
+  lastLiveProvider = null;
 }
+
+/** The sticky live provider, if any (null = follow the canonical order). */
+export function activeEmbeddingProvider(): EmbeddingProvider | null {
+  return lastLiveProvider;
+}
+
+interface EmbedLeg {
+  provider: EmbeddingProvider;
+  /** Whether this leg can run with the current env (key / creds present). */
+  enabled(): boolean;
+  /** Embed a batch; returns vectors or null when the provider declines. */
+  embed(texts: string[]): Promise<number[][] | null>;
+}
+
+const openrouterLeg: EmbedLeg = {
+  provider: 'openrouter',
+  enabled: () => !!process.env.OPENROUTER_API_KEY,
+  async embed(texts) {
+    const key = process.env.OPENROUTER_API_KEY;
+    if (!key) return null;
+    try {
+      const res = await fetch(OPENROUTER_ENDPOINT, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: OPENROUTER_MODEL, input: texts, encoding_format: 'float' }),
+      });
+      if (!res.ok) {
+        console.warn(`[embeddings] OpenRouter ${res.status}, trying next leg`);
+        return null;
+      }
+      const data = await res.json();
+      const vectors: number[][] = (data.data ?? []).map((item: { embedding: number[] }) => item.embedding);
+      return vectors.length === texts.length && vectors[0]?.length ? vectors : null;
+    } catch (err) {
+      console.warn('[embeddings] OpenRouter unreachable, trying next leg', err);
+      return null;
+    }
+  },
+};
+
+const huggingfaceLeg: EmbedLeg = {
+  provider: 'huggingface',
+  enabled: () => !!process.env.HF_API_KEY,
+  async embed(texts) {
+    const key = process.env.HF_API_KEY;
+    if (!key) return null;
+    try {
+      const res = await fetch(
+        `${HF_ENDPOINT}/?model=${encodeURIComponent(HF_MODEL)}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+            'X-Use-Cached-Embeddings': 'true',
+          },
+          body: JSON.stringify({ inputs: texts, model: HF_MODEL }),
+        }
+      );
+      if (!res.ok) {
+        console.warn(`[embeddings] HuggingFace ${res.status}, trying next leg`);
+        return null;
+      }
+      const data = await res.json();
+      const vectors: number[][] | undefined = data?.embeddings;
+      return Array.isArray(vectors) && vectors.length === texts.length && vectors[0]?.length
+        ? vectors
+        : null;
+    } catch (err) {
+      console.warn('[embeddings] HuggingFace unreachable, trying next leg', err);
+      return null;
+    }
+  },
+};
+
+/**
+ * Vertex leg — REST `:predict` on text-embedding-005. Reads the service
+ * account JSON from GOOGLE_APPLICATION_CREDENTIALS_PATH, signs a short-lived
+ * JWT (HS/RSA) and exchanges it for an OAuth Bearer token. When the GCP
+ * project / region / credentials are not all set (the live .env leaves them
+ * empty) `enabled()` is false and the leg is skipped — unused-track-B.
+ */
+const vertexLeg: EmbedLeg = {
+  provider: 'vertex',
+  enabled: () =>
+    !!process.env.VERTEX_AI_PROJECT_ID &&
+    !!process.env.VERTEX_AI_REGION &&
+    !!process.env.GOOGLE_APPLICATION_CREDENTIALS_PATH,
+  async embed(texts) {
+    const project = process.env.VERTEX_AI_PROJECT_ID;
+    const region = process.env.VERTEX_AI_REGION || 'us-central1';
+    const saPath = process.env.GOOGLE_APPLICATION_CREDENTIALS_PATH;
+    if (!project || !saPath) return null;
+    try {
+      const { readFileSync } = await import('node:fs');
+      const sa = JSON.parse(readFileSync(saPath, 'utf8')) as Record<string, unknown>;
+      const token = await vertexAccessToken(sa);
+      if (!token) return null;
+      const res = await fetch(
+        `https://${region}-aiplatform.googleapis.com/v1/projects/${project}/locations/${region}/publishers/google/models/text-embedding-005:predict`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instances: texts.map((t) => ({ content: t })) }),
+        }
+      );
+      if (!res.ok) {
+        console.warn(`[embeddings] Vertex ${res.status}, trying next leg`);
+        return null;
+      }
+      const data = await res.json();
+      const vectors: number[][] = (data?.predictions ?? []).map(
+        (p: { values?: number[]; embedding?: number[] }) => p.values ?? p.embedding ?? []
+      );
+      return vectors.length === texts.length && vectors[0]?.length ? vectors : null;
+    } catch (err) {
+      console.warn('[embeddings] Vertex unavailable, trying next leg', err);
+      return null;
+    }
+  },
+};
+
+const LEGS: EmbedLeg[] = [openrouterLeg, huggingfaceLeg, vertexLeg];
+
+/**
+ * Embed a batch by walking the live legs in canonical order. When
+ * `preferProvider` is set (the sticky lock) that leg is tried first. Records
+ * the provider that succeeded on the lock, and falls back to local-hash so
+ * the caller always gets a working embedding.
+ */
+export async function embedTexts(texts: string[], preferProvider?: EmbeddingProvider): Promise<EmbedResult> {
+  const order: EmbedLeg[] = preferProvider && preferProvider !== 'local-hash'
+    ? [...LEGS.filter((l) => l.provider === preferProvider), ...LEGS.filter((l) => l.provider !== preferProvider)]
+    : LEGS;
+
+  for (const leg of order) {
+    if (!leg.enabled()) continue;
+    const vectors = await leg.embed(texts);
+    if (vectors && vectors.length === texts.length) {
+      lastLiveProvider = leg.provider;
+      return { vectors, provider: leg.provider, dimension: vectors[0].length };
+    }
+  }
+
+  // Local-hash fallback (never fails; deterministic + offline).
+  lastLiveProvider = 'local-hash';
+  return { vectors: texts.map((t) => localHashEmbed(t)), provider: 'local-hash', dimension: LOCAL_DIM };
+}
+
+/**
+ * Embed a single query. Passes the sticky provider so the query stays on the
+ * same width as the corpus; when `targetDimension` is given and the sticky
+ * provider does not match it, the query is forced through a provider that does
+ * (or local-hash) so the ranking never mixes widths.
+ */
+export async function embedQuery(query: string, targetDimension?: number): Promise<EmbedResult> {
+  let prefer = lastLiveProvider ?? undefined;
+  if (targetDimension != null) {
+    const stickyDim = prefer ? PROVIDER_DIMS[prefer] : null;
+    if (stickyDim !== targetDimension) {
+      const match = (['openrouter', 'vertex', 'huggingface', 'local-hash'] as EmbeddingProvider[]).find(
+        (p) => PROVIDER_DIMS[p] === targetDimension
+      );
+      prefer = match;
+    }
+  }
+  return embedTexts([query], prefer);
+}
+
+/**
+ * Drop vectors whose width differs from `dimension` (cross-provider safety).
+ * The vector store uses this before ranking so a query and its corpus always
+ * compare honestly. Returns the filtered + a boolean that anything was dropped.
+ */
+export function filterSameDimension(
+  vectors: number[][],
+  dimension: number
+): { kept: number[][]; dropped: boolean } {
+  const kept = vectors.filter((v) => v.length === dimension);
+  return { kept, dropped: kept.length < vectors.length };
+}
+
+// ---------------------------------------------------------------------------
+// Vertex OAuth token (service-account → short-lived Bearer).
+// ---------------------------------------------------------------------------
+
+async function vertexAccessToken(
+  sa: Record<string, unknown>
+): Promise<string | null> {
+  const saKey = sa.private_key;
+  const clientEmail = sa.client_email;
+  if (typeof saKey !== 'string' || typeof clientEmail !== 'string') return null;
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const jwtHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const jwtClaims = Buffer.from(
+      JSON.stringify({
+        iss: clientEmail,
+        aud: 'https://oauth2.googleapis.com/token',
+        scope: 'https://www.googleapis.com/auth/cloud-platform',
+        iat: now,
+        exp: now + 3600,
+        email: clientEmail,
+      })
+    ).toString('base64url');
+    const key = createPrivateKey(saKey);
+    const sig = sign('RSA-SHA256', Buffer.from(`${jwtHeader}.${jwtClaims}`), key);
+    const assertion = `${jwtHeader}.${jwtClaims}.${sig.toString('base64url')}`;
+
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${encodeURIComponent(assertion)}`,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.access_token === 'string' ? data.access_token : null;
+  } catch (err) {
+    console.warn('[embeddings] Vertex token exchange failed', err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic local-hash embedding (offline fallback).
+// ---------------------------------------------------------------------------
 
 /**
  * Stopword list (Nigerian tax-domain noise words). Removed before hashing so
@@ -56,48 +320,6 @@ function fnv1a(str: string): number {
     h = Math.imul(h, 0x01000193);
   }
   return h >>> 0;
-}
-
-/**
- * Embed a batch of texts. Tries OpenRouter when a key is present and the
- * request succeeds; otherwise returns deterministic local-hash vectors so the
- * caller always gets a working embedding.
- */
-export async function embedTexts(texts: string[]): Promise<EmbedResult> {
-  const key = localKey();
-  if (key) {
-    try {
-      const res = await fetch(OPENROUTER_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: OPENROUTER_MODEL,
-          input: texts,
-          encoding_format: 'float',
-        }),
-      });
-      if (!res.ok) {
-        // Surface the provider error, fall through to local so the demo runs.
-        console.warn(`[embeddings] OpenRouter ${res.status}, using local hash fallback`);
-      } else {
-        const data = await res.json();
-        const vectors: number[][] = (data.data ?? []).map((item: { embedding: number[] }) => item.embedding);
-        if (vectors.length === texts.length && vectors[0]?.length) {
-          return { vectors, provider: 'openrouter', dimension: vectors[0].length };
-        }
-      }
-    } catch (err) {
-      console.warn('[embeddings] OpenRouter unreachable, using local hash fallback', err);
-    }
-  }
-  return { vectors: texts.map((t) => localHashEmbed(t)), provider: 'local-hash', dimension: LOCAL_DIM };
-}
-
-export async function embedQuery(query: string): Promise<EmbedResult> {
-  return embedTexts([query]);
 }
 
 /**

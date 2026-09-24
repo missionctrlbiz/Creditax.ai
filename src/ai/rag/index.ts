@@ -24,7 +24,12 @@ export interface RagResult {
   answer: string;
   citations: string[];
   confidence: number;
-  providers: { embedding: EmbeddingProvider; llm: LLMResult['provider'] };
+  providers: {
+    embedding: EmbeddingProvider;
+    llm: LLMResult['provider'];
+    /** Concrete LLM model id used ('' for the local synthesizer). */
+    llm_model: LLMResult['model'];
+  };
   demo_seed: boolean;
   topChunks: RagChunk[];
   conversationId?: string;
@@ -122,7 +127,7 @@ export async function runRag(
     answer: llm.answer,
     citations,
     confidence: llm.confidence,
-    providers: { embedding, llm: llm.provider },
+    providers: { embedding, llm: llm.provider, llm_model: llm.model },
     demo_seed: demo_seed || llm.provider === 'local-synthesizer',
     topChunks: chunks,
     conversationId,
