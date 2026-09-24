@@ -17,6 +17,7 @@
 import { seedProfessionals, type DemoProfessional } from '@/lib/seed/demoSeed';
 import { embedTexts, embedQuery } from '@/ai/rag/embeddings';
 import { rankBySimilarity } from '@/ai/rag/similarity';
+import { mapboxGeocode, mapboxReverseGeocode, type MapboxGeoResult, type GeoSource } from '@/ai/mapbox';
 
 // ---------------------------------------------------------------------------
 // Search types
@@ -30,6 +31,12 @@ export interface SearchInput {
   state?: string;
   lat?: number;
   lng?: number;
+  /**
+   * P14 — free-text origin address (e.g. "Lekki, Lagos"). When present, the
+   * search geocodes it via Mapbox (server-side) and uses the result as the
+   * haversine origin; falls back to the demo origin when Mapbox is unavailable.
+   */
+  originAddress?: string;
   /** Haversine radius in km; default 200. */
   radiusKm?: number;
   topK?: number;
@@ -45,6 +52,15 @@ export interface SearchOutput {
   total: number;
   demo_seed: true;
   used_geo: boolean;
+  /**
+   * P14 — where the geo origin came from: `mapbox` (live geocode), `client`
+   * (caller supplied lat/lng, e.g. browser geolocation), or `demo` (the
+   * deterministic fallback origin). `demo` means the result set is not
+   * backed by a live geocode — the honest flag Track A requires.
+   */
+  geo_source?: GeoSource;
+  /** Human-readable label of the geocoded origin (forward or reverse). */
+  origin_label?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,6 +89,47 @@ function proEmbeddingText(p: DemoProfessional): string {
     `Location: ${p.location.city}, ${p.location.state}`,
     `CAC: ${p.cacNumber}`,
   ].join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// Pro listing (P14 — real lat/lng for the client-side map)
+// ---------------------------------------------------------------------------
+
+/** All seed pros with their real lat/lng, so the client can place markers. */
+export function listPros(): DemoProfessional[] {
+  return seedProfessionals.map((p) => ({ ...p }));
+}
+
+/**
+ * P14 — resolve the geo origin for a search. If the caller supplied a free-text
+ * `originAddress`, geocode it via Mapbox (server-side) → `geo_source:'mapbox'`.
+ * If lat/lng were supplied directly (e.g. browser geolocation) → `geo_source:'client'`.
+ * Otherwise → the deterministic Lagos-Island demo origin → `geo_source:'demo'`.
+ */
+export async function resolveOrigin(
+  input: SearchInput
+): Promise<{ origin: { lat: number; lng: number } | null; geo_source: GeoSource; label?: string }> {
+  if (input.originAddress?.trim()) {
+    const geo: MapboxGeoResult | null = await mapboxGeocode(input.originAddress);
+    if (geo) return { origin: { lat: geo.lat, lng: geo.lng }, geo_source: 'mapbox', label: geo.label };
+    // No live geocode (token absent / request failed): demo fallback, honestly flagged.
+    return {
+      origin: { lat: 6.4281, lng: 3.4214 },
+      geo_source: 'demo',
+      label: 'Lagos Island (demo fallback — geocode unavailable)',
+    };
+  }
+  if (typeof input.lat === 'number' && typeof input.lng === 'number') {
+    return { origin: { lat: input.lat, lng: input.lng }, geo_source: 'client' };
+  }
+  // No geo requested at all.
+  return { origin: null, geo_source: 'demo' };
+}
+
+/** P14 — reverse-geocode for "near me" (client lat/lng → human address). */
+export async function nearMeLabel(lat: number, lng: number): Promise<string | null> {
+  const r: MapboxGeoResult | null = await mapboxReverseGeocode(lat, lng);
+  return r?.label ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -113,7 +170,37 @@ export function searchPros(input: SearchInput): SearchOutput {
   }
 
   const total = list.length;
-  return { results: list.slice(0, topK), total, demo_seed: true, used_geo: useGeo };
+  return {
+    results: list.slice(0, topK),
+    total,
+    demo_seed: true,
+    used_geo: useGeo,
+    // P14 — with direct lat/lng the origin is client-supplied; when no geo at
+    // all was requested, the flag reads demo (no origin used).
+    geo_source: useGeo ? 'client' : 'demo',
+  };
+}
+
+/**
+ * P14 — async geo-search that also accepts a free-text `originAddress`. The
+ * address is geocoded via Mapbox (server-side) when a token is present, and
+ * the resulting lat/lng drives the same haversine filter + nearest-first
+ * sort as `searchPros`. Falls back to the deterministic Lagos-Island demo
+ * origin when Mapbox is unavailable, flagged `geo_source: 'demo'`.
+ */
+export async function searchProsGeo(input: SearchInput): Promise<SearchOutput> {
+  if (input.originAddress?.trim()) {
+    const { origin, geo_source, label } = await resolveOrigin(input);
+    if (!origin) {
+      const out = searchPros(input);
+      return { ...out, geo_source: 'demo' };
+    }
+    // Re-run the deterministic search using the resolved lat/lng.
+    const out = searchPros({ ...input, lat: origin.lat, lng: origin.lng, originAddress: undefined });
+    return { ...out, geo_source, used_geo: true, origin_label: label };
+  }
+  // No address geocoding needed.
+  return searchPros(input);
 }
 
 // ---------------------------------------------------------------------------

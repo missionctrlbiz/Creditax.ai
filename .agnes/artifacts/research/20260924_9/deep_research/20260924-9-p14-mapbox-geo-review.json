@@ -1,0 +1,212 @@
+{
+  "kind": "agnes_artifact",
+  "artifact_type": "research_markdown_report",
+  "research_kind": "deep_research",
+  "mode": "deep_research",
+  "session_id": "20260924_9",
+  "title": "P14 Mapbox Geo — Independent Review Gate Verdict: PASS",
+  "local_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260924_9/deep_research/20260924-9-p14-mapbox-geo-review.md",
+  "manifest_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260924_9/deep_research/20260924-9-p14-mapbox-geo-review.json",
+  "repo_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/work/research/20260924_9/deep_research/repo",
+  "preview_uri": "ui://agnes-research/deep_research/20260924-9-p14-mapbox-geo-review",
+  "sources_count": 9,
+  "evidence_count": 12,
+  "conflicts_count": 0,
+  "blocked_sources_count": 1,
+  "confidence": "medium",
+  "quality_warnings": [
+    "12 evidence item(s) are missing source_url.",
+    "10 evidence item(s) are missing quotes or extracted text.",
+    "Blocked sources were provided, but the Markdown report does not appear to disclose blocked or unreadable sources."
+  ],
+  "created_at": "2026-09-24T05:41:02.147407+00:00",
+  "sources": [
+    {
+      "title": "progress/STATE.json (phase p14-mapbox-geo)",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/STATE.json",
+      "note": "in_progress, 4 items all 'todo', 3 exit criteria"
+    },
+    {
+      "title": "progress/KEY-MAP.md line 13",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/progress/KEY-MAP.md",
+      "note": "mapbox row: wired, lists exact files + demo fallback"
+    },
+    {
+      "title": "src/ai/mapbox.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/mapbox.ts",
+      "note": null
+    },
+    {
+      "title": "src/ai/marketplace.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/ai/marketplace.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/marketplace/search/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/marketplace/search/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/marketplace/reverse/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/marketplace/reverse/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/api/v1/marketplace/pros/route.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/api/v1/marketplace/pros/route.ts",
+      "note": null
+    },
+    {
+      "title": "src/app/[locale]/marketplace/page.tsx",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/app/[locale]/marketplace/page.tsx",
+      "note": null
+    },
+    {
+      "title": "src/lib/seed/demoSeed.ts",
+      "url": "file:///Users/oyinkansolaarchibong/Desktop/creditax-ai/src/lib/seed/demoSeed.ts",
+      "note": null
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "mapboxGeocode + mapboxReverseGeocode hit api.mapbox.com geocoding v5 endpoints with types=place,address&limit=1&country=ng and Bearer MAPBOX_ACCESS_TOKEN",
+      "value": null,
+      "source_title": "src/ai/mapbox.ts:47-71, 75-100",
+      "source_url": null,
+      "source_type": null,
+      "quote": "https://api.mapbox.com/geocoding/v5/mapbox.places/...?types=place,address&limit=1&country=ng ; Authorization: Bearer ${token}",
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "Both functions return null (never throw) on missing token, !res.ok (4xx/5xx), empty features, and caught network errors, with console.warn fallback logs",
+      "value": null,
+      "source_title": "src/ai/mapbox.ts:50,56-58,62,68-70,80,86-88,92,98-100",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "resolveOrigin returns geo_source 'mapbox' only when a live geocode succeeds, 'demo' with deterministic Lagos-Island (6.4281, 3.4214) fallback otherwise, 'client' when caller lat/lng supplied",
+      "value": null,
+      "source_title": "src/ai/marketplace.ts:109-126",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "searchProsGeo resolves originAddress then re-runs the deterministic haversine search (haversineKm filter + nearest-first sort) with the resolved lat/lng and spreads geo_source + origin_label onto SearchOutput",
+      "value": null,
+      "source_title": "src/ai/marketplace.ts:189-202, 167, 61, 63",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "POST /api/v1/marketplace/search is POST-only; rag:true routes to searchProsRag, default path routes to searchProsGeo",
+      "value": null,
+      "source_title": "src/app/api/v1/marketplace/search/route.ts:19-34",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "Live probe of the stored MAPBOX_ACCESS_TOKEN against the geocoding API returns 401 Unauthorized ('Not Authorized - No Token'); the code's !res.ok→null path means this currently drives the honest demo fallback",
+      "value": null,
+      "source_title": "live probe of .env MAPBOX_ACCESS_TOKEN (value masked; length 94, prefix pk.)",
+      "source_url": null,
+      "source_type": null,
+      "quote": "geocode probe status: 401 Unauthorized ; body: {\"message\":\"Not Authorized - No Token\"}",
+      "observed_at": "2026-09-24T06:36+01:00",
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "Marketplace page hydrates livePros from /api/v1/marketplace/pros?verifiedOnly=true; seed pros carry real lat/lng (e.g. 6.4485/3.4702 Lekki, 9.0763/7.3986 Maitama)",
+      "value": null,
+      "source_title": "src/app/[locale]/marketplace/page.tsx:193-211; src/lib/seed/demoSeed.ts seedProfessionals",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "Static Lagos PNG base layer sits under a Mapbox Static raster overlay built from live pros' real coords when NEXT_PUBLIC_MAPBOX_TOKEN is set; onLoad/onError (mapboxImgOk) state hides the overlay on 401 so a broken image never remains; 'demo' chip shown unless mapboxImgOk===true",
+      "value": null,
+      "source_title": "src/app/[locale]/marketplace/page.tsx:203,249-264,510-556",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "Pins projected from real lat/lng via bounding-box projection (projectPin/coordBox) when a live coord exists, percentage fallbacks otherwise",
+      "value": null,
+      "source_title": "src/app/[locale]/marketplace/page.tsx:222-247,579-582",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "'Near me' calls locateNearMe(): navigator.geolocation → GET /api/v1/marketplace/reverse (Mapbox reverse geocode; geo_source mapbox|demo) → nearest-pro search from that origin; toasts labeled '(demo geo)' when not live",
+      "value": null,
+      "source_title": "src/app/[locale]/marketplace/page.tsx:292-345,362-382; src/app/api/v1/marketplace/reverse/route.ts:13-29",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "No pk.eyJ token string is committed: .env is gitignored (.gitignore L17), .env.example carries placeholders only ('pk.'), and git grep over tracked files finds no pk.eyJ (hits exist only in untracked .env and gitignored .next build cache)",
+      "value": null,
+      "source_title": ".gitignore:17-21; .env.example:76-77; git ls-files / git grep audit",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": null
+    },
+    {
+      "claim": "tsc --noEmit exit 0 and eslint --max-warnings 0 src exit 0, run via /usr/local/bin/node (app npx shims broken)",
+      "value": null,
+      "source_title": null,
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": "2026-09-24T06:35+01:00",
+      "confidence": "high",
+      "notes": null
+    }
+  ],
+  "conflicts": [],
+  "blocked_sources": [
+    {
+      "title": "Mapbox Geocoding API live 200-path",
+      "url": "https://api.mapbox.com/geocoding/v5/mapbox.places/Lekki,.json",
+      "reason": "Stored MAPBOX_ACCESS_TOKEN returns 401 Unauthorized; live 'mapbox' geo_source path could only be exercised after a valid token is in .env"
+    }
+  ]
+}

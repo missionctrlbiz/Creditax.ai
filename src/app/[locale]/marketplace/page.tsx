@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -187,6 +187,84 @@ export default function MarketplacePage() {
   const [verifiedOnly, setVerifiedOnly] = useState(true);
   const [activeProId, setActiveProId] = useState<string | null>(professionals[0].id);
 
+  // P14 — live pro book (real lat/lng from /marketplace/pros). When the store
+  // hydrates we place map markers on true coordinates instead of the
+  // display list's percentage offsets; the display list is the offline fallback.
+  const [livePros, setLivePros] = useState<
+    { id: string; name: string; location: { lat: number; lng: number }; verified: boolean }[]
+  >([]);
+
+  // P14 — last "near me" result (browser geolocation → Mapbox reverse geocode).
+  const [nearMe, setNearMe] = useState<{ lat: number; lng: number; label: string; geo_source: string } | null>(null);
+  const [locating, setLocating] = useState(false);
+  // P14 — whether the live Mapbox static raster actually loaded (a 401/invalid
+  // token must not leave the user staring at a broken image; the static PNG
+  // base layer shows through and the "demo" chip stays honest).
+  const [mapboxImgOk, setMapboxImgOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    // P14 — hydrate the full pro book (verified + unverified) so every pin
+    // gets a real coordinate; the verified-only filter is applied in the view.
+    fetch('/api/v1/marketplace/pros')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && Array.isArray(d?.pros) && d.pros.length) setLivePros(d.pros);
+      })
+      .catch(() => {
+        /* offline — keep the static display list */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Bounding box of the coords actually shown, padded, used to project
+  // real lat/lng into the overlay pin positions (percentages).
+  const coordBox = useMemo(() => {
+    const withCoords = (livePros.length > 0 ? livePros : []) as { location: { lat: number; lng: number } }[];
+    if (withCoords.length === 0) return null;
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    for (const p of withCoords) {
+      minLat = Math.min(minLat, p.location.lat);
+      maxLat = Math.max(maxLat, p.location.lat);
+      minLng = Math.min(minLng, p.location.lng);
+      maxLng = Math.max(maxLng, p.location.lng);
+    }
+    const pad = Math.max(0.01, (maxLat - minLat) * 0.15);
+    return { minLat: minLat - pad, maxLat: maxLat + pad, minLng: minLng - pad, maxLng: maxLng + pad };
+  }, [livePros]);
+
+  // Project one pro's real coords to an overlay top/left percentage.
+  const projectPin = (lat: number, lng: number): { top: string; left: string } => {
+    if (!coordBox) return { top: '50%', left: '50%' };
+    const top = 100 - ((lat - coordBox.minLat) / (coordBox.maxLat - coordBox.minLat)) * 100;
+    const left = ((lng - coordBox.minLng) / (coordBox.maxLng - coordBox.minLng)) * 100;
+    return { top: `${Math.max(2, Math.min(98, top)).toFixed(1)}%`, left: `${Math.max(2, Math.min(98, left)).toFixed(1)}%` };
+  };
+
+  // P14 — Mapbox Static raster built from the real pro coordinates when the
+  // client token is present; otherwise the static Lagos PNG fallback.
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
+  const mapSrc = useMemo(() => {
+    if (!mapboxToken) return null;
+    const withCoords = livePros.length > 0 ? livePros : [];
+    if (withCoords.length === 0) return null;
+    const markers = withCoords
+      .map(
+        (p) =>
+          `marker-symbol%3Dpin-s%7Cmarker-color%3A0D7377%7C${p.location.lat.toFixed(5)},${p.location.lng.toFixed(5)}`
+      )
+      .join(';');
+    // `auto` viewBox → Mapbox fits the markers into the requested width/height.
+    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${markers}/auto/800/620?attribution=true&logo=true&access_token=${encodeURIComponent(
+      mapboxToken
+    )}`;
+  }, [mapboxToken, livePros]);
+
   const serviceOptions = Array.from(
     new Set(professionals.flatMap((pro) => pro.services))
   ).sort();
@@ -210,18 +288,90 @@ export default function MarketplacePage() {
     });
   };
 
-  // marketplace P5: ask the live geo-search endpoint (Lagos Island origin) for
-  // the nearest verified pro; fall back to the demo toast when offline.
+  // P14 — "Near me": ask the browser for the real location, reverse-geocode
+  // it through Mapbox (server), then run the live nearest-pro search from
+  // that origin. Every step degrades honestly to the demo toast.
+  const locateNearMe = async () => {
+    if (!('geolocation' in navigator)) {
+      void showMapToast();
+      return;
+    }
+    setLocating(true);
+    try {
+      const pos = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+          (err) => reject(err),
+          { timeout: 8000 }
+        );
+      });
+
+      let label: string | null = null;
+      let geoSource = 'demo';
+      try {
+        const revRes = await fetch(
+          `/api/v1/marketplace/reverse?lat=${pos.lat}&lng=${pos.lng}`
+        );
+        if (revRes.ok) {
+          const rev = await revRes.json();
+          if (rev?.label) {
+            label = rev.label;
+            geoSource = rev.geo_source ?? 'demo';
+          }
+        }
+      } catch {
+        /* offline reverse-geocode — keep the raw coords */
+      }
+
+      setNearMe({ ...pos, label: label ?? `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`, geo_source: geoSource });
+
+      // Now find the nearest verified pro from this real origin.
+      try {
+        const res = await fetch('/api/v1/marketplace/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verifiedOnly: true, lat: pos.lat, lng: pos.lng, radiusKm: 250, topK: 1 }),
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const top = d.results?.[0];
+          if (top) {
+            toast('Near you', {
+              description: `Nearest verified pro: ${top.name}${top.distanceKm ? ` · ${top.distanceKm.toFixed(1)} km (${top.location.city})` : ''}.${
+                geoSource === 'mapbox' ? '' : ' (demo geo)'
+              }`,
+              icon: <Locate className="w-4 h-4 text-brand-action" />,
+            });
+            return;
+          }
+        }
+      } catch {
+        /* offline search — keep the geolocation toast */
+      }
+
+      toast('Near you', {
+        description: label ? `You are near: ${label}` : 'Location locked — no verified pros within radius.',
+        icon: <Locate className="w-4 h-4 text-brand-action" />,
+      });
+    } catch {
+      setLocating(false);
+      void showMapToast();
+    }
+  };
+  // P14 — the "Search" button fallback. Uses the last "near me" location when
+  // one was locked, otherwise the deterministic Lagos-Island demo origin.
   const showMapToast = async () => {
+    const origin = nearMe ? { lat: nearMe.lat, lng: nearMe.lng } : { lat: 6.4281, lng: 3.4214 };
+    const source = nearMe ? nearMe.geo_source : 'demo';
     try {
       const res = await fetch('/api/v1/marketplace/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           verifiedOnly: true,
-          lat: 6.4281,
-          lng: 3.4214, // Victoria Island
-          radiusKm: 25,
+          lat: origin.lat,
+          lng: origin.lng,
+          radiusKm: 250,
           topK: 1,
         }),
       });
@@ -230,7 +380,9 @@ export default function MarketplacePage() {
         const top = d.results?.[0];
         if (top) {
           toast('Near you', {
-            description: `Nearest verified pro: ${top.name}${top.distanceKm ? ` · ${top.distanceKm.toFixed(1)} km (${top.location.city})` : ''}.`,
+            description: `Nearest verified pro: ${top.name}${top.distanceKm ? ` · ${top.distanceKm.toFixed(1)} km (${top.location.city})` : ''}.${
+              source === 'mapbox' ? '' : ' (demo geo)'
+            }`,
             icon: <Locate className="w-4 h-4 text-brand-action" />,
           });
           return;
@@ -240,7 +392,7 @@ export default function MarketplacePage() {
       /* offline — fall through to the demo toast */
     }
     toast(MAP_TOAST_TITLE, {
-      description: MAP_TOAST_BODY,
+      description: source === 'mapbox' ? 'Live location locked — no pros within radius.' : MAP_TOAST_BODY,
       icon: <Locate className="w-4 h-4 text-brand-action" />,
     });
   };
@@ -356,32 +508,58 @@ export default function MarketplacePage() {
         <section className="py-6">
           <div className="max-w-[1440px] mx-auto px-6 md:px-10">
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Map panel — static image, no live map requests */}
+              {/* Map panel — live Mapbox static raster when the client token +
+                  real pro coords are present; static Lagos PNG fallback. */}
               <div className="lg:w-[42%] lg:sticky lg:top-[124px] self-start">
                 <Card className="relative overflow-hidden bg-surface-raised border-border-default p-0">
                   <div className="relative h-[380px] sm:h-[440px] lg:h-[620px]">
+                    {/* Base layer: guaranteed static Lagos raster. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/images/marketplace/map-lagos.png"
-                      alt="Static map of Lagos showing the locations of listed tax professionals"
+                      alt="Map of Lagos showing the locations of listed tax professionals"
                       width={1280}
                       height={716}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
+                    {/* Overlay: live Mapbox static raster with real pro
+                        coordinates. Rendered on top of the base layer and
+                        self-hides on load error (e.g. 401/invalid token), so
+                        the guaranteed PNG always shows through. */}
+                    {mapSrc && mapboxImgOk !== false && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={mapSrc}
+                        alt=""
+                        width={800}
+                        height={620}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onLoad={() => setMapboxImgOk(true)}
+                        onError={() => setMapboxImgOk(false)}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/30 pointer-events-none" />
 
                     {/* Top row: count chip + near me */}
                     <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3">
                       <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-overlay border border-border-strong px-3 py-1.5 text-[12px] text-text-secondary backdrop-blur-sm">
                         <MapPin className="w-3.5 h-3.5 text-brand-action" />
-                        {visiblePros.length} verified pros near Lagos Island
+                        {nearMe
+                          ? `${visiblePros.length} verified pros near ${nearMe.label}`
+                          : `${visiblePros.length} verified pros near Lagos Island`}
+                        {(!mapSrc || mapboxImgOk !== true) && (
+                          <span className="ml-1 font-mono text-[10px] text-text-muted">demo</span>
+                        )}
                       </span>
                       <button
                         type="button"
-                        onClick={showMapToast}
-                        title={MAP_TOAST_TITLE}
-                        aria-label={MAP_TOAST_TITLE}
-                        className="inline-flex items-center gap-1.5 rounded-pill bg-surface-overlay/90 border border-border-strong px-3 py-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary hover:border-border-brand backdrop-blur-sm transition-colors cursor-pointer"
+                        onClick={locateNearMe}
+                        disabled={locating}
+                        title={locating ? 'Locating…' : 'Use my location'}
+                        aria-label={locating ? 'Locating…' : 'Use my location'}
+                        className="inline-flex items-center gap-1.5 rounded-pill bg-surface-overlay/90 border border-border-strong px-3 py-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary hover:border-border-brand backdrop-blur-sm transition-colors cursor-pointer disabled:opacity-60"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -391,14 +569,19 @@ export default function MarketplacePage() {
                           height={15}
                           className="w-[15px] h-[15px] object-contain"
                         />
-                        Near me
+                        {locating ? 'Locating…' : 'Near me'}
                       </button>
                     </div>
 
-                    {/* Pins */}
+                    {/* Pins — projected from real lat/lng when the live book
+                        has hydrated, otherwise the display-list percentages. */}
                     {professionals.map((pro) => {
                       const isActive = activeProId === pro.id;
                       const isVisible = visiblePros.some((p) => p.id === pro.id);
+                      const liveCoord = livePros.find((p) => p.id === pro.id);
+                      const pin = liveCoord?.location
+                        ? projectPin(liveCoord.location.lat, liveCoord.location.lng)
+                        : { top: pro.pin.top, left: pro.pin.left };
                       return (
                         <button
                           key={pro.id}
@@ -407,7 +590,7 @@ export default function MarketplacePage() {
                           aria-label={`Show ${pro.name} on the map`}
                           aria-pressed={isActive}
                           onClick={() => setActiveProId(pro.id)}
-                          style={{ top: pro.pin.top, left: pro.pin.left }}
+                          style={{ top: pin.top, left: pin.left }}
                           className={`absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full border transition-all duration-200 cursor-pointer ${
                             isActive
                               ? 'w-9 h-9 bg-brand-action border-white/70 shadow-modal z-10'

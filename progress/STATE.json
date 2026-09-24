@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p14-mapbox-geo",
+  "current_phase": "p15-mono-payments",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -567,29 +567,40 @@
     },
     {
       "id": "p14-mapbox-geo",
-      "status": "in_progress",
+      "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
       "attempts": 1,
       "scope": "Plug MAPBOX_ACCESS_TOKEN / NEXT_PUBLIC_MAPBOX_TOKEN into marketplace geocoding + map view ('near me'), replacing the simulated haversine/geo demo with real geocoded results where the key is present.",
       "items": {
-        "mapbox-geocode": "todo",
-        "marketplace-map-view": "todo",
-        "near-me-live": "todo",
-        "geo-demo_seed-fallback": "todo"
+        "mapbox-geocode": "done",
+        "marketplace-map-view": "done",
+        "near-me-live": "done",
+        "geo-demo_seed-fallback": "done"
       },
       "exit_criteria": [
         "Marketplace search geocodes addresses via Mapbox Geocoding API when the token is present; falls back to the deterministic demo geo with a geo:demo flag otherwise",
         "/marketplace map view renders markers at real lat/lng; 'near me' uses browser geolocation -> Mapbox reverse geocode",
         "Token read from env (server-side MAPBOX_ACCESS_TOKEN, client NEXT_PUBLIC_MAPBOX_TOKEN); no key committed; lint 0"
       ],
-      "last_review": null,
-      "last_updated": "2026-09-24T00:42:00+01:00"
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-24T06:25:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox)"
+        },
+        "honesty_check": "pass (Mapbox 401/absent -> null -> geo_source:demo, never a fake live geocode; static PNG base layer always shows)",
+        "note": "Ground: live MAPBOX token currently 401 (present but not authorized for Geocoding) -> the honest demo path is the live-tested branch. New: src/ai/mapbox.ts (mapboxGeocode/mapboxReverseGeocode, country=ng, null-on-failure); marketplace.ts SearchInput.originAddress + resolveOrigin + searchProsGeo + listPros + nearMeLabel; routes /marketplace/reverse + /marketplace/pros; search route -> searchProsGeo. Page: livePros hydration, Mapbox Static overlay w/ onLoad/onError (broken-token safe), real-coord bbox pin projection, locateNearMe (browser geolocation -> reverse geocode -> nearest-pro search), demo toasts labeled. Non-blocking: fix the 401 token for a positive live-geo smoke test; unverified seed pro p-4 falls to % pins."
+      },
+      "last_updated": "2026-09-24T06:25:00+01:00"
     },
     {
       "id": "p15-mono-payments",
-      "status": "queued",
+      "status": "in_progress",
       "gate": "gated_until_p12_complete",
-      "attempts": 0,
+      "attempts": 1,
       "scope": "Plug Mono SANDBOX keys (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox) into the credit data provider interface + a payments/charge sandbox path. Sandbox only — never wired to production; keep demo_seed honest and label everything sandbox. Payments: research/API-Research.md recommends Flutterwave as the PSP for a Nigerian-focused MVP (Paystack as alternate); wire the PSP that has live sandbox keys in .env and record the choice in progress/KEY-MAP.md.",
       "items": {
         "mono-connect-sandbox": "todo",
