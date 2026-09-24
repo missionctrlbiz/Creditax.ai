@@ -31,13 +31,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const kvn = req.nextUrl.searchParams.get('kvn') ?? '';
 
   let result: CreditScoreResult;
+  let monoAttempted = false;
   if (kv && kvn && monoEnabled()) {
+    monoAttempted = true;
     const live = await monoSandboxCreditScore(kv, kvn);
     result = live ?? demoCreditScore();
   } else {
     result = demoCreditScore();
   }
 
+  const monoSandboxHit = result.data_source === 'mono-sandbox';
   return NextResponse.json({
     ...result,
     factors: result.factors,
@@ -45,16 +48,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     reference: [
       'Score = f(income, stability, savings rate, debt burden, tax compliance)',
       'Tax compliance is a first-class factor (Creditax differentiator)',
-      result.data_source === 'mono-sandbox'
+      monoSandboxHit
         ? 'Income source: Mono sandbox analyzed flows (kv/kvn supplied); non-income factors fall back to the demo profile.'
         : 'Deterministic demo seed — the "filing streak beats bank balance" story.',
     ],
     mono: {
-      sandbox: result.data_source === 'mono-sandbox',
+      sandbox: monoSandboxHit,
       enabled: monoEnabled(),
-      note: result.data_source === 'mono-sandbox'
+      attempted: monoAttempted,
+      note: monoSandboxHit
         ? 'Live Mono sandbox data (test key); demo_seed stays true because these are sandbox test values.'
-        : 'Mono not used for this request (no kv/kvn, or not in sandbox mode).',
+        : monoAttempted
+          ? 'Mono sandbox call attempted but failed closed (invalid/missing secret key, bad kv/kvn, or unreachable) — demo seed used.'
+          : 'Mono not used for this request (no kv/kvn, or not in sandbox mode).',
     },
     demo_seed: result.demo_seed,
   });

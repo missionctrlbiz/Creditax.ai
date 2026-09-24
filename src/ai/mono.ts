@@ -44,28 +44,43 @@ export function monoEnabled(): boolean {
   return !!key && env === 'sandbox';
 }
 
-const SANDBOX_BASE = 'https://sandbox.api.mono.co';
+// Mono uses one host for sandbox + production (docs.mono.co/docs/environments);
+// sandbox vs live is selected by the KEY (test_sk_* vs live_sk_*), not the host.
+// The old sandbox.api.mono.co host no longer resolves.
+const SANDBOX_BASE = 'https://api.withmono.com';
 
 /**
  * Resolve the Mono base URL. When the deployment is in sandbox mode the host
- * is pinned to the sandbox endpoint regardless of `MONO_BASE_URL` — this makes
- * "a sandbox key can never be aimed at a production host" a code invariant,
- * not just an env-var convention (review gate, p15). In sandbox mode a
- * non-sandbox MONO_BASE_URL is ignored (and the operator is warned once, with
+ * is pinned to the documented Mono API host regardless of `MONO_BASE_URL` — a
+ * sandbox key can never be aimed at an arbitrary production host via env alone
+ * (and the old dead sandbox.api.mono.co default is replaced). In sandbox mode
+ * a non-Mono MONO_BASE_URL is ignored (and the operator is warned once, with
  * the masked host, not the key).
  */
 function baseUrl(): string {
   const configured = (process.env.MONO_BASE_URL || SANDBOX_BASE).replace(/\/$/, '');
-  if ((process.env.MONO_ENVIRONMENT || '').toLowerCase() === 'sandbox' && configured !== SANDBOX_BASE) {
-    console.warn(`[mono] MONO_ENVIRONMENT=sandbox — pinning base URL to ${SANDBOX_BASE} (ignoring a non-sandbox MONO_BASE_URL).`);
-    return SANDBOX_BASE;
+  if ((process.env.MONO_ENVIRONMENT || '').toLowerCase() === 'sandbox') {
+    const host = (() => {
+      try {
+        return new URL(configured).host;
+      } catch {
+        return configured;
+      }
+    })();
+    if (host !== 'api.withmono.com') {
+      console.warn(`[mono] MONO_ENVIRONMENT=sandbox — pinning base URL to ${SANDBOX_BASE} (ignoring MONO_BASE_URL host ${host}).`);
+      return SANDBOX_BASE;
+    }
   }
   return configured;
 }
 
 function authHeaders(): Record<string, string> {
-  // Mono uses a plain `Authorization: <key>` header (no Bearer prefix).
-  return { Authorization: process.env.MONO_API_KEY ?? '', Accept: 'application/json' };
+  // Current Mono docs: mono-sec-key holds the app secret (test_sk_* / live_sk_*).
+  // MONO_API_KEY may still be a public test_pk_* — that fails closed on v2 with
+  // "invalid secret key" (honest 401 → null → demo seed).
+  const key = process.env.MONO_API_KEY ?? '';
+  return { 'mono-sec-key': key, Authorization: key, Accept: 'application/json' };
 }
 
 function parseStatus(data: { status_code?: number; status?: string }): boolean {
