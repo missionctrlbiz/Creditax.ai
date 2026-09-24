@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "none (chain complete \u2014 all phases reviewed_pass)",
+  "current_phase": "none (p17 complete)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -666,17 +666,17 @@
     },
     {
       "id": "p17-full-access-followups",
-      "status": "queued",
+      "status": "reviewed_pass",
       "gate": "gated_full_access_machine",
-      "attempts": 0,
+      "attempts": 1,
       "scope": "Blocked follow-ups the sandboxed authoring box could not finish. Runs on a full-access machine (real network, no OS EPERM sandbox, browser + dev server). NOT new runner phases, NOT scheduled tasks \u2014 run them in opencode from the hand-off prompt in progress/CONTINUATION-FULL-ACCESS.md, one commit per step (prefix fa-<n>:).",
       "items": {
-        "fa-1-build-gate-closeout": "todo",
-        "fa-2-mapbox-live-smoke": "todo",
-        "fa-3-mono-live-2xx": "todo",
-        "fa-4-psp-test-keys": "todo",
-        "fa-5-screenshot-capture": "todo",
-        "fa-6-investor-deck-paper": "todo"
+        "fa-1-build-gate-closeout": "done",
+        "fa-2-mapbox-live-smoke": "done",
+        "fa-3-mono-live-2xx": "blocked_honest",
+        "fa-4-psp-test-keys": "skipped_no_keys",
+        "fa-5-screenshot-capture": "done",
+        "fa-6-investor-deck-paper": "done"
       },
       "exit_criteria": [
         "fa-1: `npm run build` green; every STATE.json phase whose last_review.gates.build said env_blocked flipped to pass",
@@ -687,8 +687,21 @@
         "fa-6: landscape investor deck (PPTX) consuming fa-5 captures + academic-paper outline (A4, 10-20pp) under research/"
       ],
       "runbook": "progress/CONTINUATION-FULL-ACCESS.md",
-      "last_review": null,
-      "last_updated": "2026-09-24T12:00:00+01:00"
+      "last_review": {
+        "at": "2026-09-24T14:45:00+01:00",
+        "outcome": "reviewed_pass (with honest fa-3 blocked + fa-4 skipped)",
+        "gates": {
+          "build": "pass (full-access run 2026-09-24)",
+          "fa-1": "pass — next build exit 0; 15 phases env_blocked→pass",
+          "fa-2": "pass — reverse+search geo_source=mapbox; static raster 200",
+          "fa-3": "blocked_honest — host fixed to api.withmono.com; public test_pk key 401s (needs test_sk_* + sandbox kv/kvn); demo_seed path verified with mono.attempted=true",
+          "fa-4": "skipped_no_keys — PSP keys empty; charged:false invariant verified live",
+          "fa-5": "pass — 37/37 captures A-G desktop+mobile",
+          "fa-6": "pass — 12-slide landscape PPTX + academic-paper-outline.md"
+        },
+        "note": "p17 closed on full-access machine. Remaining live flips are operator actions (supply test_sk Mono secret + sandbox kv/kvn; PSP test keys) — no code change needed. Never committed .env or key values."
+      },
+      "last_updated": "2026-09-24T14:45:00+01:00"
     }
   ],
   "cleaned_up": {
@@ -699,37 +712,43 @@
     {
       "id": "fa-1",
       "item": "Close the env-blocked build gate",
+      "status": "done",
       "detail": "Every phase's last_review shows build=env_blocked (Turbopack EPERM in the authoring sandbox). Run `npm run build` on a full-access machine; on green, flip each phase's gates.build to pass and note it in CHANGELOG.md."
     },
     {
       "id": "fa-2",
       "item": "Mapbox live smoke test",
+      "status": "done",
       "detail": "Stored MAPBOX token currently 401s on Geocoding (present, not authorized). Refresh/authorize a token with Geocoding v5 + Static Images scopes, then smoke: GET /api/v1/marketplace/reverse?lat=6.45&lng=3.39 returns geo_source=mapbox; search with originAddress geocodes; /marketplace map overlay loads a real raster."
     },
     {
       "id": "fa-3",
       "item": "Mono sandbox live 2xx path",
-      "detail": "sandbox.api.mono.co was unreachable from the sandboxed box (fail-closed null -> demo seed). From a networked machine, GET /api/v1/credit/score?kv=<sandbox kv>&kvn=<sandbox kvn> should return data_source=mono-sandbox (not demo_seed) when 2xx."
+      "status": "blocked_honest",
+      "detail": "sandbox.api.mono.co was unreachable from the sandboxed box (fail-closed null -> demo seed). From a networked machine, GET /api/v1/credit/score?kv=<sandbox kv>&kvn=<sandbox kvn> should return data_source=mono-sandbox (not demo_seed) when 2xx. BLOCKED: host fixed to api.withmono.com; env has public test_pk only (401 secret invalid); no kv/kvn committed. Operator must supply test_sk_* + sandbox Connect kv/kvn to flip."
     },
     {
       "id": "fa-4",
       "item": "PSP test keys",
-      "detail": "FLUTTERWAVE/PAYSTACK test keys are empty -> psp=none, charged:false. If test keys are added, verify pspConfigured() resolves the provider and quota/tier billing surfaces it (charge still charged:false by code guarantee)."
+      "status": "skipped_no_keys",
+      "detail": "FLUTTERWAVE/PAYSTACK test keys are empty -> psp=none, charged:false. If test keys are added, verify pspConfigured() resolves the provider and quota/tier billing surfaces it (charge still charged:false by code guarantee). SKIPPED — keys empty; invariant verified live."
     },
     {
       "id": "fa-5",
       "item": "Screenshot capture A-G",
-      "detail": "assets/demo-screenshots/README.md manifest (sections A-G mapped to the 8-min demo script). Needs dev server + browser: desktop 1440x900 (feeds the deck) + mobile 375x812 for key flows. Every capture must show demo_seed/live badge honestly."
+      "status": "done",
+      "detail": "assets/demo-screenshots/README.md manifest (sections A-G mapped to the 8-min demo script). Needs dev server + browser: desktop 1440x900 (feeds the deck) + mobile 375x812 for key flows. Every capture must show demo_seed/live badge honestly. CAPTURED: 37/37 via scripts/capture-demo-screenshots.mjs."
     },
     {
       "id": "fa-6",
       "item": "Investor deck (landscape) + paper outline",
-      "detail": "Per mvp-demo-plan \u00a77 order: screenshots -> client pitches -> investor deck + academic paper (A4, 10-20pp: idea, context, architecture, cost-benefit, investment, revenue streams, 3-year forecast). Deck consumes fa-5 captures."
+      "status": "done",
+      "detail": "Per mvp-demo-plan §7 order: screenshots -> client pitches -> investor deck + academic paper (A4, 10-20pp: idea, context, architecture, cost-benefit, investment, revenue streams, 3-year forecast). Deck consumes fa-5 captures. DONE: research/creditax-investor-deck.pptx (12 slides) + research/academic-paper-outline.md."
     }
   ],
   "gates": {
     "gated_until_p12_complete": "DO NOT start any p13/p14/p15/p16 work until (a) the p12-demo-polish session is fully finished and its tree is committed clean (no in-flight changes), and (b) no other runner session is active. The skill checks this gate at the start of any gated run: if unmet, it DEFERS by re-arming itself later instead of proceeding. This gate is set by the user on 2026-09-24.",
-    "gated_full_access_machine": "p17-full-access-followups is BLOCKED until it runs on a full-access machine: real outbound network, no OS-sandbox EPERM (build worker must be free to run), and a browser + dev server for fa-5. Do not attempt it in a sandboxed or approval-gated environment; fa-1..fa-3 will fail or hang there. Run it in opencode (no blocking) from progress/OPENCODE-CONTINUATION.md."
+    "gated_full_access_machine": "SATISFIED 2026-09-24 — p17 ran on the full-access machine (real network, no OS-sandbox EPERM, browser + dev server). All fa items closed (fa-3 blocked_honest for missing test_sk/kv, fa-4 skipped_no_keys). Gate retained for historical reference only."
   },
   "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked \u2014 NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog. P17 is the blocked full-access batch; its hand-off prompt lives in progress/OPENCODE-CONTINUATION.md."
 }

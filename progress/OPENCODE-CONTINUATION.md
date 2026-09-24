@@ -1,5 +1,10 @@
 # OPENCODE CONTINUATION — paste this into opencode (full-access machine, no blocking)
 
+> **STATUS (2026-09-24): p17 COMPLETE.** All fa-1…fa-6 closed on the full-access
+> machine. This prompt is retained for the record. Remaining operator actions (not
+> code): supply Mono `test_sk_*` + sandbox kv/kvn to flip fa-3 to `mono-sandbox`;
+> add PSP test keys to exercise fa-4 (charged stays false until live).
+
 > The creditax-ai 20-phase chain (core-api → p16-key-sweep) is complete: every phase
 > `reviewed_pass` in `progress/STATE.json`. What remains is the blocked batch
 > **p17-full-access-followups** (fa-1…fa-6) — work the sandboxed Agnes box could not

@@ -179,18 +179,23 @@ Applies to the demo, the MVP demo, and the final product equally:
    can prompt *with* that context inside our canvas. Connectors are read-scoped,
    revocable, and logged; quotas in `pricing-and-access.md`.
 
-## 11. Planned Long-Form Documents (Noted, Not Started)
+## 11. Planned Long-Form Documents (Drafted — fa-6)
 
 - **Investor pitch deck** — landscape, high-design, ~12 slides: problem, solution, demo,
   moat (RAG + compliance-credit data), traction, business model, team, ask.
+  → **Shipped fa-6:** `research/creditax-investor-deck.pptx` (generator: `scripts/build-investor-deck.mjs`).
 - **Academic-style paper** — portrait A4, 10–20 pages with references: idea, literature/
   context (Nigerian tax reform), solution architecture, methodology, cost-benefit analysis,
   investment requirements, revenue streams, 3-year forecast, risks, conclusion.
-- Both will be drafted from these foundation docs once the MVP demo is stable.
+  → **Outline shipped fa-6:** `research/academic-paper-outline.md` (full draft next).
+- Both drafted from these foundation docs after the MVP demo screenshots (fa-5) landed.
 
 ---
 
 ## Changelog
+
+### v1.2 (September 24, 2026)
+- fa-6: investor deck PPTX + academic paper outline created under research/; §11 status → Drafted.
 
 ### v1.1 (September 21, 2026)
 - Added §9 site-wide i18n (EN/YO/HA/IG incl. agent prompting, all tracks) and §10 collaboration/connectors (paid invites + canvas sharing; connectors on all tiers, 2 free); reframed the FIRS/API line to the no-grey-area posture (points to legal-compliance.md).
