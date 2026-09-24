@@ -21,7 +21,8 @@
     "p13-llm-live",
     "p14-mapbox-geo",
     "p15-mono-payments",
-    "p16-key-sweep"
+    "p16-key-sweep",
+    "p17-full-access-followups"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -662,6 +663,32 @@
         "note": "Catch-all sweep: all 38 .env keys triaged (wired/sandboxed/reserved/unused-track-B) in KEY-MAP.md + new progress/KEY-AUDIT.md decision log. Two false P7/P4 claims corrected in code: RATE_LIMIT_PER_MINUTE now read by rate-limit.ts configuredRpmLimit(); AUTH_SESSION_SECRET demoted wired->reserved (zero consumers). P16 wirings: status route surfaces CREDITAX_ENV; PB URL chain (pb-features/pocketbase/pb-auth) honors NEXT_PUBLIC_POCKETBASE_FALLBACK_URL. No new deps; Track B integrations documented, not faked."
       },
       "last_updated": "2026-09-24T07:10:00+01:00"
+    },
+    {
+      "id": "p17-full-access-followups",
+      "status": "queued",
+      "gate": "gated_full_access_machine",
+      "attempts": 0,
+      "scope": "Blocked follow-ups the sandboxed authoring box could not finish. Runs on a full-access machine (real network, no OS EPERM sandbox, browser + dev server). NOT new runner phases, NOT scheduled tasks — run them in opencode from the hand-off prompt in progress/CONTINUATION-FULL-ACCESS.md, one commit per step (prefix fa-<n>:).",
+      "items": {
+        "fa-1-build-gate-closeout": "todo",
+        "fa-2-mapbox-live-smoke": "todo",
+        "fa-3-mono-live-2xx": "todo",
+        "fa-4-psp-test-keys": "todo",
+        "fa-5-screenshot-capture": "todo",
+        "fa-6-investor-deck-paper": "todo"
+      },
+      "exit_criteria": [
+        "fa-1: `npm run build` green; every STATE.json phase whose last_review.gates.build said env_blocked flipped to pass",
+        "fa-2: authorized Mapbox token (Geocoding v5 + Static Images) yields geo_source=mapbox on /marketplace/reverse + originAddress geocode + real raster overlay (honest note if token still 401s)",
+        "fa-3: GET /api/v1/credit/score?kv=&kvn= returns data_source=mono-sandbox on a 2xx (sandbox values never committed)",
+        "fa-4: PSP test keys (if present) resolve a provider; charged stays false by code guarantee",
+        "fa-5: all demo-screenshots A-G captured at 1440x900 (+375x812 key flows), each showing demo_seed/live badge honestly",
+        "fa-6: landscape investor deck (PPTX) consuming fa-5 captures + academic-paper outline (A4, 10-20pp) under research/"
+      ],
+      "runbook": "progress/CONTINUATION-FULL-ACCESS.md",
+      "last_review": null,
+      "last_updated": "2026-09-24T08:10:00+01:00"
     }
   ],
   "cleaned_up": {
@@ -701,7 +728,8 @@
     }
   ],
   "gates": {
-    "gated_until_p12_complete": "DO NOT start any p13/p14/p15/p16 work until (a) the p12-demo-polish session is fully finished and its tree is committed clean (no in-flight changes), and (b) no other runner session is active. The skill checks this gate at the start of any gated run: if unmet, it DEFERS by re-arming itself later instead of proceeding. This gate is set by the user on 2026-09-24."
+    "gated_until_p12_complete": "DO NOT start any p13/p14/p15/p16 work until (a) the p12-demo-polish session is fully finished and its tree is committed clean (no in-flight changes), and (b) no other runner session is active. The skill checks this gate at the start of any gated run: if unmet, it DEFERS by re-arming itself later instead of proceeding. This gate is set by the user on 2026-09-24.",
+    "gated_full_access_machine": "p17-full-access-followups is BLOCKED until it runs on a full-access machine: real outbound network, no OS-sandbox EPERM (build worker must be free to run), and a browser + dev server for fa-5. Do not attempt it in a sandboxed or approval-gated environment; fa-1..fa-3 will fail or hang there. Run it in opencode (no blocking) from progress/OPENCODE-CONTINUATION.md."
   },
-  "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked — NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog."
+  "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked — NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog. P17 is the blocked full-access batch; its hand-off prompt lives in progress/OPENCODE-CONTINUATION.md."
 }
