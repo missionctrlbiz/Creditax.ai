@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p15-mono-payments",
+  "current_phase": "p16-key-sweep",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -598,29 +598,40 @@
     },
     {
       "id": "p15-mono-payments",
-      "status": "in_progress",
+      "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
       "attempts": 1,
       "scope": "Plug Mono SANDBOX keys (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox) into the credit data provider interface + a payments/charge sandbox path. Sandbox only — never wired to production; keep demo_seed honest and label everything sandbox. Payments: research/API-Research.md recommends Flutterwave as the PSP for a Nigerian-focused MVP (Paystack as alternate); wire the PSP that has live sandbox keys in .env and record the choice in progress/KEY-MAP.md.",
       "items": {
-        "mono-connect-sandbox": "todo",
-        "credit-data-provider-swap": "todo",
-        "payments-sandbox-path": "todo",
-        "sandbox-labeling": "todo"
+        "mono-connect-sandbox": "done",
+        "credit-data-provider-swap": "done",
+        "payments-sandbox-path": "done",
+        "sandbox-labeling": "done"
       },
       "exit_criteria": [
         "credit-scoring provider interface swaps local demo model -> Mono sandbox income/credit lookup when MONO keys present; result labeled source:'mono-sandbox'",
         "Payments charge path hits Mono sandbox (or Paystack/Flutterwave sandbox test keys) for test transactions only; no production charge is possible in this build",
         "MONO_ENVIRONMENT guard blocks any non-sandbox call; secrets stay in .env (gitignored); lint 0"
       ],
-      "last_review": null,
-      "last_updated": "2026-09-24T00:42:00+01:00"
+      "last_review": {
+        "verdict": "pass",
+        "reviewer": "independent subagent (deep-analysis)",
+        "at": "2026-09-24T06:40:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0)",
+          "build": "env_blocked (Turbopack EPERM in sandbox)"
+        },
+        "honesty_check": "pass (Mono sandbox-only: monoEnabled() requires MONO_ENVIRONMENT=sandbox AND key; baseUrl pins the sandbox host; monoSandboxCreditScore fails closed to null -> demo seed. Payments: charged:false is a literal type; no PSP endpoint is ever contacted; no production charge possible.)",
+        "note": "New src/ai/mono.ts (sandbox client + host pinning) + src/ai/payments.ts (test-only PSP resolver, charged:false). credit-scoring data_source extended to mono-sandbox|demo_seed; credit/score route gains ?kv=&kvn= live-sandbox path with demo fallback. payments/charge route + quota/tier billing.psp surface the real resolver. Post-review hardening applied in-session: MONO_BASE_URL pinned to the sandbox host in sandbox mode (code invariant, not env-trusted). Live probe: monoEnabled=true, mono path fail-closed null (host unreachable from sandboxed box), psp=none (keys empty), sandboxCharge charged:false. Non-blocking: monoLookupUser dormant (Track B); live 2xx from Mono untestable here."
+      },
+      "last_updated": "2026-09-24T06:40:00+01:00"
     },
     {
       "id": "p16-key-sweep",
-      "status": "queued",
+      "status": "in_progress",
       "gate": "gated_until_p12_complete",
-      "attempts": 0,
+      "attempts": 1,
       "scope": "Full key-map sweep: audit every key in .env and plug each into where it belongs, or explicitly mark it unused/Track-B. See progress/KEY-MAP.md (the authoritative key -> usage map). This is the catch-all mapping phase after the specific p13-p15 wirings.",
       "items": {
         "key-audit": "todo",

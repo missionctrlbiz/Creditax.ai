@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { setTier, TIER_PLANS, type Tier } from '@/ai/quota';
+import { sandboxCharge } from '@/ai/payments';
 
 const VALID_TIERS: Tier[] = ['free', 'plus', 'professional', 'enterprise'];
 
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
   const userId = body.userId ?? 'u-consumer';
   setTier(userId, body.tier);
   const plan = TIER_PLANS.find((p) => p.tier === body.tier);
+  // P15 — surface the test-only PSP state for this tier (test keys only; no
+  // production charge is possible). Charged is always false.
+  const charge = sandboxCharge({ tier: body.tier, userId });
   return NextResponse.json({
     userId,
     tier: body.tier,
@@ -32,7 +36,15 @@ export async function POST(req: NextRequest) {
       title: plan ? `You're on ${plan.name}` : 'Tier updated',
       body: plan?.priceNGN ? `${plan.name} · ₦${plan.priceNGN.toLocaleString('en-NG')}/mo` : 'Free tier',
     },
-    billing: { provider: 'mock', note: 'Real Paystack/Flutterwave is Track B', demo_seed: true },
+    billing: {
+      provider: charge.provider, // 'flutterwave' | 'paystack' | 'none'
+      charge,
+      note:
+        charge.provider === 'none'
+          ? 'No PSP test keys in .env — upgrade stays mocked; nothing is charged.'
+          : `${charge.provider} test-mode keys present; test transaction prepared (not completed). Real PSP auth is Track B.`,
+      demo_seed: true,
+    },
     demo_seed: true,
   });
 }

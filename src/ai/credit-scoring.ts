@@ -12,6 +12,8 @@
  * `demo_seed: true` while the data source is the demo seed.
  */
 
+import { monoIncomes, monoOutflows, monoEnabled } from '@/ai/mono';
+
 // ---------------------------------------------------------------------------
 // Inputs (what Mono Connect / Income / Prove would supply in Track B)
 // ---------------------------------------------------------------------------
@@ -41,9 +43,13 @@ export interface CreditScoreResult {
   range: { min: number; max: number };
   grade: 'excellent' | 'good' | 'fair' | 'poor';
   factors: ScoreFactor[];
-  /** True when the inputs came from demo seed (not live Mono data). */
+  /**
+   * True when the inputs are NOT live bank data. Live Mono sandbox factors
+   * still set `demo_seed: true` (the values are sandbox test data, not a
+   * real person's finances) — the *data source* is what distinguishes them.
+   */
   demo_seed: boolean;
-  data_source: 'mono' | 'demo_seed';
+  data_source: 'mono-sandbox' | 'demo_seed';
   computed_at: string;
 }
 
@@ -122,6 +128,64 @@ export function demoCreditScore(): CreditScoreResult {
     ...computeCreditScore(DEMO_FACTORS),
     demo_seed: true,
     data_source: 'demo_seed',
+    computed_at: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// P15 — Mono sandbox provider swap
+// ---------------------------------------------------------------------------
+
+/**
+ * Live (sandbox) credit score from a Mono Connect account's income / outflow
+ * analysis. The *income* figure is the part sourced from Mono sandbox; the
+ * non-income dimensions (stability, savings, debt, tax) still use the demo
+ * profile because the sandbox flows endpoint returns totals, not a full
+ * behavioural profile — the full profile swap is Track B.
+ *
+ * Honesty: the returned record is `demo_seed: true` (the values are sandbox
+ * test data, not a real person's finances) but `data_source: 'mono-sandbox'`
+ * so the caller knows the income came from a live sandbox call. Returns null
+ * when Mono is not in sandbox mode, the call fails, or no income data is
+ * present — the caller then falls back to `demoCreditScore()`.
+ */
+export async function monoSandboxCreditScore(
+  kv: string,
+  kvn: string
+): Promise<CreditScoreResult | null> {
+  if (!monoEnabled() || !kv || !kvn) return null;
+
+  const [incomes, outflows] = await Promise.all([
+    monoIncomes(kv, kvn),
+    monoOutflows(kv, kvn),
+  ]);
+
+  // No sandbox income data → caller falls back to the demo seed.
+  if (!incomes || incomes.count === 0) return null;
+
+  // 12-month flow window → monthly average income.
+  const monthlyIncome = Math.max(0, incomes.total) / 12;
+  if (!Number.isFinite(monthlyIncome) || monthlyIncome <= 0) return null;
+
+  const factors: CreditFactors = {
+    monthlyIncome,
+    // Mono flows give record counts, not a stability history — proxy by the
+    // number of income records observed in the window (capped at 12 months).
+    incomeStabilityMonths: Math.min(12, Math.max(incomes.count, 0)),
+    // Savings rate from income vs outflow (clamped to 0..1).
+    savingsRate: outflows
+      ? Math.max(0, Math.min(1, (incomes.total - outflows.total) / Math.max(incomes.total, 1)))
+      : DEMO_FACTORS.savingsRate,
+    // Debt + tax are not derivable from Mono flows in this build — carry the
+    // demo profile values (Track B wires Mono Prove for these).
+    debtBurden: DEMO_FACTORS.debtBurden,
+    taxComplianceScore: DEMO_FACTORS.taxComplianceScore,
+  };
+
+  return {
+    ...computeCreditScore(factors),
+    demo_seed: true,
+    data_source: 'mono-sandbox',
     computed_at: new Date().toISOString(),
   };
 }
