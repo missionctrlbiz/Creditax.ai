@@ -34,12 +34,12 @@ function serverToken(): string | undefined {
 }
 
 async function get(url: string, token: string): Promise<Response> {
-  return fetch(url, {
+  // Public `pk.` tokens are passed as a query param — Authorization: Bearer
+  // is rejected with 401 "Not Authorized - No Token" on Geocoding v5.
+  const sep = url.includes('?') ? '&' : '?';
+  return fetch(`${url}${sep}access_token=${encodeURIComponent(token)}`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-    },
+    headers: { Accept: 'application/json' },
   });
 }
 
@@ -79,8 +79,10 @@ export async function mapboxReverseGeocode(
   const token = serverToken();
   if (!token || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   try {
+    // Reverse is `/{lng},{lat}.json` — a `reverse/` path segment is treated
+    // as a search query and returns an empty FeatureCollection.
     const url =
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/reverse/${lng},${lat}.json` +
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
       `?types=place,address&limit=1&country=ng`;
     const res = await get(url, token);
     if (!res.ok) {

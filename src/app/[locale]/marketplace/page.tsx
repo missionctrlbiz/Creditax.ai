@@ -248,19 +248,17 @@ export default function MarketplacePage() {
 
   // P14 — Mapbox Static raster built from the real pro coordinates when the
   // client token is present; otherwise the static Lagos PNG fallback.
+  // Overlay uses `pin-s+COLOR(lat,lng)` and size is `WxH` (not `W/H`).
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
   const mapSrc = useMemo(() => {
     if (!mapboxToken) return null;
     const withCoords = livePros.length > 0 ? livePros : [];
     if (withCoords.length === 0) return null;
     const markers = withCoords
-      .map(
-        (p) =>
-          `marker-symbol%3Dpin-s%7Cmarker-color%3A0D7377%7C${p.location.lat.toFixed(5)},${p.location.lng.toFixed(5)}`
-      )
+      .map((p) => `pin-s+0D7377(${p.location.lng.toFixed(5)},${p.location.lat.toFixed(5)})`)
       .join(';');
     // `auto` viewBox → Mapbox fits the markers into the requested width/height.
-    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${markers}/auto/800/620?attribution=true&logo=true&access_token=${encodeURIComponent(
+    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${markers}/auto/800x620?access_token=${encodeURIComponent(
       mapboxToken
     )}`;
   }, [mapboxToken, livePros]);
