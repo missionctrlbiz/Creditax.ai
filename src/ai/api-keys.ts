@@ -111,6 +111,24 @@ export function createKey(input: CreateKeyInput): ApiKeyRecord {
   return record;
 }
 
+/**
+ * Bump a stored key's usage + last_used when an admitted request passes the
+ * rate limiter. Keys are masked, so we match on the last 4 chars — the caller
+ * passes the bearer it saw on the wire. No-op if the key is unknown.
+ */
+export function bumpUsage(rawKey: string): ApiKeyRecord | null {
+  if (rawKey.length < 4) return null;
+  const suffix = rawKey.slice(-4);
+  for (const record of store.values()) {
+    if (record.key.endsWith(suffix)) {
+      record.usage += 1;
+      record.last_used = 'just now';
+      return record;
+    }
+  }
+  return null;
+}
+
 export function revokeKey(id: string): ApiKeyRecord | null {
   const k = store.get(id);
   if (!k) return null;

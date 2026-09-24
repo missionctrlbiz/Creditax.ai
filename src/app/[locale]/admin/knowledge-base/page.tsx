@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -266,6 +267,12 @@ export default function AdminKnowledgeBasePage() {
                 <button
                   aria-label={`Re-index ${doc.title}`}
                   title="Re-index"
+                  onClick={() =>
+                    toast(`Re-indexing ${doc.title} (demo)`, {
+                      description:
+                        'Vector re-embedding runs on the Track B ingestion worker; rules are searchable in chat afterwards.',
+                    })
+                  }
                   className="p-1.5 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                 >
                   <RefreshCw size={15} />

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import {
@@ -91,6 +92,38 @@ export default function ReportsPage() {
 
   const maxMonthlyIncome = Math.max(...previewData.monthlyIncome);
 
+  // P12 — real handlers: the report API exists (Track A computes synchronously).
+  const handleGenerate = () => {
+    const type =
+      selectedType === 'credit' ? 'credit_report' :
+      selectedType === 'expense' ? 'receipt_analysis' : 'tax_calculation';
+    fetch('/api/v1/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => {});
+  };
+
+  // Real Blob download from the in-component preview data (no PDF worker in Track A).
+  const downloadCsv = () => {
+    const rows = [
+      ['Metric', 'Value'],
+      ['Gross Income', String(previewData.grossIncome)],
+      ['Total Tax', String(previewData.totalTax)],
+      ['Effective Rate (%)', String(previewData.effectiveRate)],
+      ...previewData.taxBreakdown.map((t) => [`${t.name}`, String(t.amount)]),
+    ];
+    const csv = rows.map((r) => r.join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'creditax-report-preview.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="">
       {/* Header */}
@@ -104,7 +137,7 @@ export default function ReportsPage() {
           <h1 className="text-text-primary mb-2">Reports</h1>
           <p className="text-text-muted text-sm">Generate and manage your tax and credit reports.</p>
         </div>
-        <Button variant="primary" size="md">
+        <Button variant="primary" size="md" onClick={handleGenerate}>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />
           </svg>
@@ -194,12 +227,22 @@ export default function ReportsPage() {
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="text-xs text-text-muted">{report.size}</span>
                     <div className="flex items-center gap-1">
-                       <div className="p-1.5 rounded hover:bg-surface-inset transition-colors">
+                       <div
+                         role="button"
+                         tabIndex={0}
+                         onClick={downloadCsv}
+                         className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
+                       >
                          <svg className="w-4 h-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                          </svg>
                        </div>
-                       <div className="p-1.5 rounded hover:bg-surface-inset transition-colors">
+                       <div
+                         role="button"
+                         tabIndex={0}
+                         onClick={() => toast('Demo build — report sharing is mocked', { description: 'Canvas share links (paid) ship in Track B.' })}
+                         className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
+                       >
                          <svg className="w-4 h-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                            <circle cx="18" cy="5" r="3" />
                            <circle cx="6" cy="12" r="3" />
@@ -207,7 +250,12 @@ export default function ReportsPage() {
                            <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
                          </svg>
                        </div>
-                       <div className="p-1.5 rounded hover:bg-surface-inset transition-colors">
+                       <div
+                         role="button"
+                         tabIndex={0}
+                         onClick={() => toast('Demo build — report deletion is mocked', { description: 'Fixture reports stay in place so the demo journey completes.' })}
+                         className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
+                       >
                          <svg className="w-4 h-4 text-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                          </svg>
@@ -220,7 +268,10 @@ export default function ReportsPage() {
           </Card>
 
           <motion.div variants={fadeInUp} className="mt-4 text-center">
-            <button className="text-sm text-brand-primary hover:underline">
+            <button
+              onClick={() => toast('Demo build — report pagination is mocked', { description: 'All fixture reports are already listed on this page.' })}
+              className="text-sm text-brand-primary hover:underline cursor-pointer"
+            >
               View all 34 reports →
             </button>
           </motion.div>
@@ -346,19 +397,29 @@ export default function ReportsPage() {
 
                 {/* Export Buttons */}
                 <div className="flex gap-3 mb-4">
-                  <Button variant="primary" size="md" className="flex-1">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="flex-1"
+                    onClick={() => toast('Demo build — PDF generation is mocked', { description: 'PDF rendering ships with the report worker in Track B.' })}
+                  >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                     </svg>
                     PDF
                   </Button>
-                  <Button variant="secondary" size="md" className="flex-1">
+                  <Button variant="secondary" size="md" className="flex-1" onClick={downloadCsv}>
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                     </svg>
                     CSV
                   </Button>
-                  <Button variant="ghost" size="md" className="flex-1">
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    className="flex-1"
+                    onClick={() => toast('Demo build — report sharing is mocked', { description: 'Canvas share links (paid) ship in Track B.' })}
+                  >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
@@ -369,7 +430,10 @@ export default function ReportsPage() {
                   </Button>
                 </div>
 
-                <button className="w-full text-center text-sm text-brand-primary hover:underline">
+                <button
+                  onClick={() => toast('Demo build — full report view is mocked', { description: 'The complete report view ships with report rendering in Track B.' })}
+                  className="w-full text-center text-sm text-brand-primary hover:underline cursor-pointer"
+                >
                   View full report →
                 </button>
               </Card>

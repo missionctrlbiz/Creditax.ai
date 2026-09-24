@@ -60,6 +60,22 @@ export function setStatus(id: string, status: UserStatus): AdminUser | null {
   return u;
 }
 
+/** P12 — edit a user's profile fields (name/email/tier) from the modal. */
+export function updateUser(
+  id: string,
+  patch: Partial<Pick<AdminUser, 'name' | 'email' | 'tier' | 'locale'>>
+): AdminUser | null {
+  const u = board.get(id);
+  if (!u) return null;
+  if (patch.name !== undefined) u.name = patch.name;
+  if (patch.email !== undefined) u.email = patch.email;
+  if (patch.tier !== undefined) u.tier = patch.tier;
+  if (patch.locale !== undefined) u.locale = patch.locale;
+  u.lastActive = 'just now';
+  board.set(id, u);
+  return u;
+}
+
 export function suspendUser(id: string): AdminUser | null {
   return setStatus(id, 'suspended');
 }

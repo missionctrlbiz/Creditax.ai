@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { seedDemoKeys, listKeys } from '@/ai/api-keys';
+import { guard } from '@/lib/rate-limit';
 
 /**
  * POST /api/v1/auth/verify — validate an API key (Track A demo contract).
@@ -13,8 +14,17 @@ import { seedDemoKeys, listKeys } from '@/ai/api-keys';
  *
  * This closes the deferred core-api "auth-verify" exit criterion at the
  * contract level while staying honest about the demo boundary.
+ *
+ * Rate limiting: the 100 req/min ceiling is enforced in-process by
+ * `@/lib/rate-limit` (fixed-window, keyed by the Bearer suffix; IP fallback
+ * for anonymous callers) — see `guard()` below. A shared Redis store is the
+ * Track B upgrade for multi-instance fairness.
  */
 export async function POST(req: NextRequest) {
+  // core-api "rate-limit" closure: 100 req/min per key (in-memory window).
+  const limited = guard(req);
+  if (limited) return limited;
+
   let key: string | null = null;
 
   const auth = req.headers.get('authorization') ?? '';
@@ -45,7 +55,10 @@ export async function POST(req: NextRequest) {
     reason: known ? 'active key' : 'unknown or revoked key',
     environment: /live/i.test(key) ? 'live' : 'test',
     scopes: known ? active.find((k) => k.key.includes(key!.slice(-4)))?.scopes ?? ['Read'] : [],
-    rate_limit: { rpm: 100, note: 'enforced by the Track B limiter' },
+    rate_limit: {
+      rpm: 100,
+      note: 'enforced in-process by @/lib/rate-limit (fixed window); a shared Redis store is the multi-instance Track B upgrade',
+    },
     demo_seed: true,
   });
 }

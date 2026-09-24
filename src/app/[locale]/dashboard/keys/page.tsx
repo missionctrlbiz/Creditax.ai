@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -295,7 +296,7 @@ export default function ApiKeysPage() {
                 <Button variant="danger" size="sm" onClick={() => void handleRevoke(apiKey.id)}>
                   Revoke Key
                 </Button>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => toast('Demo build — key rename is mocked', { description: 'Key management lands with the api-keys PATCH in Track B.' })}>
                   Edit Name
                 </Button>
               </div>

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -39,6 +40,8 @@ export default function DocumentsPage() {
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedDocs, setSelectedDocs] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
+  const [page, setPage] = useState(1);
 
   const toggleDoc = (id: number) => {
     setSelectedDocs(prev =>
@@ -99,19 +102,36 @@ export default function DocumentsPage() {
           <p className="text-text-muted text-sm">Manage and track all your uploaded documents.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="primary" size="md">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => {
+              // Real page: the upload journey routes through POST /api/v1/documents/upload.
+              window.location.href = '/dashboard/documents/upload';
+            }}
+          >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
             Upload Document
           </Button>
-          <div className="flex border border-border-default rounded-btn overflow-hidden">
-            <button className="p-2.5 bg-brand-primary-bg text-brand-primary">
+          <div className="flex border border-border-default rounded-btn overflow-hidden" role="group" aria-label="View mode">
+            <button
+              aria-label="Table view"
+              aria-pressed={viewMode === 'table'}
+              onClick={() => setViewMode('table')}
+              className={`p-2.5 ${viewMode === 'table' ? 'bg-brand-primary-bg text-brand-primary' : 'text-text-muted hover:bg-surface-inset'}`}
+            >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18" />
               </svg>
             </button>
-            <button className="p-2.5 text-text-muted hover:bg-surface-inset transition-colors">
+            <button
+              aria-label="List view"
+              aria-pressed={viewMode === 'list'}
+              onClick={() => setViewMode('list')}
+              className={`p-2.5 ${viewMode === 'list' ? 'bg-brand-primary-bg text-brand-primary' : 'text-text-muted hover:bg-surface-inset'}`}
+            >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 3h18v18H3zM9 3v18M15 3v18" />
               </svg>
@@ -174,11 +194,30 @@ export default function DocumentsPage() {
               {selectedDocs.length} document{selectedDocs.length > 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-3">
-              <button className="text-sm text-brand-primary hover:underline">Download Selected</button>
-              <button className="text-sm text-error hover:underline">Delete Selected</button>
+              <button
+                className="text-sm text-brand-primary hover:underline cursor-pointer"
+                onClick={() =>
+                  toast(`${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''} queued for download (demo)`, {
+                    description: 'Bulk export streams from Backblaze B2 on Track B.',
+                  })
+                }
+              >
+                Download Selected
+              </button>
+              <button
+                className="text-sm text-error hover:underline cursor-pointer"
+                onClick={() => {
+                  toast(`${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''} deleted (demo)`, {
+                    description: 'Deletion propagates to the storage layer on Track B.',
+                  });
+                  setSelectedDocs([]);
+                }}
+              >
+                Delete Selected
+              </button>
               <button
                 onClick={() => setSelectedDocs([])}
-                className="text-sm text-text-muted hover:text-text-primary"
+                className="text-sm text-text-muted hover:text-text-primary cursor-pointer"
               >
                 Clear Selection ✕
               </button>
@@ -285,9 +324,36 @@ export default function DocumentsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button className="text-xs text-brand-primary hover:underline">View</button>
-                        <button className="text-xs text-brand-primary hover:underline">Download</button>
-                        <button className="text-xs text-error hover:underline">Delete</button>
+                        <button
+                          className="text-xs text-brand-primary hover:underline cursor-pointer"
+                          onClick={() =>
+                            toast(`Viewing ${doc.name} (demo)`, {
+                              description: 'Document preview opens in the Track B viewer.',
+                            })
+                          }
+                        >
+                          View
+                        </button>
+                        <button
+                          className="text-xs text-brand-primary hover:underline cursor-pointer"
+                          onClick={() =>
+                            toast(`Downloading ${doc.name} (demo)`, {
+                              description: 'Files stream from Backblaze B2 on Track B.',
+                            })
+                          }
+                        >
+                          Download
+                        </button>
+                        <button
+                          className="text-xs text-error hover:underline cursor-pointer"
+                          onClick={() =>
+                            toast(`${doc.name} deleted (demo)`, {
+                              description: 'Deletion propagates to the storage layer on Track B.',
+                            })
+                          }
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </motion.tr>
@@ -320,15 +386,47 @@ export default function DocumentsPage() {
         variants={fadeInUp}
         className="mt-6 flex items-center justify-center gap-2"
       >
-        <button className="px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           ← Prev
         </button>
-        <button className="w-8 h-8 rounded-btn bg-brand-primary text-text-inverse text-sm font-semibold">1</button>
-        <button className="w-8 h-8 rounded-btn text-sm text-text-muted hover:bg-surface-inset transition-colors">2</button>
-        <button className="w-8 h-8 rounded-btn text-sm text-text-muted hover:bg-surface-inset transition-colors">3</button>
+        <button
+          onClick={() => setPage(1)}
+          aria-pressed={page === 1}
+          className={`w-8 h-8 rounded-btn text-sm font-semibold cursor-pointer ${page === 1 ? 'bg-brand-primary text-text-inverse' : 'text-text-muted hover:bg-surface-inset'}`}
+        >
+          1
+        </button>
+        <button
+          onClick={() => setPage(2)}
+          aria-pressed={page === 2}
+          className={`w-8 h-8 rounded-btn text-sm cursor-pointer ${page === 2 ? 'bg-brand-primary text-text-inverse' : 'text-text-muted hover:bg-surface-inset'}`}
+        >
+          2
+        </button>
+        <button
+          onClick={() => setPage(3)}
+          aria-pressed={page === 3}
+          className={`w-8 h-8 rounded-btn text-sm cursor-pointer ${page === 3 ? 'bg-brand-primary text-text-inverse' : 'text-text-muted hover:bg-surface-inset'}`}
+        >
+          3
+        </button>
         <span className="px-2 text-text-muted">...</span>
-        <button className="w-8 h-8 rounded-btn text-sm text-text-muted hover:bg-surface-inset transition-colors">6</button>
-        <button className="px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">
+        <button
+          onClick={() => setPage(6)}
+          aria-pressed={page === 6}
+          className={`w-8 h-8 rounded-btn text-sm cursor-pointer ${page === 6 ? 'bg-brand-primary text-text-inverse' : 'text-text-muted hover:bg-surface-inset'}`}
+        >
+          6
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(6, p + 1))}
+          disabled={page === 6}
+          className="px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           Next →
         </button>
       </motion.div>

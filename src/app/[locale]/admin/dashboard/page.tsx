@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -79,6 +80,7 @@ interface AdminSummary {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<AdminSummary | null>(null);
 
   // P10 — hydrate the counts live (users, approval queue, KB corpus, quota
@@ -275,11 +277,11 @@ export default function AdminDashboardPage() {
                     ))}
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button variant="danger" size="sm" className="flex-1">
+                    <Button variant="danger" size="sm" className="flex-1" onClick={() => router.push('/admin/professionals')}>
                       <X size={14} />
                       Reject
                     </Button>
-                    <Button variant="primary" size="sm" className="flex-1">
+                    <Button variant="primary" size="sm" className="flex-1" onClick={() => router.push('/admin/professionals')}>
                       <Check size={14} />
                       Approve
                     </Button>

@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { toast } from 'sonner';
 
 const LANGUAGE_ICONS: Record<string, React.ReactNode> = {
   'JavaScript / TypeScript': <Braces size={20} aria-hidden />,
@@ -349,7 +350,15 @@ export default function SDKsPage() {
           <p className="text-text-secondary mb-6">
             Request an SDK or contribute to an existing one. We welcome community contributions.
           </p>
-          <Button variant="secondary" size="lg">
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() =>
+              toast('Library requested (demo)', {
+                description: 'We prioritize official SDKs by language demand — Track B wires the request form.',
+              })
+            }
+          >
             <Plus size={18} aria-hidden />
             Request Library
           </Button>

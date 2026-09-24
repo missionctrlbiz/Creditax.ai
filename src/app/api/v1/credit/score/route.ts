@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { demoCreditScore, type CreditScoreResult } from '@/ai/credit-scoring';
+import { guard } from '@/lib/rate-limit';
 
 /**
  * GET /api/v1/credit/score — VantageScore-shaped credit snapshot.
@@ -13,7 +14,11 @@ import { demoCreditScore, type CreditScoreResult } from '@/ai/credit-scoring';
  * This is demo-scope item 6 on camera: a seeded score + factor bars, with the
  * "try the simulator" affordance gated behind a tier.
  */
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  // core-api "rate-limit" closure: 100 req/min per key (in-memory window).
+  const limited = guard(req);
+  if (limited) return limited;
+
   const result: CreditScoreResult = demoCreditScore();
   return NextResponse.json({
     ...result,

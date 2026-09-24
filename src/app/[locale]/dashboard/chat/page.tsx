@@ -50,6 +50,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { toast } from 'sonner';
 import { SKILLS, runSkill as runSkillLocal, type SkillMeta, type SkillResult } from '@/ai/skills';
 import { buildReferralCard, type ReferralCard } from '@/ai/referral';
 import { fmtNaira } from '@/ai/tax-rules';
@@ -1226,7 +1227,7 @@ function BoardCard({
           ))}
         </ol>
         <div className="flex gap-2">
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => toast('Added to your 2025 filing', { description: 'Demo build — the filing draft now includes these figures.' })}>
             <Check size={14} /> Add to filing
           </Button>
           <Link href="/dashboard/tax-filing">
@@ -1274,12 +1275,26 @@ function BoardCard({
             </span>
           ) : (
             <>
-              <Button variant="secondary" size="sm" aria-label="Call pro (demo)">
-                <Phone size={13} /> {live?.contact.phone ?? '+2348011000001'}
-              </Button>
-              <Button variant="secondary" size="sm" aria-label="Message pro (demo)">
-                <MessageCircle size={13} /> {live?.contact.whatsapp ?? 'WhatsApp'}
-              </Button>
+              <Link
+                href={`tel:${(live?.contact.phone ?? '+2348011000001').replace(/[^+\d]/g, '')}`}
+                aria-label="Call pro (demo)"
+              >
+                <Button variant="secondary" size="sm">
+                  <Phone size={13} /> {live?.contact.phone ?? '+2348011000001'}
+                </Button>
+              </Link>
+              <Link
+                href={
+                  live?.pro.slug
+                    ? `/marketplace/${live.pro.slug}`
+                    : `/marketplace/adaeze-consulting`
+                }
+                aria-label="Open pro profile (demo)"
+              >
+                <Button variant="secondary" size="sm">
+                  <MessageCircle size={13} /> {live?.contact.whatsapp ?? 'WhatsApp'}
+                </Button>
+              </Link>
             </>
           )}
           <span className="text-[10px] text-text-muted self-center">{t('demoNote')}</span>

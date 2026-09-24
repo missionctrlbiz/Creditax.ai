@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 import type { ProApplication } from '@/ai/marketplace';
 
 const containerVariants = {
@@ -112,6 +113,26 @@ export default function AdminProfessionalsPage() {
     );
   };
 
+  // P12 — real decision handlers (was dead Approve/Reject buttons). Calls the
+  // live marketplace decision endpoint (best-effort, Track A demo_seed) and
+  // reflects the outcome locally; clears the selection on bulk actions.
+  const [statusOverrides, setStatusOverrides] = useState<Record<number, string>>({});
+
+  function decide(id: number, decision: 'approve' | 'reject') {
+    setStatusOverrides((prev) => ({ ...prev, [id]: decision === 'approve' ? 'verified' : 'rejected' }));
+    // Best-effort against the live store; demo application ids may not match.
+    fetch(`/api/v1/admin/marketplace/${id}/${decision}`, { method: 'POST' }).catch(() => {});
+    setSelectedPro(null);
+  }
+  function bulkDecide(decision: 'approve' | 'reject') {
+    selectedIds.forEach((id) =>
+      setStatusOverrides((prev) => ({ ...prev, [id]: decision === 'approve' ? 'verified' : 'rejected' }))
+    );
+    selectedIds.forEach((id) => fetch(`/api/v1/admin/marketplace/${id}/${decision}`, { method: 'POST' }).catch(() => {}));
+    setSelectedIds([]);
+    setSelectedPro(null);
+  }
+
   return (
     <motion.div
       variants={containerVariants}
@@ -159,7 +180,7 @@ export default function AdminProfessionalsPage() {
             className="h-10"
           />
         </div>
-        <Button variant="primary" size="md">
+        <Button variant="primary" size="md" onClick={() => toast('Demo build — professional onboarding is mocked', { description: 'New pros apply via /pro/apply and appear in the approval queue.' })}>
           <UserPlus size={15} />
           Add Professional
         </Button>
@@ -179,11 +200,11 @@ export default function AdminProfessionalsPage() {
                 <span className="font-mono tabular-nums text-text-primary">{selectedIds.length}</span> selected
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="danger" size="sm">
+                <Button variant="danger" size="sm" onClick={() => bulkDecide('reject')}>
                   <X size={14} />
                   Reject
                 </Button>
-                <Button variant="primary" size="sm">
+                <Button variant="primary" size="sm" onClick={() => bulkDecide('approve')}>
                   <Check size={14} />
                   Approve
                 </Button>
@@ -262,8 +283,8 @@ export default function AdminProfessionalsPage() {
                   </p>
                 </button>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <Badge variant={statusBadgeVariant[pro.status]} className="text-[10px]">
-                    {pro.status.charAt(0).toUpperCase() + pro.status.slice(1)}
+                  <Badge variant={statusBadgeVariant[statusOverrides[pro.id] ?? pro.status]} className="text-[10px]">
+                    {(statusOverrides[pro.id] ?? pro.status).charAt(0).toUpperCase() + (statusOverrides[pro.id] ?? pro.status).slice(1)}
                   </Badge>
                   {pro.rating && (
                     <div className="flex items-center gap-1">
@@ -338,6 +359,11 @@ export default function AdminProfessionalsPage() {
                           <button
                             aria-label={`View ${doc.name}`}
                             title={`View ${doc.name}`}
+                            onClick={() =>
+                              toast(`Viewing ${doc.name} (demo)`, {
+                                description: 'Verification document preview opens in the Track B admin viewer.',
+                              })
+                            }
                             className="p-1 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                           >
                             <ExternalLink size={13} />
@@ -380,11 +406,11 @@ export default function AdminProfessionalsPage() {
 
                   {/* Action Buttons — labeled icons, one row, no cluster */}
                   <div className="flex items-center gap-2">
-                    <Button variant="primary" size="lg" className="flex-1">
+                    <Button variant="primary" size="lg" className="flex-1" onClick={() => decide(selectedPro!.id, 'approve')}>
                       <Check size={16} />
                       Approve
                     </Button>
-                    <Button variant="danger" size="lg" className="flex-1">
+                    <Button variant="danger" size="lg" className="flex-1" onClick={() => decide(selectedPro!.id, 'reject')}>
                       <X size={16} />
                       Reject
                     </Button>
@@ -394,6 +420,7 @@ export default function AdminProfessionalsPage() {
                       aria-label="Request more info"
                       title="Request more info"
                       className="px-3"
+                      onClick={() => toast('Info request sent (demo)', { description: `The ${selectedPro!.name} team will be prompted to re-upload documents.` })}
                     >
                       <MessageSquare size={16} />
                     </Button>

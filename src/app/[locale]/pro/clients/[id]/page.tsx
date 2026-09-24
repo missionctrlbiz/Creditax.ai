@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ProClient } from "@/ai/pro-portal";
 
@@ -282,6 +283,11 @@ export default function ClientDetailPage() {
             <button
               aria-label={`Message ${client.name}`}
               title="Message client"
+              onClick={() =>
+                toast(`Message drafted for ${client.name}`, {
+                  description: "Direct messaging lands in the Track B client inbox.",
+                })
+              }
               className="p-2 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
             >
               <MessageSquare size={16} />
@@ -289,6 +295,11 @@ export default function ClientDetailPage() {
             <button
               aria-label={`Edit ${client.name}`}
               title="Edit client"
+              onClick={() =>
+                toast(`Edit ${client.name} (demo)`, {
+                  description: "Client profile editing lands in the Track B pro workspace.",
+                })
+              }
               className="p-2 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
             >
               <Pencil size={16} />
@@ -384,11 +395,31 @@ export default function ClientDetailPage() {
                       Calculate Tax Liability
                     </Button>
                   </Link>
-                  <Button variant="primary" size="md" fullWidth className="justify-start">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    fullWidth
+                    className="justify-start"
+                    onClick={() =>
+                      toast(`Compliance report queued for ${client.name}`, {
+                        description: 'Report generation runs on the Track B worker; results land in the Reports tab.',
+                      })
+                    }
+                  >
                     <FileText size={15} />
                     Generate Compliance Report
                   </Button>
-                  <Button variant="ghost" size="md" fullWidth className="justify-start">
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    fullWidth
+                    className="justify-start"
+                    onClick={() =>
+                      toast(`Message drafted for ${client.name}`, {
+                        description: 'Direct messaging lands in the Track B client inbox.',
+                      })
+                    }
+                  >
                     <MessageSquare size={15} />
                     Message Client
                   </Button>
@@ -466,10 +497,12 @@ export default function ClientDetailPage() {
                 <option>Amount (low to high)</option>
               </select>
 
-              <Button variant="primary" size="md">
-                <Upload size={15} />
-                Upload Document
-              </Button>
+              <Link href="/dashboard/documents/upload">
+                <Button variant="primary" size="md">
+                  <Upload size={15} />
+                  Upload Document
+                </Button>
+              </Link>
             </div>
 
             <Card className="overflow-hidden">
@@ -518,6 +551,11 @@ export default function ClientDetailPage() {
                                 <button
                                   aria-label={`View ${doc.name}`}
                                   title="View"
+                                  onClick={() =>
+                                    toast(`${doc.name} — viewer (demo)`, {
+                                      description: "Document preview opens in the Track B viewer.",
+                                    })
+                                  }
                                   className="p-1.5 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                                 >
                                   <Eye size={15} />
@@ -525,6 +563,11 @@ export default function ClientDetailPage() {
                                 <button
                                   aria-label={`Download ${doc.name}`}
                                   title="Download"
+                                  onClick={() =>
+                                    toast(`Downloading ${doc.name} (demo)`, {
+                                      description: "Files stream from Backblaze B2 on Track B.",
+                                    })
+                                  }
                                   className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                                 >
                                   <Download size={15} />
@@ -532,6 +575,11 @@ export default function ClientDetailPage() {
                                 <button
                                   aria-label={`More actions for ${doc.name}`}
                                   title="More actions"
+                                  onClick={() =>
+                                    toast(`More actions for ${doc.name} (demo)`, {
+                                      description: "Document management menu lands on Track B.",
+                                    })
+                                  }
                                   className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                                 >
                                   <MoreHorizontal size={15} />
@@ -589,6 +637,11 @@ export default function ClientDetailPage() {
                             <button
                               aria-label={`View ${filing.type} filing`}
                               title="View"
+                              onClick={() =>
+                                toast(`Viewing ${filing.type} filing (demo)`, {
+                                  description: "Filing details render in the Track B filing viewer.",
+                                })
+                              }
                               className="p-1.5 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                             >
                               <Eye size={15} />
@@ -596,6 +649,11 @@ export default function ClientDetailPage() {
                             <button
                               aria-label={`Download ${filing.type} filing`}
                               title="Download"
+                              onClick={() =>
+                                toast(`Downloading ${filing.type} filing (demo)`, {
+                                  description: "Filing PDFs export from the Track B document pipeline.",
+                                })
+                              }
                               className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                             >
                               <Download size={15} />
@@ -603,6 +661,11 @@ export default function ClientDetailPage() {
                             <button
                               aria-label={`More actions for ${filing.type} filing`}
                               title="More actions"
+                              onClick={() =>
+                                toast(`More actions for ${filing.type} (demo)`, {
+                                  description: "Filing management menu lands on Track B.",
+                                })
+                              }
                               className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                             >
                               <MoreHorizontal size={15} />
@@ -642,6 +705,11 @@ export default function ClientDetailPage() {
                 <button
                   aria-label={`Download ${report.name}`}
                   title="Download"
+                  onClick={() =>
+                    toast(`Downloading ${report.name} (demo)`, {
+                      description: "Report PDFs export from the Track B document pipeline.",
+                    })
+                  }
                   className="p-2 rounded-btn text-text-muted hover:text-brand-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                 >
                   <Download size={16} />
@@ -649,6 +717,11 @@ export default function ClientDetailPage() {
                 <button
                   aria-label={`More actions for ${report.name}`}
                   title="More actions"
+                  onClick={() =>
+                    toast(`More actions for ${report.name} (demo)`, {
+                      description: "Report management menu lands on Track B.",
+                    })
+                  }
                   className="p-2 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                 >
                   <MoreHorizontal size={16} />
@@ -664,7 +737,15 @@ export default function ClientDetailPage() {
               <p className="text-xs text-text-muted mt-0.5 mb-4">
                 Compliance summaries, VAT positions, and annual estimates
               </p>
-              <Button variant="primary" size="md">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() =>
+                  toast(`Compliance report queued for ${client.name}`, {
+                    description: 'Report generation runs on the Track B worker; results land in the Reports tab.',
+                  })
+                }
+              >
                 <FileText size={15} />
                 Generate Compliance Report
               </Button>

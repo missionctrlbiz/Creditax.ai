@@ -212,7 +212,13 @@ export default function UsagePage() {
         <span className="text-text-secondary text-sm">
           Current plan: {TIER_PLANS.find((p) => p.tier === (quota?.tier ?? 'free'))?.name ?? 'Free'}
         </span>
-        <Button variant="primary" size="sm">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            window.location.href = '/pricing';
+          }}
+        >
           Upgrade Plan →
         </Button>
       </div>
@@ -530,7 +536,7 @@ export default function UsagePage() {
             <p className="text-text-muted text-sm mb-4">
               Get unlimited API calls, dedicated infrastructure, and custom rate limits.
             </p>
-            <Button variant="primary" fullWidth>
+            <Button variant="primary" fullWidth onClick={() => { window.location.href = '/pricing'; }}>
               Talk to Sales →
             </Button>
           </Card>

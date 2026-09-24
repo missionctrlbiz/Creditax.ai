@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Activity,
@@ -130,6 +130,12 @@ export default function ReferencePage() {
     endpointCategories[0].endpoints[0]
   );
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
+  const router = useRouter();
+  const { locale } = useParams<{ locale: string }>();
+
+  const goToSandbox = () => {
+    router.push(`/${locale}/developers/sandbox`);
+  };
 
   const copyToClipboard = (text: string, blockId: string) => {
     navigator.clipboard.writeText(text);
@@ -456,24 +462,21 @@ export default function ReferencePage() {
             </Card>
 
             {/* Try in sandbox */}
-            <Button variant="primary" size="lg" fullWidth>
+            <Button variant="primary" size="lg" fullWidth onClick={goToSandbox}>
               <Play size={16} aria-hidden />
               Try in Sandbox
             </Button>
 
             {/* Related endpoints */}
             <Card className="p-4">
-              <p className="text-sm font-semibold text-text-primary mb-3">Related Endpoints</p>
+              <p className="text-sm font-semibold text-text-primary mb-3">Machine-Readable</p>
               <div className="space-y-2">
-                <Link href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
-                  POST /v2/tax/vat
-                </Link>
-                <Link href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
-                  GET /v2/tax/brackets
-                </Link>
-                <Link href="/developers/sandbox" className="block text-sm font-mono text-brand-primary hover:underline">
-                  GET /v2/tax/wht
-                </Link>
+                <a href="/openapi/v1.json" target="_blank" rel="noopener noreferrer" className="block text-sm font-mono text-brand-primary hover:underline">
+                  GET /openapi/v1.json
+                </a>
+                <p className="text-xs text-text-muted">
+                  OpenAPI 3.0 spec covering all <code className="font-mono">/api/v1/*</code> endpoints — import into Postman, Insomnia, or your codegen tool.
+                </p>
               </div>
             </Card>
           </div>

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { toast } from "sonner";
 import { getSession } from "@/lib/auth";
 import type { ProDashboard } from "@/ai/pro-portal";
 
@@ -371,6 +372,11 @@ export default function ProDashboardPage() {
                         <button
                           aria-label={`More actions for ${client.name}`}
                           title="More actions"
+                          onClick={() =>
+                            toast(`More actions for ${client.name} (demo)`, {
+                              description: "Client management menu lands on Track B.",
+                            })
+                          }
                           className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                         >
                           <MoreHorizontal size={15} />

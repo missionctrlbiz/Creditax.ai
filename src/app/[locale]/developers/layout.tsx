@@ -313,6 +313,9 @@ export default function DevelopersLayout({
                 variant="primary"
                 size="sm"
                 className="h-9 whitespace-nowrap"
+                onClick={() => {
+                  window.location.href = '/dashboard/keys';
+                }}
               >
                 Get API Key
               </Button>

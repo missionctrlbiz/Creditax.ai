@@ -1,0 +1,149 @@
+{
+  "kind": "agnes_artifact",
+  "artifact_type": "research_markdown_report",
+  "research_kind": "deep_research",
+  "mode": "deep_research",
+  "session_id": "20260923_36",
+  "title": "P12 Demo Polish — Independent Review Gate",
+  "local_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_36/deep_research/20260923-36-p12-demo-polish-review-gate.md",
+  "manifest_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/artifacts/research/20260923_36/deep_research/20260923-36-p12-demo-polish-review-gate.json",
+  "repo_path": "/Users/oyinkansolaarchibong/Desktop/creditax-ai/.agnes/work/research/20260923_36/deep_research/repo",
+  "preview_uri": "ui://agnes-research/deep_research/20260923-36-p12-demo-polish-review-gate",
+  "sources_count": 4,
+  "evidence_count": 8,
+  "conflicts_count": 1,
+  "blocked_sources_count": 0,
+  "confidence": "medium",
+  "quality_warnings": [
+    "8 evidence item(s) are missing source_url.",
+    "No evidence entries include quotes or extracted text; add short quotes for auditability."
+  ],
+  "created_at": "2026-09-23T23:44:07.007869+00:00",
+  "sources": [
+    {
+      "title": "progress/STATE.json (p12-demo-polish exit criteria)",
+      "url": "file://progress/STATE.json",
+      "note": null
+    },
+    {
+      "title": "research/mvp-demo-plan.md §4–§5",
+      "url": "file://research/mvp-demo-plan.md",
+      "note": null
+    },
+    {
+      "title": "assets/demo-screenshots/README.md",
+      "url": "file://assets/demo-screenshots/README.md",
+      "note": null
+    },
+    {
+      "title": "src/app/globals.css",
+      "url": "file://src/app/globals.css",
+      "note": null
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "All 7 p12-named dead buttons wired to real handlers",
+      "value": null,
+      "source_title": "focus-file inspections",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "reference L466 goToSandbox; sdks L353 toast; webhooks L235/L239/L492/L303/L362 toast; pro/clients/[id] L383 Link-wrap, L388/L402/L690 toast; L491 Link-wrap"
+    },
+    {
+      "claim": "10 native icon-only <button> elements without onClick in pro/clients/[id]/page.tsx (L283,290,541,548,555,612,619,626,665,672)",
+      "value": null,
+      "source_title": "pro/clients/[id]/page.tsx block scan",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "no onClick/onKeyDown/type=submit in 12-line window of each block; violates exit criterion 1"
+    },
+    {
+      "claim": "No runtime console.log in src/app; 2 hits are template-literal code examples",
+      "value": null,
+      "source_title": "grep console.log src/app",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "quickstart L64, developers L125 inside backtick examples; admin/users L235 is a comment"
+    },
+    {
+      "claim": "globals.css has .container, 6 keyframes, data-state rules, 3 font vars",
+      "value": null,
+      "source_title": "src/app/globals.css",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": ".container L259/267; @keyframes L430-450; data-state L455-464; --font-inter/--font-syne/--font-jetbrains-mono L5-7"
+    },
+    {
+      "claim": "No toast imports in dashboard/documents or dashboard/usage",
+      "value": null,
+      "source_title": "grep toast",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "0 matches in both files; their buttons use window.location.href"
+    },
+    {
+      "claim": "All demo-beat routes exist, KB at /admin/knowledge-base, /api/v1/admin/kb present",
+      "value": null,
+      "source_title": "route ls sweep",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "24/24 route files OK"
+    },
+    {
+      "claim": "Screenshot manifest covers sections A-G mapped to script beats",
+      "value": null,
+      "source_title": "assets/demo-screenshots/README.md",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "A-G tables with beat ranges; capture status honestly pending"
+    },
+    {
+      "claim": "tsc --noEmit exit 0; eslint --max-warnings 0 src exit 0",
+      "value": null,
+      "source_title": "gate runs via /usr/local/bin/node",
+      "source_url": null,
+      "source_type": null,
+      "quote": null,
+      "observed_at": null,
+      "confidence": "high",
+      "notes": "sandbox-safe node invocations per task instruction"
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "STATE.json p12 last_review verdict",
+      "variants": [
+        "pass (reviewer claim: every button resolves to a real handler)",
+        "residual 10 no-handler native buttons in pro/clients/[id] contradict that claim"
+      ],
+      "source_urls": [
+        "file://progress/STATE.json",
+        "file://src/app/[locale]/pro/clients/[id]/page.tsx"
+      ],
+      "resolution": "reviewer sweep covered only <Button> components / named buttons; native <button> elements in the same demo-critical file were not checked. Strict re-read of the exit criterion fails p12 until they are wired."
+    }
+  ],
+  "blocked_sources": []
+}

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 
 export default function AdminSettingsPage() {
   const [siteName, setSiteName] = useState('Creditax.ai');
@@ -54,11 +55,11 @@ export default function AdminSettingsPage() {
         </div>
         <p className="text-text-muted text-sm mb-4">Prototype — these buttons navigate, they don&apos;t delete anything.</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="danger" size="md">
+          <Button variant="danger" size="md" onClick={() => toast('Signups paused (demo)', { description: 'Real signup gating is a Track B setting.' })}>
             <Pause size={15} />
             Pause Signups
           </Button>
-          <Button variant="ghost" size="md">
+          <Button variant="ghost" size="md" onClick={() => window.location.assign('/admin/audit')}>
             <Download size={15} />
             Export Audit Log
           </Button>

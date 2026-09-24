@@ -158,8 +158,10 @@ export default function QuickstartPage() {
     setTimeout(() => setCopiedBlock(null), 2000);
   };
 
-  const currentStep = steps.find((s) => s.current) || steps[1];
-  const progressPercent = (currentStep.number / steps.length) * 100;
+  // P12 — functional wizard navigation (was a static single step).
+  const [stepNumber, setStepNumber] = useState(2);
+  const currentStep = steps.find((s) => s.number === stepNumber) || steps[1];
+  const progressPercent = (stepNumber / steps.length) * 100;
   const activeCode =
     activeLanguage === 'bash' ? codeBlocks.bash.install : codeBlocks[activeLanguage];
 
@@ -315,14 +317,14 @@ export default function QuickstartPage() {
 
           {/* Step navigation */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button variant="ghost" size="lg" disabled={currentStep.number === 1}>
+            <Button variant="ghost" size="lg" disabled={currentStep.number === 1} onClick={() => setStepNumber((n) => Math.max(1, n - 1))}>
               <ArrowLeft size={18} aria-hidden />
               <span className="truncate">
                 Step {currentStep.number - 1}:{' '}
                 {currentStep.number > 1 ? steps[currentStep.number - 2].title : 'Get API Key'}
               </span>
             </Button>
-            <Button variant="primary" size="lg">
+            <Button variant="primary" size="lg" onClick={() => setStepNumber((n) => Math.min(steps.length, n + 1))}>
               <span className="truncate">
                 Step {currentStep.number + 1}: {steps[currentStep.number]?.title || 'Complete'}
               </span>

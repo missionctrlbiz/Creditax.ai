@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   FileText,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -170,6 +171,11 @@ export default function BlogDetailPage() {
                 <button
                   type="button"
                   aria-label="Bookmark article"
+                  onClick={() =>
+                    toast('Article bookmarked (demo)', {
+                      description: 'Saved to your reading list on the Track B sync.',
+                    })
+                  }
                   className="h-9 w-9 rounded-input border border-border-strong text-text-secondary hover:text-brand-action flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <Bookmark className="w-4 h-4" />

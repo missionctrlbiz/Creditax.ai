@@ -423,6 +423,46 @@ textarea::placeholder {
   font-family: var(--font-display);
 }
 
+/* ── P12 — animation keyframes fallback (tailwindcss-animate parity) ──
+   dialog.tsx + AccountMenu use `animate-in / fade-in-0 / zoom-in-95`
+   data-state utilities. Since tailwindcss-animate is not installed, these
+   @keyframes + utility definitions make the open/close motion real. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes zoom-in {
+  from { transform: scale(0.95); }
+  to   { transform: scale(1); }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes zoom-out {
+  from { transform: scale(1); }
+  to   { transform: scale(0.95); }
+}
+@keyframes slide-in-up {
+  from { transform: translateY(12px); }
+  to   { transform: translateY(0); }
+}
+@keyframes slide-in-down {
+  from { transform: translateY(-12px); }
+  to   { transform: translateY(0); }
+}
+
+[data-state='open'] {
+  animation: fade-in 0.15s ease-out, zoom-in 0.15s ease-out;
+}
+[data-state='open'].fade-in-0 { animation: fade-in 0.15s ease-out; }
+[data-state='open'].zoom-in-95 { animation: zoom-in 0.15s ease-out; }
+[data-state='open'].slide-in-up { animation: slide-in-up 0.2s ease-out; }
+[data-state='open'].slide-in-down { animation: slide-in-down 0.2s ease-out; }
+[data-state='closed'] {
+  animation: fade-out 0.12s ease-in, zoom-out 0.12s ease-in;
+}
+
 /* ── Markdown answer rendering (chat canvas) ── */
 .prose-creditax > :first-child { margin-top: 0; }
 .prose-creditax > :last-child { margin-bottom: 0; }

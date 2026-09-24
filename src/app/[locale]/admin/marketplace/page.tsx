@@ -62,6 +62,12 @@ export default function AdminMarketplacePage() {
     fetch(`/api/v1/admin/marketplace/${id}/${decision}`, { method: 'POST' }).catch(() => {});
   };
 
+  /** P12 — bulk decision over the current selection (was a dead button). */
+  const handleBulkDecision = (decision: 'approve' | 'reject') => {
+    selectedIds.forEach((id) => handleDecision(id, decision));
+    setSelectedIds([]);
+  };
+
   const effectiveStatus = (app: (typeof applications)[number]) => statusOverrides[app.id] ?? app.status;
 
   const filtered = applications.filter((app) => {
@@ -128,11 +134,11 @@ export default function AdminMarketplacePage() {
                 <span className="font-mono tabular-nums text-text-primary">{selectedIds.length}</span> selected
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="danger" size="sm">
+                <Button variant="danger" size="sm" onClick={() => handleBulkDecision('reject')} disabled={selectedIds.length === 0}>
                   <X size={14} />
                   Reject
                 </Button>
-                <Button variant="primary" size="sm">
+                <Button variant="primary" size="sm" onClick={() => handleBulkDecision('approve')} disabled={selectedIds.length === 0}>
                   <Check size={14} />
                   Approve
                 </Button>

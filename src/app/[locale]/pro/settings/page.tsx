@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertTriangle,
@@ -15,6 +16,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { toast } from 'sonner';
 
 type SettingsSection = 'profile' | 'branding' | 'services' | 'notifications' | 'billing' | 'danger';
 
@@ -44,6 +46,7 @@ const notificationItems = [
 ] as const;
 
 export default function ProSettingsPage() {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [notifications, setNotifications] = useState({
     email: true,
@@ -161,11 +164,25 @@ export default function ProSettingsPage() {
                     <div>
                       <p className="text-text-primary font-semibold mb-1">Adaeze Obi &amp; Associates</p>
                       <div className="flex gap-3">
-                        <button className="text-brand-primary text-sm hover:underline cursor-pointer">
+                        <button
+                          onClick={() =>
+                            toast('Logo upload (demo)', {
+                              description: 'Logo uploads land in Cloudinary on Track B.',
+                            })
+                          }
+                          className="text-brand-primary text-sm hover:underline cursor-pointer"
+                        >
                           Change photo
                         </button>
                         <span className="text-text-muted">·</span>
-                        <button className="text-text-muted text-sm hover:text-text-secondary cursor-pointer">
+                        <button
+                          onClick={() =>
+                            toast('Logo removed (demo)', {
+                              description: 'Logo removal clears the Cloudinary record on Track B.',
+                            })
+                          }
+                          className="text-text-muted text-sm hover:text-text-secondary cursor-pointer"
+                        >
                           Remove
                         </button>
                       </div>
@@ -197,7 +214,7 @@ export default function ProSettingsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-4 mt-8 pt-6 border-t border-border-default">
-                    <Button variant="primary">Save Changes</Button>
+                    <Button variant="primary" onClick={() => toast('Profile updated', { description: 'Demo build — profile changes are not persisted in Track A.' })}>Save Changes</Button>
                     <span className="text-text-muted text-sm">No unsaved changes</span>
                   </div>
                 </Card>
@@ -227,7 +244,7 @@ export default function ProSettingsPage() {
                         <div className="w-20 h-20 rounded-card bg-surface-inset border border-border-default flex items-center justify-center">
                           <Palette size={22} className="text-text-muted" />
                         </div>
-                        <Button variant="secondary" size="sm">Upload Logo</Button>
+                        <Button variant="secondary" size="sm" onClick={() => toast('Demo build — logo upload is mocked', { description: 'File uploads land in Track B with Backblaze B2.' })}>Upload Logo</Button>
                       </div>
                     </div>
 
@@ -254,7 +271,7 @@ export default function ProSettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-4 mt-8 pt-6 border-t border-border-default">
-                      <Button variant="primary">Save Changes</Button>
+                      <Button variant="primary" onClick={() => toast('Branding saved', { description: 'Demo build — branding changes are not persisted in Track A.' })}>Save Changes</Button>
                     </div>
                   </div>
                 </Card>
@@ -305,7 +322,7 @@ export default function ProSettingsPage() {
                   </div>
 
                   <div className="flex items-center gap-4 mt-8 pt-6 border-t border-border-default">
-                    <Button variant="primary">Save Changes</Button>
+                    <Button variant="primary" onClick={() => toast('Services saved', { description: 'Demo build — service changes are not persisted in Track A.' })}>Save Changes</Button>
                   </div>
                 </Card>
               </motion.div>
@@ -384,7 +401,7 @@ export default function ProSettingsPage() {
                     </div>
                   </div>
 
-                  <Button variant="secondary">
+                  <Button variant="secondary" onClick={() => router.push('/pricing')}>
                     <CreditCard size={15} />
                     Manage Subscription
                   </Button>
@@ -415,7 +432,9 @@ export default function ProSettingsPage() {
                       <p className="text-text-muted text-sm mb-4">
                         Hide your profile from the marketplace. Existing clients keep access to their files.
                       </p>
-                      <Button variant="danger" size="sm">Withdraw Listing</Button>
+                      <Button variant="danger" size="sm" onClick={() => toast('Listing withdrawn (demo)', { description: 'Your pro profile is hidden from the marketplace; existing clients keep access.' })}>
+                        Withdraw Listing
+                      </Button>
                     </div>
 
                     <div className="p-4 rounded-card bg-error-bg border border-error-border">
@@ -423,7 +442,7 @@ export default function ProSettingsPage() {
                       <p className="text-text-muted text-sm mb-4">
                         Permanently delete your account, client files, and marketplace listing. This cannot be undone.
                       </p>
-                      <Button variant="danger" size="sm">
+                      <Button variant="danger" size="sm" onClick={() => toast('Demo build — practice deletion is mocked', { description: 'No real data is stored or removed in Track A.' })}>
                         <Trash2 size={14} />
                         Delete Practice
                       </Button>

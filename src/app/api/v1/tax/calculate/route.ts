@@ -6,6 +6,7 @@ import {
   fmtNaira,
   type VatInput,
 } from '@/ai/tax-rules';
+import { guard } from '@/lib/rate-limit';
 
 type CalcBody = {
   kind: 'paye' | 'vat' | 'wht';
@@ -29,6 +30,10 @@ type CalcBody = {
  * section it traces to — the "answers you can defend" posture.
  */
 export async function POST(req: NextRequest) {
+  // core-api "rate-limit" closure: 100 req/min per key (in-memory window).
+  const limited = guard(req);
+  if (limited) return limited;
+
   let body: CalcBody;
   try {
     body = await req.json();

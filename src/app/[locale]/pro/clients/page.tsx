@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ProClient } from "@/ai/pro-portal";
 
@@ -404,6 +405,11 @@ export default function ClientsPage() {
                             <button
                               aria-label={`Edit ${client.name}`}
                               title="Edit"
+                              onClick={() =>
+                                toast(`Edit ${client.name} (demo)`, {
+                                  description: "Client profile editing lands in the Track B pro workspace.",
+                                })
+                              }
                               className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                             >
                               <Pencil size={15} />
@@ -411,6 +417,11 @@ export default function ClientsPage() {
                             <button
                               aria-label={`More actions for ${client.name}`}
                               title="More actions"
+                              onClick={() =>
+                                toast(`More actions for ${client.name} (demo)`, {
+                                  description: "Client management menu lands on Track B.",
+                                })
+                              }
                               className="p-1.5 rounded-btn text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer"
                             >
                               <MoreHorizontal size={15} />

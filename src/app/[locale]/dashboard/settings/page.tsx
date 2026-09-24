@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Link2, Users, Share2, Plus, HardDrive } from 'lucide-react';
+import { toast } from 'sonner';
 
 type SettingsSection = 'account' | 'notifications' | 'security' | 'billing' | 'api' | 'team' | 'connectors';
 
@@ -23,6 +24,8 @@ interface ConnectorData {
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('account');
+  const [twoFactor, setTwoFactor] = useState(true);
+  const [revoked, setRevoked] = useState<string[]>([]);
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -34,6 +37,7 @@ export default function SettingsPage() {
   const [collab, setCollab] = useState<CollabData | null>(null);
   const [connectors, setConnectors] = useState<ConnectorData | null>(null);
   const [tier] = useState<'free' | 'plus' | 'professional'>('free');
+  const inviteInputRef = useRef<HTMLInputElement>(null);
 
   function loadCollab() {
     return fetch('/api/v1/collab')
@@ -111,6 +115,11 @@ export default function SettingsPage() {
             {/* Danger Zone */}
             <div className="mt-6 pt-4 border-t border-border-default">
               <button
+                onClick={() =>
+                  toast('Danger Zone (demo)', {
+                    description: 'Account-level actions are mocked in Track A; session revocation and deletion land in Track B.',
+                  })
+                }
                 className="w-full px-4 py-2.5 rounded-[10px] text-sm font-medium text-left
                   text-[var(--color-error-text)] hover:bg-[var(--color-error-bg)] transition-all duration-150 cursor-pointer"
               >
@@ -150,11 +159,25 @@ export default function SettingsPage() {
                     <div>
                       <p className="text-text-primary font-semibold mb-1">Emeka Obi</p>
                       <div className="flex gap-3">
-                        <button className="text-brand-primary text-sm hover:underline cursor-pointer">
+                        <button
+                          onClick={() =>
+                            toast('Photo upload (demo)', {
+                              description: 'Avatar uploads land in Cloudinary on Track B.',
+                            })
+                          }
+                          className="text-brand-primary text-sm hover:underline cursor-pointer"
+                        >
                           Change photo
                         </button>
                         <span className="text-text-muted">·</span>
-                        <button className="text-text-muted text-sm hover:text-text-secondary cursor-pointer">
+                        <button
+                          onClick={() =>
+                            toast('Photo removed (demo)', {
+                              description: 'Avatar removal clears the Cloudinary record on Track B.',
+                            })
+                          }
+                          className="text-text-muted text-sm hover:text-text-secondary cursor-pointer"
+                        >
                           Remove
                         </button>
                       </div>
@@ -196,7 +219,9 @@ export default function SettingsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-4 mt-8 pt-6 border-t border-border-default">
-                    <Button variant="primary">Save Changes</Button>
+                    <Button variant="primary" onClick={() => toast('Settings saved', { description: 'Demo build — settings are not persisted in Track A.' })}>
+                      Save Changes
+                    </Button>
                     <span className="text-text-muted text-sm">No unsaved changes</span>
                   </div>
                 </Card>
@@ -337,9 +362,17 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant="success">ON</Badge>
-                      <button className="w-12 h-6 rounded-full bg-brand-primary relative cursor-pointer">
-                        <div className="absolute top-1 left-7 w-4 h-4 rounded-full bg-white" />
+                      <Badge variant={twoFactor ? 'success' : 'warning'}>{twoFactor ? 'ON' : 'OFF'}</Badge>
+                      <button
+                        role="switch"
+                        aria-checked={twoFactor}
+                        aria-label="Toggle two-factor authentication"
+                        onClick={() => setTwoFactor((v) => !v)}
+                        className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${twoFactor ? 'bg-brand-primary' : 'bg-surface-inset border border-border-default'}`}
+                      >
+                        <div
+                          className={`absolute top-1 w-4 h-4 rounded-full transition-all ${twoFactor ? 'left-7 bg-white' : 'left-1 bg-text-muted'}`}
+                        />
                       </button>
                     </div>
                   </div>
@@ -364,10 +397,20 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-3">
                           {session.isCurrent ? (
                             <Badge variant="success">Current session</Badge>
+                          ) : revoked.includes(session.device) ? (
+                            <span className="text-text-muted text-xs">Revoked</span>
                           ) : (
                             <>
                               <span className="text-text-muted text-xs">{session.status}</span>
-                              <button className="text-[var(--color-error-text)] text-xs hover:underline cursor-pointer">
+                              <button
+                                onClick={() => {
+                                  setRevoked((prev) => [...prev, session.device]);
+                                  toast(`${session.device} revoked (demo)`, {
+                                    description: 'Session revocation propagates to the auth server on Track B.',
+                                  });
+                                }}
+                                className="text-[var(--color-error-text)] text-xs hover:underline cursor-pointer"
+                              >
                                 Revoke
                               </button>
                             </>
@@ -443,6 +486,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex gap-2 mb-3">
                       <Input
+                        ref={inviteInputRef}
                         placeholder="teammate@firm.ng"
                         className="h-9 flex-1"
                         onKeyDown={(e) => {
@@ -456,7 +500,25 @@ export default function SettingsPage() {
                           }
                         }}
                       />
-                      <Button variant="primary" size="sm">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          const v = inviteInputRef.current?.value?.trim();
+                          if (!v) {
+                            toast('Enter a teammate email first', { description: 'Invites are a paid feature (Plus / Pro).' });
+                            return;
+                          }
+                          fetch('/api/v1/collab/invite', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: v, tier }),
+                          })
+                            .then(() => loadCollab())
+                            .catch(() => {});
+                          toast('Invite sent', { description: 'Workspace invites are a paid feature (Plus / Pro).' });
+                        }}
+                      >
                         <Plus size={14} /> Invite
                       </Button>
                     </div>
@@ -573,7 +635,13 @@ export default function SettingsPage() {
             <p className="text-text-muted text-sm mb-4">
               Permanently delete your account and all data. This cannot be undone.
             </p>
-            <Button variant="danger" size="sm">Delete Account</Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => toast('Demo build — account deletion is mocked', { description: 'No real data is stored or removed in Track A.' })}
+            >
+              Delete Account
+            </Button>
           </motion.div>
         </div>
       </div>

@@ -253,6 +253,21 @@ export default function AdminAuditPage() {
   const totalPages = Math.max(1, Math.ceil(visibleLogs.length / perPage));
   const paginatedLogs = visibleLogs.slice((currentPage - 1) * perPage, currentPage * perPage);
 
+  /** P12 — Export the visible audit rows to a real CSV download. */
+  const exportCsv = () => {
+    const header = 'Timestamp,User,Action,Entity Type,Entity,IP';
+    const rows = visibleLogs.map((l) =>
+      [l.timestamp, l.user, l.action, l.entityType, l.entityName, l.ip].join(',')
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'creditax-audit-log.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const clearFilters = () => {
     setDateFrom('Jun 1, 2025');
     setDateTo('Jun 12, 2025');
@@ -276,7 +291,7 @@ export default function AdminAuditPage() {
           <p className="text-text-muted mt-1">Track all system changes and user actions</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="md">
+          <Button variant="secondary" size="md" onClick={exportCsv}>
             <Download size={15} />
             Export CSV
           </Button>

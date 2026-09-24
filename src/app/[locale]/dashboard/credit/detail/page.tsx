@@ -4,6 +4,7 @@ import { motion, type Variants } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { toast } from 'sonner';
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -206,7 +207,16 @@ export default function CreditDetailPage() {
 
           {/* CTA Button */}
           <motion.div variants={fadeInUp}>
-            <Button variant="primary" size="xl" fullWidth>
+            <Button
+              variant="primary"
+              size="xl"
+              fullWidth
+              onClick={() =>
+                toast('Demo build — score improvement playbook is mocked', {
+                  description: 'A personalised "how to improve" playbook ships with the Track B report worker.',
+                })
+              }
+            >
               How to Improve My Score
             </Button>
           </motion.div>
@@ -335,13 +345,31 @@ export default function CreditDetailPage() {
             <Card className="p-6">
               <h3 className="text-sm font-semibold text-text-primary mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <Button variant="secondary" size="md" fullWidth className="justify-start">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  className="justify-start"
+                  onClick={() => {
+                    window.location.href = '/dashboard/documents/upload';
+                  }}
+                >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                   </svg>
                   Upload Bank Statement
                 </Button>
-                <Button variant="primary" size="md" fullWidth className="justify-start">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  className="justify-start"
+                  onClick={() =>
+                    toast('Demo build — lender matching is mocked', {
+                      description: 'Lender matching needs bank consent (Mono/Jumo) — arrives in Track B.',
+                    })
+                  }
+                >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
@@ -349,7 +377,27 @@ export default function CreditDetailPage() {
                   </svg>
                   Request Lender Match
                 </Button>
-                <Button variant="ghost" size="md" fullWidth className="justify-start">
+                <Button
+                  variant="ghost"
+                  size="md"
+                  fullWidth
+                  className="justify-start"
+                  onClick={() => {
+                    const csv = [
+                      ['Metric', 'Value'],
+                      ['Score', String(currentScore)],
+                      ...scoreBreakdown.map((b) => [b.label, `${b.points} pts (${b.percentage}%)`]),
+                    ]
+                      .map((r) => r.join(', '))
+                      .join('\n');
+                    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'creditax-score-report.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                     <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />

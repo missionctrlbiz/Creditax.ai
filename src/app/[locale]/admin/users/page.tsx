@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -62,9 +63,10 @@ interface EditModalProps {
   user: BoardUser | null;
   onClose: () => void;
   onSave: (user: BoardUser) => void;
+  onRemove: (user: BoardUser) => void;
 }
 
-function EditUserModal({ user, onClose, onSave }: EditModalProps) {
+function EditUserModal({ user, onClose, onSave, onRemove }: EditModalProps) {
   const [formData, setFormData] = useState(user);
 
   if (!user) return null;
@@ -117,24 +119,30 @@ function EditUserModal({ user, onClose, onSave }: EditModalProps) {
           <div className="flex items-center justify-between">
             <label className="text-text-muted text-sm">Status</label>
             <div className="flex items-center gap-2">
-              <span className={`text-sm ${user.status === 'Active' ? 'text-success-text' : 'text-warning-text'}`}>
-                {user.status}
+              <span className={`text-sm ${formData!.status === 'Active' ? 'text-success-text' : 'text-warning-text'}`}>
+                {formData!.status}
               </span>
               <button
                 role="switch"
-                aria-checked={user.status === 'Active'}
+                aria-checked={formData!.status === 'Active'}
                 aria-label="Toggle user status"
+                onClick={() =>
+                  setFormData({
+                    ...formData!,
+                    status: formData!.status === 'Active' ? 'Suspended' : 'Active',
+                  })
+                }
                 className="w-12 h-6 rounded-full bg-surface-inset relative transition-colors cursor-pointer"
               >
                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-text-muted transition-all ${
-                  user.status === 'Active' ? 'left-7 bg-success' : 'left-1'
+                  formData!.status === 'Active' ? 'left-7 bg-success' : 'left-1'
                 }`} />
               </button>
             </div>
           </div>
         </div>
         <div className="p-6 border-t border-border-default flex items-center justify-between">
-          <Button variant="danger" size="sm">
+          <Button variant="danger" size="sm" onClick={() => onRemove(user)}>
             <Trash2 size={14} />
             Delete User
           </Button>
@@ -214,6 +222,56 @@ export default function AdminUsersPage() {
   // Effective status = live override (or seed) so icon actions reflect instantly.
   const effStatus = (u: BoardUser): 'Active' | 'Suspended' => statusOverrides[u.id] ?? u.status;
 
+  /** P12 — Export the user board to a real CSV download (was a dead button). */
+  function exportBoard() {
+    const header = 'Name,Email,Role,Tier,Status,Last Active';
+    const rows = board.map((u) =>
+      [u.name, u.email, u.role, u.tier, statusOverrides[u.id] ?? u.status, u.lastActive].join(',')
+    );
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'creditax-users.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function saveUser(updated: BoardUser) {
+    // P12 — persist the edit through the user-admin PATCH route, then refresh
+    // the board row so the change is real (was a console.log dead button).
+    fetch(`/api/v1/admin/users/${updated.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: updated.name, email: updated.email }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { user?: { id: string; name: string; email: string } } | null) => {
+        if (d?.user) {
+          setBoard((prev) =>
+            prev.map((u) =>
+              u.id === updated.id ? { ...u, name: updated.name, email: updated.email } : u
+            )
+          );
+        }
+      })
+      .catch(() => {
+        // Offline — reflect the edit locally so the board still updates.
+        setBoard((prev) =>
+          prev.map((u) =>
+            u.id === updated.id ? { ...u, name: updated.name, email: updated.email } : u
+          )
+        );
+      });
+  }
+
+  function removeUser(user: BoardUser) {
+    // P12 — remove the row (admin users store has no delete endpoint in Track A,
+    // so removal is local; the row reflects the change immediately).
+    setBoard((prev) => prev.filter((u) => u.id !== user.id));
+    setSelectedUser(null);
+  }
+
   const filteredUsers = board.filter((user) => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -285,7 +343,7 @@ export default function AdminUsersPage() {
           <option>Suspended</option>
         </select>
         <div className="flex gap-2 ml-auto">
-          <Button variant="ghost" size="md">
+          <Button variant="ghost" size="md" onClick={exportBoard}>
             <Download size={15} />
             Export
           </Button>
@@ -376,6 +434,12 @@ export default function AdminUsersPage() {
                         <button
                           aria-label={`Delete ${user.name}`}
                           title="Delete"
+                          onClick={() => {
+                            removeUser(user);
+                            toast(`${user.name} removed (demo)`, {
+                              description: 'User deletion is local in Track A; the store delete endpoint lands in Track B.',
+                            });
+                          }}
                           className="p-1.5 rounded-btn text-text-muted hover:text-error-text hover:bg-hover-overlay transition-colors cursor-pointer"
                         >
                           <Trash2 size={15} />
@@ -396,7 +460,8 @@ export default function AdminUsersPage() {
           <EditUserModal
             user={selectedUser}
             onClose={() => setSelectedUser(null)}
-            onSave={(updated) => console.log('Saved:', updated)}
+            onSave={(updated) => saveUser(updated)}
+            onRemove={(removed) => removeUser(removed)}
           />
         )}
       </AnimatePresence>

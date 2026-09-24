@@ -1,6 +1,8 @@
 'use client';
 
 import { motion, type Variants } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +33,7 @@ const expenses = [
 ];
 
 export default function TaxFilingStep3Page() {
+  const router = useRouter();
   const grossIncome = 12000000;
   const totalDeductions = 2450000;
   const taxableIncome = grossIncome - totalDeductions;
@@ -141,10 +144,10 @@ export default function TaxFilingStep3Page() {
                     Based on your uploaded receipts and invoices, I found <span className="text-brand-action font-semibold">{formatCurrency(totalDeductions)}</span> in potentially deductible business expenses. Would you like me to add all of these to your filing?
                   </p>
                   <div className="flex gap-3">
-                    <Button variant="primary" size="sm">
+                    <Button variant="primary" size="sm" onClick={() => toast('Deductions added to your 2025 filing', { description: 'All matched expenses are now in the filing draft.' })}>
                       ✓ Yes, add all
                     </Button>
-                    <Button variant="secondary" size="sm">
+                    <Button variant="secondary" size="sm" onClick={() => toast('Demo build — line-by-line review is mocked', { description: 'Deductions stay added in bulk for the demo journey.' })}>
                       Review each one
                     </Button>
                   </div>
@@ -289,10 +292,10 @@ export default function TaxFilingStep3Page() {
             Step 3 of 5
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" size="lg">
+            <Button variant="ghost" size="lg" onClick={() => router.push('/dashboard/tax-filing')}>
               ← Back
             </Button>
-            <Button variant="primary" size="lg">
+            <Button variant="primary" size="lg" onClick={() => router.push('/dashboard/tax-filing')}>
               Continue to Summary →
             </Button>
           </div>

@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { PIT_BANDS, VAT_RATE, WHT_RATES, fmtNaira } from '@/ai/tax-rules';
+import { guard } from '@/lib/rate-limit';
 
 /**
  * GET /api/v1/tax/brackets — reference tables (used by the developer-portal
@@ -8,7 +9,11 @@ import { PIT_BANDS, VAT_RATE, WHT_RATES, fmtNaira } from '@/ai/tax-rules';
  * Naira-only, demo-labeled. Re-verify against the current NTA schedule before
  * any production use.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // core-api "rate-limit" closure: 100 req/min per key (in-memory window).
+  const limited = guard(req);
+  if (limited) return limited;
+
   return NextResponse.json({
     currency: 'NGN',
     pit: {

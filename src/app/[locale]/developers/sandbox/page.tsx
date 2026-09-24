@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   ArrowRight,
   Check,
@@ -301,7 +302,7 @@ export default function SandboxPage() {
                 </p>
               </div>
             </div>
-            <Button variant="danger" size="md" className="shrink-0">
+            <Button variant="danger" size="md" className="shrink-0" onClick={() => toast('Sandbox reset (demo)', { description: 'Test records clear on the Track B worker; this is a demo build.' })}>
               Reset Sandbox
               <ArrowRight size={16} aria-hidden />
             </Button>
@@ -322,7 +323,7 @@ export default function SandboxPage() {
                 </p>
               </div>
             </div>
-            <Button variant="primary" size="lg" className="shrink-0">
+            <Button variant="primary" size="lg" className="shrink-0" onClick={() => { window.location.href = '/pricing'; }}>
               Upgrade to Pro
               <ArrowRight size={18} aria-hidden />
             </Button>

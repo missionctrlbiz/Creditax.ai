@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { toast } from 'sonner';
 import type { WebhookEndpoint } from '@/ai/webhooks-store';
 
 /** Display shape for a webhook endpoint card (delivery stats are demo samples). */
@@ -231,7 +232,7 @@ export default function WebhooksPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => toast('Edit endpoint (demo)', { description: `Event subscriptions for ${endpoint.url} are managed on the Track B worker.` })}>
                     <Pencil size={14} aria-hidden />
                     Edit
                   </Button>
@@ -239,6 +240,7 @@ export default function WebhooksPage() {
                     variant="ghost"
                     size="sm"
                     className="text-error-text hover:bg-error-bg"
+                    onClick={() => toast('Endpoint removed (demo)', { description: 'Webhook deletion lands in the Track B webhook registry.' })}
                   >
                     <Trash2 size={14} aria-hidden />
                     Delete
@@ -298,6 +300,7 @@ export default function WebhooksPage() {
                       <button
                         type="button"
                         className="mt-2 flex items-center gap-1 text-xs font-semibold text-error-text underline cursor-pointer"
+                        onClick={() => toast('Error logs (demo)', { description: 'Full delivery logs stream in on the Track B worker.' })}
                       >
                         View Error Logs
                         <ArrowRight size={12} aria-hidden />
@@ -355,6 +358,7 @@ export default function WebhooksPage() {
                       <button
                         type="button"
                         className="flex items-center gap-1 text-sm text-brand-primary hover:underline cursor-pointer"
+                        onClick={() => toast('Payload inspector (demo)', { description: 'Signed payloads and delivery traces appear with the Track B worker.' })}
                       >
                         <Play size={14} aria-hidden />
                         View Payload
@@ -485,7 +489,7 @@ export default function WebhooksPage() {
 
                   {/* Actions */}
                   <div className="flex flex-col gap-3 pt-4">
-                    <Button variant="secondary" size="lg" fullWidth>
+                    <Button variant="secondary" size="lg" fullWidth onClick={() => toast('Test delivery sent (demo)', { description: 'A sample payload is dispatched to the endpoint on the Track B worker.' })}>
                       <Play size={18} aria-hidden />
                       Test Endpoint
                     </Button>
