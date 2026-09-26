@@ -35,7 +35,7 @@ export interface SkillMeta {
 /** The chip rail above the composer (replaces the 4 quick-ask chips). */
 export const SKILLS: SkillMeta[] = [
   { id: 'wht-recovery', label: '🧾 Recover my WHT', icon: '🧾', costCredits: 5, tierGate: null, oneLiner: 'Scan my docs for unclaimed WHT credit notes' },
-  { id: 'tcc-readiness', label: '📜 TCC readiness', icon: '📜', costCredits: 2, tierGate: null, oneLiner: 'Check my Tax Clearance Certificate checklist' },
+  { id: 'tcc-readiness', label: '📜 TCC readiness', icon: '📜', costCredits: 3, tierGate: null, oneLiner: 'Check my Tax Clearance Certificate checklist' },
   { id: 'notice-explainer', label: '📩 Explain a notice', icon: '📩', costCredits: 2, tierGate: null, oneLiner: 'Plain-language breakdown of an IRS/FIRS notice' },
   { id: 'invoice-wht-check', label: '🧮 Invoice WHT check', icon: '🧮', costCredits: 2, tierGate: 'plus', oneLiner: 'Deduct the right WHT before you pay an invoice' },
 ];

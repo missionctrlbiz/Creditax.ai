@@ -11,7 +11,7 @@
  * each exchange, and the next turn loads the recent history back in.
  */
 
-import { getPb } from '@/lib/pocketbase';
+import { pbServer } from '@/lib/pb-server';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
 import { seedConversation } from '@/lib/seed/demoSeed';
 
@@ -107,12 +107,12 @@ class PocketBaseConversationStore implements ConversationStore {
   readonly backend = 'pocketbase' as const;
 
   async create(userId: string, title?: string): Promise<string> {
-    const rec = await getPb().collection('conversations').create({ user_id: userId, title: title ?? '' });
+    const rec = await pbServer().collection('conversations').create({ user_id: userId, title: title ?? '' });
     return rec.id;
   }
 
   async append(conversationId: string, msg: Omit<ConversationMessage, 'id'>): Promise<ConversationMessage> {
-    const rec = await getPb().collection('conversation_messages').create({
+    const rec = await pbServer().collection('conversation_messages').create({
       conversation_id: conversationId,
       role: msg.role,
       kind: msg.kind ?? '',
@@ -124,7 +124,7 @@ class PocketBaseConversationStore implements ConversationStore {
   }
 
   async get(conversationId: string): Promise<Conversation | null> {
-    const pb = getPb();
+    const pb = pbServer();
     const res = await pb.collection('conversations').getFullList({ filter: `id = "${conversationId}"` });
     if (res.length === 0) return null;
     const conv = res[0];
@@ -147,7 +147,7 @@ class PocketBaseConversationStore implements ConversationStore {
   }
 
   async list(userId: string): Promise<Conversation[]> {
-    const pb = getPb();
+    const pb = pbServer();
     const res = await pb.collection('conversations').getFullList({ filter: `user_id = "${userId}"` });
     const out: Conversation[] = [];
     for (const c of res) {

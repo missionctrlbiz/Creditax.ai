@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { CountUp } from '@/components/ui/CountUp';
 import { QuickCalculator } from '@/components/marketing/QuickCalculator';
+import { useRouter } from '@/i18n/navigation';
 
 /** Semi-circular gauge with animated draw + count-up figure. */
 function Gauge({
@@ -93,6 +95,8 @@ const SIGNALS = [
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  const router = useRouter();
+  const [askDraft, setAskDraft] = useState('');
   const [currentDate, setCurrentDate] = useState('Thursday, 12 June 2026');
 
   useEffect(() => {
@@ -115,6 +119,34 @@ export default function DashboardPage() {
           {currentDate}
         </span>
       </div>
+
+      {/* §3.1 dashboard-first composer — every journey starts with a question.
+          Submitting hands the question to the canvas chat (?q=) which auto-asks
+          and docks the thread (demo beat 1–2). */}
+      <Card className="p-5 mb-6 border-brand-primary-border bg-gradient-to-br from-brand-primary-bg/30 to-brand-action-bg/10">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const q = askDraft.trim();
+            if (!q) return;
+            router.push(`/dashboard/chat?q=${encodeURIComponent(q)}`);
+          }}
+          className="flex flex-col sm:flex-row gap-3"
+        >
+          <input
+            type="text"
+            value={askDraft}
+            onChange={(e) => setAskDraft(e.target.value)}
+            placeholder={t('askPlaceholder')}
+            aria-label={t('askPlaceholder')}
+            className="flex-1 h-11 rounded-btn bg-surface-base border border-border-strong px-4 text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-brand-primary transition-colors"
+          />
+          <Button type="submit" variant="primary" size="lg">
+            {t('askCta')} →
+          </Button>
+        </form>
+        <p className="text-[11px] text-text-muted mt-2.5">{t('askTitle')} · <Link href="/dashboard/chat" className="text-brand-primary font-semibold hover:underline">canvas →</Link></p>
+      </Card>
 
       {/* Stats Grid — every figure counts up on load */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -194,8 +226,8 @@ export default function DashboardPage() {
       {/* Filing signals — refined, purposeful motion */}
       <Card className="p-6 md:p-7 mb-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-text-primary">Filing signals</h2>
-          <Badge variant="brand">Live demo feed</Badge>
+          <h2 className="text-base font-semibold text-text-primary">{t('filingSignals')}</h2>
+          <Badge variant="brand">{t('liveFeedBadge')}</Badge>
         </div>
         <div className="flex flex-col gap-3">
           {SIGNALS.map((s, i) => (

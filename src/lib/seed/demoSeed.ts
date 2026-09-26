@@ -61,6 +61,9 @@ export interface DemoProfessional {
   verified: boolean;
   rating: number;
   reviewCount: number;
+  /** pricing-and-access §2: Professional-tier firms get priority placement in
+   *  search results (surfaced as a "Priority" badge on marketplace cards). */
+  priority?: boolean;
   demo_seed: true;
 }
 
@@ -162,7 +165,7 @@ export const seedKbDocs: DemoKbDoc[] = [
 export const seedProfessionals: DemoProfessional[] = [
   {
     id: 'p-1', slug: 'akinwale-associates', name: 'Akinwale & Associates', owner: 'Akinwale O.', email: 'hello@akinwale.tax', phone: '+2348011000001', whatsapp: '+2348011000001', cacNumber: 'BN-1234567',
-    services: ['VAT Filing', 'Tax Audit', 'TCC'], location: { address: 'Admiralty Way, Lekki Phase 1', city: 'Lagos', state: 'Lagos', lat: 6.4485, lng: 3.4702 }, verified: true, rating: 4.8, reviewCount: 127, demo_seed: true,
+    services: ['VAT Filing', 'Tax Audit', 'TCC'], location: { address: 'Admiralty Way, Lekki Phase 1', city: 'Lagos', state: 'Lagos', lat: 6.4485, lng: 3.4702 }, verified: true, rating: 4.8, reviewCount: 127, priority: true, demo_seed: true,
   },
   {
     id: 'p-2', slug: 'greenleaf-tax', name: 'GreenLeaf Tax Services', owner: 'Grace I.', email: 'care@greenleaf.tax', phone: '+2348022000002', cacNumber: 'RC-7654321',
@@ -195,7 +198,7 @@ export const seedConversation: DemoMessage[] = [
 // Quotas — free-tier counters that make upgrade walls real (pricing §4)
 // ---------------------------------------------------------------------------
 export const seedQuotas: DemoQuota[] = [
-  { userId: 'u-consumer', tier: 'free', chatToday: 4, chatCap: 5, lifetimeChats: 54, lifetimeCap: 60, calcsToday: 3, uploadsToday: 2, bvnsUsed: 1, bvnsFreeTeaser: 2, demo_seed: true },
+  { userId: 'u-consumer', tier: 'free', chatToday: 4, chatCap: 5, lifetimeChats: 54, lifetimeCap: 60, calcsToday: 3, uploadsToday: 1, bvnsUsed: 1, bvnsFreeTeaser: 2, demo_seed: true },
   { userId: 'u-pro', tier: 'professional', chatToday: 12, chatCap: 100000, lifetimeChats: 12, lifetimeCap: 999999, calcsToday: 48, uploadsToday: 90, bvnsUsed: 14, bvnsFreeTeaser: 0, demo_seed: true },
 ];
 

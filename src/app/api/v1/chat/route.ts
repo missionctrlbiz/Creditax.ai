@@ -5,6 +5,7 @@ import { registerChatWebhook } from '@/ai/rag/webhooks';
 import { meter, type MeteredAction, type Tier } from '@/ai/quota';
 import { getDocument } from '@/ai/documents';
 import { fmtNaira } from '@/ai/tax-rules';
+import { guard } from '@/lib/rate-limit';
 
 /**
  * POST /api/v1/chat — grounded tax answer (P2 base + P1 multi-turn / async).
@@ -30,6 +31,11 @@ import { fmtNaira } from '@/ai/tax-rules';
  * delivery is always flagged `delivered: false` (stub).
  */
 export async function POST(req: NextRequest) {
+  // P19: chat POST was unmetered at the transport level (only user quota);
+  // share the in-memory 100 req/min window with the other public endpoints.
+  const limited = guard(req);
+  if (limited) return limited;
+
   let body: {
     question?: string;
     locale?: string;

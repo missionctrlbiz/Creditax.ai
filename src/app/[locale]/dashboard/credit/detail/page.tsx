@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, type Variants } from 'framer-motion';
+import { Pin } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -197,10 +198,10 @@ export default function CreditDetailPage() {
           <motion.div variants={fadeInUp}>
             <Card accent="teal" className="p-6">
               <h3 className="text-sm font-semibold text-text-primary mb-2 flex items-center gap-2">
-                <span>📌</span> What this means
+                <Pin size={13} className="text-brand-action" /> What this means
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
-                A score of 720 puts you in the &pos;’Good&pos;’ tier. Lenders on the Creditax platform will see you as a low-risk borrower. You qualify for loan rates starting from 12% per annum. Improving your filing consistency could push you to &pos;’Excellent&pos;’ within 3 months.
+                A score of 720 puts you in the &lsquo;Good&rsquo; tier. Lenders on the Creditax platform will see you as a low-risk borrower. You qualify for loan rates starting from 12% per annum. Improving your filing consistency could push you to &lsquo;Excellent&rsquo; within 3 months.
               </p>
             </Card>
           </motion.div>

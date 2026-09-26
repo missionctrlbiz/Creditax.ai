@@ -23,7 +23,6 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -140,7 +139,7 @@ interface AppShellProps {
  *  - mobile drawer
  *  - avatar-only account menu (AccountMenu)
  */
-export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, children }: AppShellProps) {
+export function AppShell({ portal, nav, title, eyebrow, children }: AppShellProps) {
   const pathname = usePathname();
   const t = useTranslations();
   const { theme, toggleTheme } = useTheme();
@@ -149,6 +148,7 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Session read only after mount — SSR must match client HTML (hydration fix).
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [sessionName, setSessionName] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -156,6 +156,9 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
     getUnifiedSession().then((s) => {
       if (!active) return;
       setSessionEmail(s.email);
+      // P20: the header used to hardcode demo personas even for a different
+      // signed-in account — derive the display name from the session.
+      setSessionName(s.name?.trim() ? s.name : null);
       setMounted(true);
     });
     return () => {
@@ -262,7 +265,7 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
         <button
           type="button"
           onClick={toggleCollapsed}
-          aria-label={collapsed ? t('shell.collapse') : t('shell.collapse')}
+          aria-label={collapsed ? t('shell.expand') : t('shell.collapse')}
           className={cn(
             'w-full flex items-center gap-3 h-9 px-3 rounded-btn text-[13px] text-text-muted hover:text-text-primary hover:bg-hover-overlay transition-colors cursor-pointer',
             collapsed && 'justify-center px-0'
@@ -347,17 +350,10 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
 
           <div className="flex-1" />
 
-          {searchPlaceholder && (
-            <div className="hidden md:flex items-center gap-2 h-9 px-3 w-56 rounded-btn bg-surface-inset border border-border-subtle text-text-muted focus-within:border-brand-primary transition-colors">
-              <Search size={14} />
-              <input
-                type="search"
-                placeholder={t('shell.search')}
-                aria-label={t('shell.search')}
-                className="bg-transparent border-none outline-none text-xs w-full text-text-primary placeholder:text-text-placeholder"
-              />
-            </div>
-          )}
+          {/* P20: the decorative search field is gone — it looked functional,
+              had no handler, and ignored the searchPlaceholder prop. Boards
+              keep their own working filters; a global search needs real
+              wiring and returns when it does. */}
 
           <LanguageSwitcher className="hidden sm:inline-flex" />
 
@@ -376,7 +372,13 @@ export function AppShell({ portal, nav, title, eyebrow, searchPlaceholder, child
           <div className="flex items-center gap-2.5 pl-1 border-l border-border-subtle ml-1">
             <div className="hidden sm:flex flex-col items-end leading-tight mr-0.5">
               <span className="text-[13px] font-medium text-text-primary">
-                {portal === 'admin' ? t('auth.admin') + ' O.' : portal === 'pro' ? 'Ayo Ogundimu' : 'Emeka O.'}
+                {mounted && sessionName
+                  ? sessionName
+                  : portal === 'admin'
+                    ? t('auth.admin') + ' O.'
+                    : portal === 'pro'
+                      ? 'Ayo Ogundimu'
+                      : 'Emeka O.'}
               </span>
               <span className="text-[10px] text-text-muted truncate max-w-[140px]">
                 {mounted && sessionEmail ? sessionEmail : 'demo@creditax.ai'}

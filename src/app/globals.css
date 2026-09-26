@@ -349,11 +349,34 @@ table {
   margin-inline: auto;
 }
 
-/* All figures & amounts use mono, tabular for alignment */
+/* All figures & amounts use mono, tabular for alignment.
+   P21: stat figures carry the brand display face (Syne) sitewide — the old
+   default mono treatment read bland on the landing stats strip. */
 .stat-number,
 [data-figure],
 .font-mono {
   font-variant-numeric: tabular-nums;
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+/* P21 — naira/price figures sitewide: mono, tabular, tight. Apply where a
+   price is the visual anchor (landing pricing CTA, tier cards, pro cards). */
+.price-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.price-figure .naira {
+  font-size: 0.72em;
+  margin-right: 0.04em;
+  vertical-align: 0.08em;
 }
 
 /* ── Focus visibility (WCAG) ── */
@@ -421,6 +444,32 @@ textarea::placeholder {
 /* ── Utility: display font on demand ── */
 .font-display {
   font-family: var(--font-display);
+}
+
+/* ── P21 — auto-scrolling marquee (landing marketplace teaser) ── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+.marquee-paused:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* Soft fade at the track edges so cards dissolve instead of hard-clipping */
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
 }
 
 /* ── P12 — animation keyframes fallback (tailwindcss-animate parity) ──

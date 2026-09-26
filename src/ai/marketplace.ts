@@ -160,13 +160,20 @@ export function searchPros(input: SearchInput): SearchOutput {
   if (input.city) list = list.filter((p) => p.location.city.toLowerCase() === input.city!.toLowerCase());
   if (input.state) list = list.filter((p) => p.location.state.toLowerCase() === input.state!.toLowerCase());
 
+  // Priority placement (pricing-and-access §2): Professional-tier firms rank
+  // ahead within the same distance band — a stable, two-key sort.
+  const byPlacement = (a: ScoredPro, b: ScoredPro) =>
+    Number(b.priority ?? false) - Number(a.priority ?? false);
+
   // Geo filter + sort.
   if (useGeo) {
     const origin = { lat: input.lat!, lng: input.lng! };
     list = list
       .map((p) => ({ ...p, distanceKm: haversineKm(origin, p.location) }))
       .filter((p) => (p.distanceKm ?? Infinity) <= radius)
-      .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+      .sort((a, b) => byPlacement(a, b) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  } else {
+    list = [...list].sort(byPlacement);
   }
 
   const total = list.length;
@@ -235,12 +242,12 @@ export async function searchProsRag(input: SearchInput): Promise<
     candidates = ranked.slice(0, topK * 2).map((r) => r.item);
   }
 
-  // Apply geo radius when provided, then order.
+  // Apply geo radius when provided, then order (priority placement first).
   if (origin) {
     candidates = candidates
       .map((p) => ({ ...p, distanceKm: haversineKm(origin, p.location) }))
       .filter((p) => (p.distanceKm ?? Infinity) <= radius)
-      .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+      .sort((a, b) => Number(b.priority ?? false) - Number(a.priority ?? false) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
   }
 
   const results: ScoredPro[] = candidates.slice(0, topK);

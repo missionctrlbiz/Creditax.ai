@@ -15,7 +15,7 @@
     "title1": "Ụtụ n’Amamihe.",
     "title2": "Gbazite n’Amamihe.",
     "sub": "Deo taks nke ọma. Kwekọrịa rọrọ. Ngwugwu taks na krediti na agbanweela taks ka ọ bụrụ krediti.",
-    "cta": "Jikọta na mgbatị ahịa",
+    "cta": "Soro waitlist",
     "login": "Banye",
     "chip1": "Ọtụtụ ụtụ n'ime ₦",
     "chip2": "Azịza nwere ebe ọmụma",
@@ -81,7 +81,8 @@
     "marketplace": "Ahịa",
     "search": "Chọọ…",
     "notifications": "Ọkwa",
-    "language": "Asụsụ"
+    "language": "Asụsụ",
+    "expand": "Mepee"
   },
   "chat": {
     "title": "Onye Obonyere Taks AI",
@@ -107,7 +108,28 @@
     "clear": "Kpochapụ",
     "demoAnswer": "aza demo",
     "thinkingHint": "Na echiche…",
-    "skillsLabel": "Skills"
+    "skillsLabel": "Skills",
+    "canvas": "Kanvas",
+    "canvasEmpty": "Nsonaazụ Skill, ntụle ndị ọkachamara, na ọrụ nnabata ụtụ ga-adị ebe a ka ị na-ekwu okwu — haziri site na ntụgharị.",
+    "emptyHint": "Nsonaazụ Skill, ntụle ndị ọkachamara, na ọrụ nnabata ụtụ ga-ada na Kanvas dị n'akụkụ gị — azịza ga-anọgide na mkparịta ụka a.",
+    "attach": "Tinye akwụkwọ",
+    "library": "Akwụkwọ",
+    "connectedContext": "Ngwa ejikọtara",
+    "upload": "Bulite",
+    "chatsToday": "Mkparịta ụka",
+    "lifetime": "mgbe niile",
+    "freeLimitReached": "Ị rutela oke efu",
+    "upgradeTo": "Melite ka ọ bụrụ {tier}",
+    "pinnedToCanvas": "etinyere na Kanvas",
+    "filingAction": "Ọrụ nnabata ụtụ",
+    "addToFiling": "Tinye na faịlụ",
+    "verifiedPro": "Ọkachamara enyochara",
+    "maskedNote": "ozi zuru oke na Plus (₦5,000/ọnwa) ma ọ bụ ụgwọ nbanye",
+    "openPreview": "Mepee nyocha",
+    "viewProfile": "Lelee",
+    "turn": "Ntụgharị {n}",
+    "errorNetwork": "Enweghị ike iru onye enyemaka ahụ — lelee njikọ gị, nwalee ọzọ.",
+    "demoBilling": "demo_seed · ụgwọ nwale"
   },
   "footer": {
     "tagline": "Taks Mma. Ebee Ebee Mma.",
@@ -241,7 +263,12 @@
     "checkCredit": "Lele ọkwa ntụkwasụ obi",
     "recentActivity": "Ihe mere na nso nso",
     "viewAll": "Hụ ihe niile",
-    "tagline": "Ụtụ n’Amamihe. Gbazite n’Amamihe."
+    "tagline": "Ụtụ n’Amamihe. Gbazite n’Amamihe.",
+    "askTitle": "Jụọ onye-enyemaka AI gị",
+    "askPlaceholder": "Jụọ ajụjụ ụtụ ma ọ bụ dọrọ akwụkwọ nbido",
+    "askCta": "Jụọ",
+    "filingSignals": "Mkpado nbipụta",
+    "liveFeedBadge": "Ntụle demo"
   },
   "share": {
     "sharedCanvas": "Ntezi nkwere",

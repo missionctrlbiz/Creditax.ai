@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate Remotion side-project inside the repo — not part of the app.
+    "video/**",
   ]),
 ]);
 

@@ -1,21 +1,23 @@
 'use client';
 
 /**
- * P8 — /dashboard/chat as the INFINITE CANVAS (roles-and-experience.md §3.2,
- * mvp-demo-plan G-03 Track A, demo scope #4/#12). Not a chatbot thread:
+ * P18 — /dashboard/chat rebuilt around the conversation first (user spec:
+ * "a chat that docks to the sidebar after the first message").
  *
- *   • A pannable + zoomable board (Miro / Google-Flow style). Documents,
- *     agent answers, skill results, referrals, filing actions, quota walls and
- *     share links are all CARDS placed at world coordinates on a dot-grid stage.
- *   • The composer (input + Skills chip rail, feature-specs) docks beneath the
- *     viewport and undocks into the left sidebar as cards accumulate (§3.2.1).
- *   • Sidebar uploads → live library (P8: real store reads), attach pins a
- *     document into the next turn (§3.2.3).
- *   • Referral cards are tier-aware (P8 exit 3); the 5th free chat is a 403
- *     from the server-side quota engine and renders as a wall card (P8 exit 1).
- *   • Share spawns a read-only /share/<slug> link card (P6 F-18, scope 11).
- *   • Language follows the user: the agent answers in the active locale
- *     (EN/YO/HA/IG, §3.2.7, P8 exit 4).
+ *   • Empty state = centered hero composer (roles-and-experience.md §3.1
+ *     empty-state composer, demo beat 1–2).
+ *   • After the first message the chat DOCKS into a left sidebar: a real
+ *     agent thread (user ↔ agent messages with sources + honesty badge) with
+ *     the composer pinned beneath it (§3.2.1 "single agent thread").
+ *   • The canvas holds ARTIFACTS only — skill results, verified-pro
+ *     referrals, filing actions, share links — auto-arranged in a clean grid
+ *     and tagged with the turn that produced them. Plain answers stay in the
+ *     thread; nothing dumps onto the board uninvited.
+ *   • Multi-turn is real: the POST carries the server conversationId so the
+ *     P1 history store grounds every follow-up (chat route P1).
+ *   • The agent answers from the live LLM + RAG pipeline (P13); when no
+ *     provider is reachable the server's offline synthesizer answers and the
+ *     message is honestly badged "demo answer".
  */
 
 import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
@@ -25,17 +27,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  BookOpen,
   Bot,
   Check,
   Clock,
-  Crosshair,
   FileText,
-  Link2,
-  Lock,
-  Maximize2,
-  MessageCircle,
-  Minus,
+  LayoutDashboard,
   Paperclip,
   Phone,
   Plus,
@@ -43,13 +39,12 @@ import {
   Share2,
   ShieldCheck,
   Sparkles,
+  SquarePen,
   X,
-  Zap,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { toast } from 'sonner';
 import { SKILLS, runSkill as runSkillLocal, type SkillMeta, type SkillResult } from '@/ai/skills';
 import { buildReferralCard, type ReferralCard } from '@/ai/referral';
@@ -65,35 +60,47 @@ import type {
 } from '@/ai/skills';
 
 // ---------------------------------------------------------------------------
-// Canvas data model — every element on the board is a positioned card
+// Data model — a thread of messages + a board of artifacts
 // ---------------------------------------------------------------------------
 
-type CardKind = 'user' | 'answer' | 'filing' | 'referral' | 'skill' | 'wall' | 'share' | 'thinking';
+type ThreadMsg =
+  | {
+      id: string;
+      role: 'user';
+      turn: number;
+      text: string;
+      doc?: LiveDoc;
+    }
+  | {
+      id: string;
+      role: 'agent';
+      turn: number;
+      text: string;
+      sources: string[];
+      demoSeed: boolean;
+      /** Titles of artifacts this turn pinned to the canvas. */
+      pinned: string[];
+    }
+  | {
+      id: string;
+      role: 'wall';
+      turn: number;
+      message: string;
+      to: string;
+    };
 
-interface CanvasCard {
-  id: string;
-  kind: CardKind;
-  content: string;
-  /** World-coordinate top-left on the board stage. */
-  pos: { x: number; y: number };
-  /** World-coordinate width the card should occupy. */
-  width: number;
-  sources?: string[];
-  /** How the answer was produced (P2 Track A honesty): live RAG vs offline fallback. */
-  demoSeed?: boolean;
-  /** P3 F-20: skill chip → canvas result card payload (pinned to canvas). */
-  skill?: SkillResult;
-  /** P3 F-09 / P8: live verified-pro referral (masked → revealed by real tier). */
-  referral?: ReferralCard;
-  /** P8: live quota upgrade wall (5th free chat metered-blocked on the server). */
-  wall?: { message: string; to: string };
-  /** P8: attached document pinned into the next turn as context. */
-  attachedDoc?: LiveDoc;
-  /** P6 F-18: shared-canvas link card (read-only URL + tier gate). */
-  shareLink?: { url: string; access: string; ok: boolean; upgradeTo?: string };
-}
+type Artifact =
+  | { id: string; turn: number; kind: 'skill'; label: string; skill: SkillResult; demoSeed: boolean }
+  | { id: string; turn: number; kind: 'referral'; referral: ReferralCard }
+  | { id: string; turn: number; kind: 'filing' }
+  | {
+      id: string;
+      turn: number;
+      kind: 'share';
+      shareLink: { url: string; access: string; ok: boolean; upgradeTo?: string };
+    };
 
-/** P8 — a *live* processed document from the store (replaces the static LIBRARY). */
+/** P8 — a *live* processed document from the store. */
 interface LiveDoc {
   id: string;
   name: string;
@@ -126,97 +133,22 @@ interface ConnectorChip {
   displayName: string;
 }
 
-/** Board metrics. */
-const CARD_W = 360;
-const USER_W = 280;
-const GAP_X = 340; // next column (USER_W or CARD_W + 40 gutter, rounded)
-const LANE_Y = 250; // rows on the board
-const MIN_Z = 0.4;
-const MAX_Z = 2.5;
-
-/** Markdown canned answers — offline fallback when the RAG endpoint is unreachable. */
-const CANNED: { match: string[]; reply: string; sources: string[]; referral?: boolean }[] = [
-  {
-    match: ['vat', 'value added'],
-    reply: `Under the Nigeria VAT Act, **VAT is charged at 7.5%** on most goods and services.
-
-- **Filing:** monthly returns to FIRS by the **21st** of the following month
-- **Input VAT:** deductible when you hold a valid tax invoice
-- **Exempt:** basic food items, medical products, education
-
-Want me to check the deductible VAT from your uploaded invoices?`,
-    sources: ['FIRS VAT Guide (demo)', 'Nigeria VAT Act §8 (demo)'],
-  },
-  {
-    match: ['paye', 'pay as you earn', 'salary'],
-    reply: `**PAYE** is deducted by your employer under the Personal Income Tax Act.
-
-| Item | Value |
-|---|---|
-| Graduated bands | 7% – 24% |
-| Consolidated Relief Allowance | ₦200,000 + 20% of gross |
-| Minimum CRA | 1% of gross |
-
-Your *PAYE_Certificate_2024.pdf* is in the library — pin it on the board and I'll compute your relief.`,
-    sources: ['Personal Income Tax Act (demo)', 'FIRS PAYE Guide (demo)'],
-  },
-  {
-    match: ['wht', 'withholding'],
-    reply: `**Withholding Tax** in Nigeria ranges from **5%–10%** by transaction:
-
-- Rent — 10%
-- Dividends — 10%
-- Professional fees — 10% (individual) / 5% (company)
-- Contracts — 5%
-
-The payer remits it and issues you a **WHT credit note** you can track under Documents.`,
-    sources: ['WHT Circulars (demo)'],
-  },
-  {
-    match: ['tin', 'tax identification'],
-    reply: `Your **TIN** is issued by FIRS (companies) or your State IRS (individuals). You need it for filing, bank transactions, and CAC registration.
-
-Attach a document or ask me to verify a TIN — verification opens the Pro portal in this demo.`,
-    sources: ['FIRS TIN Guide (demo)'],
-    referral: true,
-  },
-];
-
-const FALLBACK = `Great question. In this prototype the assistant answers from a small demo set — try **VAT**, **PAYE**, **WHT**, or **TIN**.
-
-For anything deeper, a verified pro on the [Marketplace](/marketplace) can help — I'll pin one to the board.`;
-
-const FALLBACK_SOURCES = ['Demo set'];
+/** A filing-action artifact only lands when the question is about filing —
+ *  a plain "what is the VAT rate" never spawns one (P18 fix). */
+const FILING_INTENT = /\b(fil(e|ed|ing)|returns?|submit|deadline|annual|assess)\b/i;
 
 const FILING_STEPS = ['Review figures', 'Attach documents', 'Add to 2025 filing'];
 
-// ---------------------------------------------------------------------------
-// Card bodies (shared by the board + the thinking indicator)
-// ---------------------------------------------------------------------------
-
-/** P3 F-20 — a Skill's fixed I/O contract, pinned to the canvas. */
-function SkillCardBody({ card }: { card: CanvasCard }) {
-  const s = card.skill;
-  if (!s) {
-    return (
-      <>
-        <p className="text-sm font-semibold text-text-primary">{card.content}</p>
-        <p className="text-[11px] text-text-muted mt-1">This Skill needs more input — ask in the composer below.</p>
-      </>
-    );
-  }
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary mb-2">{card.content}</p>
-      {renderSkillBody(s)}
-      {s.demo_seed && (
-        <p className="text-[10px] text-text-muted mt-2">demo_seed · output is illustrative, not live data</p>
-      )}
-    </div>
-  );
+/** Unique citations, capped — retrieval often returns overlapping chunks of
+ *  the same document and the old card rendered the same source twice. */
+function dedupeSources(sources: string[]): string[] {
+  return [...new Set(sources)].slice(0, 4);
 }
 
-/** Branch the skill body by its concrete result type. */
+// ---------------------------------------------------------------------------
+// Skill result bodies (shared by artifact cards)
+// ---------------------------------------------------------------------------
+
 function renderSkillBody(s: SkillResult) {
   if (s.skill === 'wht-recovery') {
     const r = s as WhtRecoveryResult;
@@ -317,7 +249,8 @@ function renderSkillBody(s: SkillResult) {
   return null;
 }
 
-function AnswerBody({ card, t }: { card: CanvasCard; t: ReturnType<typeof useTranslations> }) {
+/** Agent markdown (thread message body). */
+function AgentMarkdown({ text }: { text: string }) {
   return (
     <div className="prose-creditax text-sm leading-relaxed text-text-primary">
       <ReactMarkdown
@@ -329,7 +262,7 @@ function AnswerBody({ card, t }: { card: CanvasCard; t: ReturnType<typeof useTra
             </Link>
           ),
           table: ({ children }) => (
-            <div className="overflow-x-auto my-2 max-w-[300px]">
+            <div className="overflow-x-auto my-2">
               <table className="text-[13px]">{children}</table>
             </div>
           ),
@@ -339,32 +272,8 @@ function AnswerBody({ card, t }: { card: CanvasCard; t: ReturnType<typeof useTra
           td: ({ children }) => <td className="px-3 py-1.5 border-b border-border-subtle text-text-secondary">{children}</td>,
         }}
       >
-        {card.content}
+        {text}
       </ReactMarkdown>
-      {card.attachedDoc && (
-        <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-badge border border-brand-action-border bg-brand-action-bg text-[10px] text-text-secondary">
-          <Paperclip size={11} className="text-brand-action" />
-          {card.attachedDoc.name}
-        </div>
-      )}
-      {card.sources && card.sources.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-2.5 border-t border-border-subtle">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{t('sources')}:</span>
-          {card.sources.map((s) => (
-            <span key={s} className="px-2 py-0.5 rounded-badge bg-brand-primary-bg text-brand-primary text-[10px] font-medium">
-              {s}
-            </span>
-          ))}
-          {card.demoSeed && (
-            <span
-              className="px-2 py-0.5 rounded-badge bg-surface-inset border border-border-subtle text-text-muted text-[10px] font-medium"
-              title="Answered from the offline demo knowledge base (no live LLM)"
-            >
-              {t('demoAnswer')}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -378,34 +287,31 @@ export default function ChatCanvasPage() {
   const td = useTranslations('dashboard');
   const locale = useLocale();
 
-  // — Cards on the board. The greeting anchors the stage at world (60,40). —
-  const [cards, setCards] = useState<CanvasCard[]>([
-    { id: 'greeting', kind: 'answer', content: t('greeting'), sources: [t('demoNta')], pos: { x: 60, y: 40 }, width: CARD_W },
-  ]);
+  const [messages, setMessages] = useState<ThreadMsg[]>([]);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [turnCount, setTurnCount] = useState(0);
   const [draft, setDraft] = useState('');
-  const [libraryOpen, setLibraryOpen] = useState(true);
   const [thinking, setThinking] = useState(false);
   const [pinnedDoc, setPinnedDoc] = useState<LiveDoc | null>(null);
-
-  // — Board camera: pan (screen px) + zoom. World = (screen - pan) / zoom. —
-  const [cam, setCam] = useState({ x: 40, y: 40, z: 1 });
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   // — P8 data hydration —
   const [me, setMe] = useState<Me>({ userId: 'u-consumer', tier: 'free', email: '', name: '', loggedIn: false });
   const [library, setLibrary] = useState<LiveDoc[]>([]);
   const [quota, setQuota] = useState<LiveQuota | null>(null);
   const [connectors, setConnectors] = useState<ConnectorChip[]>([]);
-  const [viewportSize, setViewportSize] = useState({ w: 1200, h: 700 });
 
-  const viewportRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(0);
-  const batchRef = useRef(0);
-  const nextId = () => `c${++idRef.current}`;
-  const panRef = useRef<{ startX: number; startY: number; camX: number; camY: number } | null>(null);
-  const cardDragRef = useRef<{ id: string; startX: number; startY: number; orig: { x: number; y: number } } | null>(null);
+  const nextId = () => `m${++idRef.current}`;
+  const threadRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const attachRef = useRef<HTMLDivElement>(null);
+  const autoAskedRef = useRef(false);
 
-  // — P8: resolve the signed-in demo account (pb-auth with mock fallback) so the
-  //   chat POST carries {userId, locale, tier} and the quota engine meters it. —
+  const docked = messages.length > 0;
+
+  // — P8: resolve the signed-in demo account (pb-auth with mock fallback). —
   useEffect(() => {
     let active = true;
     getSession().then((s) => {
@@ -466,122 +372,73 @@ export default function ChatCanvasPage() {
     }
   }, [me.userId]);
 
-  /** Wheel zoom around the cursor (native listener so preventDefault works). */
+  // §3.1 dashboard-first composer handoff: /dashboard/chat?q=… auto-asks the
+  // question once (read from window.location so no Suspense boundary needed).
+  // The one-shot guard is set inside the rAF (StrictMode double-mounts run
+  // this effect twice; cancelling the frame there would swallow the ask).
   useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      setViewportSize({ w: rect.width, h: rect.height });
-      const sx = e.clientX - rect.left;
-      const sy = e.clientY - rect.top;
-      const factor = Math.exp(-e.deltaY * 0.0015);
-      setCam((c) => {
-        const z = Math.min(MAX_Z, Math.max(MIN_Z, c.z * factor));
-        const wx = (sx - c.x) / c.z;
-        const wy = (sy - c.y) / c.z;
-        return { x: sx - wx * z, y: sy - wy * z, z };
-      });
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, []);
-
-  /** Pan handlers on the stage background (drag empty board space). */
-  function onStagePointerDown(e: React.PointerEvent) {
-    if ((e.target as HTMLElement).closest('[data-board-card], .board-ui-chrome')) return;
-    panRef.current = { startX: e.clientX, startY: e.clientY, camX: cam.x, camY: cam.y };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }
-  function onStagePointerMove(e: React.PointerEvent) {
-    const p = panRef.current;
-    if (p) {
-      setCam((c) => ({ ...c, x: p.camX + (e.clientX - p.startX), y: p.camY + (e.clientY - p.startY) }));
-      return;
-    }
-    const d = cardDragRef.current;
-    if (d) {
-      const z = cam.z;
-      const nx = d.orig.x + (e.clientX - d.startX) / z;
-      const ny = d.orig.y + (e.clientY - d.startY) / z;
-      setCards((prev) => prev.map((c) => (c.id === d.id ? { ...c, pos: { x: nx, y: ny } } : c)));
-    }
-  }
-  function onStagePointerUp() {
-    panRef.current = null;
-    cardDragRef.current = null;
-  }
-  /** Start dragging a card (its top-left bar). Screen delta ÷ zoom = world delta. */
-  function startCardDrag(e: React.PointerEvent, card: CanvasCard) {
-    if ((e.target as HTMLElement).closest('button, a, input, textarea')) return;
-    cardDragRef.current = { id: card.id, startX: e.clientX, startY: e.clientY, orig: { ...card.pos } };
-  }
-
-  /** Zoom buttons (bottom-right chrome). */
-  function zoomBy(factor: number) {
-    const el = viewportRef.current;
-    const rect = el?.getBoundingClientRect();
-    const sx = (rect?.width ?? 1200) / 2;
-    const sy = (rect?.height ?? 700) / 2;
-    setCam((c) => {
-      const z = Math.min(MAX_Z, Math.max(MIN_Z, c.z * factor));
-      const wx = (sx - c.x) / c.z;
-      const wy = (sy - c.y) / c.z;
-      return { x: sx - wx * z, y: sy - wy * z, z };
+    if (autoAskedRef.current || thinking) return;
+    const q = new URLSearchParams(window.location.search).get('q')?.trim();
+    if (!q || !me.userId) return;
+    requestAnimationFrame(() => {
+      if (autoAskedRef.current) return;
+      autoAskedRef.current = true;
+      // Strip the query from the URL so a refresh doesn't re-ask it.
+      window.history.replaceState({}, '', window.location.pathname);
+      setThinking(true);
+      void ask(q);
     });
-  }
-  /** Fit: back to 100% centered on the board's card cluster. */
-  function fitBoard() {
-    const el = viewportRef.current;
-    const rect = el?.getBoundingClientRect();
-    const vw = rect?.width ?? 1200;
-    const vh = rect?.height ?? 700;
-    if (cards.length === 0) return;
-    const minX = Math.min(...cards.map((c) => c.pos.x));
-    const minY = Math.min(...cards.map((c) => c.pos.y));
-    setCam({ x: vw / 2 - (minX + 200), y: vh / 2 - (minY + 150), z: 1 });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.userId]);
 
-  /** World-coordinate anchor for the next batch: viewport centre, lifted so
-   *  it clears the docked composer. Batches alternate columns as they land. */
-  function spawnAnchor() {
-    const rect = viewportRef.current?.getBoundingClientRect();
-    const vw = rect?.width ?? viewportSize.w;
-    const vh = rect?.height ?? viewportSize.h;
-    const cx = (vw / 2 - cam.x) / cam.z;
-    const cy = (vh / 2 - cam.y) / cam.z - 80 / cam.z; // lift above the docked composer
-    const o = { x: cx - 340, y: cy - 120 };
-    o.x += (batchRef.current % 2) * 46;
-    o.y += Math.floor(batchRef.current / 2) * 24;
-    batchRef.current += 1;
-    return o;
-  }
+  // Keep the newest message + artifact in view.
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages.length, thinking]);
+  useEffect(() => {
+    if (artifacts.length > 0) {
+      canvasRef.current?.scrollTo({ top: canvasRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [artifacts.length]);
+
+  // Close the attach popover on outside click / Escape.
+  useEffect(() => {
+    if (!attachOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!attachRef.current?.contains(e.target as Node)) setAttachOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAttachOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [attachOpen]);
 
   // ————————————————————————————————————————————————————————————
-  // Canvas actions (spawn card batches on the board)
+  // Actions
   // ————————————————————————————————————————————————————————————
 
   /**
-   * P8: ask the grounded agent. The POST carries {userId, locale, tier, docId}
-   * so the server-side quota engine meters it and the 5th free chat short-
-   * circuits into a 403 upgrade wall (P8 exit 1). Offline it falls back to
-   * the CANNED set; the answer card records how it was produced (demoSeed).
+   * Ask the grounded agent. The POST carries {userId, locale, tier, docId,
+   * conversationId} so the server meters the turn (403 → wall in the thread)
+   * and multi-turn history is real. The answer stays IN THE THREAD; only
+   * genuine artifacts (filing intent, referral) pin to the canvas.
    */
-  async function ask(text: string, opts: { referral?: boolean; doc?: LiveDoc } = {}) {
-    const doc = opts.doc ?? pinnedDoc;
-    const lower = text.toLowerCase();
-    const hit = CANNED.find((c) => c.match.some((m) => lower.includes(m)));
-    const canned: { reply: string; sources: string[]; referral?: boolean } = hit
-      ? hit
-      : { reply: FALLBACK, sources: FALLBACK_SOURCES, referral: true };
+  async function ask(text: string) {
+    const doc = pinnedDoc;
+    const turn = turnCount + 1;
+    setTurnCount(turn);
+    setMessages((prev) => [...prev, { id: nextId(), role: 'user', turn, text, doc: doc ?? undefined }]);
 
-    let reply = canned;
+    let answer: string | null = null;
+    let sources: string[] = [];
     let demoSeed = true;
     let liveConfidence: number | undefined;
-    let blocked = false;
-    let wallMsg: string | undefined;
-    let wallTo: string | undefined;
+    let blocked: { message: string; to: string } | null = null;
 
     try {
       const res = await fetch('/api/v1/chat', {
@@ -594,18 +451,18 @@ export default function ChatCanvasPage() {
           tier: me.tier,
           loggedIn: me.loggedIn,
           docId: doc?.id,
+          conversationId,
         }),
       });
       if (res.status === 403) {
-        // P8 live-quota-in-canvas — the free limit is metered-blocked on the
-        // server; render the named-limit upgrade wall card on the board.
         const data = (await res.json().catch(() => ({}))) as {
           status?: LiveQuota;
           upgrade?: { to: string; message: string } | null;
         };
-        blocked = true;
-        wallMsg = data.upgrade?.message ?? 'You have hit your free limit.';
-        wallTo = data.upgrade?.to ?? 'plus';
+        blocked = {
+          message: data.upgrade?.message ?? 'You have hit your free limit.',
+          to: data.upgrade?.to ?? 'plus',
+        };
         if (data.status) setQuota(data.status);
       } else if (res.ok) {
         const data = (await res.json()) as {
@@ -613,96 +470,73 @@ export default function ChatCanvasPage() {
           citations?: string[];
           confidence?: number;
           demo_seed?: boolean;
+          conversationId?: string | null;
         };
         if (data.answer) {
-          reply = { reply: data.answer, sources: data.citations ?? [] };
+          answer = data.answer;
+          sources = dedupeSources(data.citations ?? []);
           demoSeed = !!data.demo_seed;
           liveConfidence = data.confidence;
         }
+        if (data.conversationId) setConversationId(data.conversationId);
         await refreshQuota();
       }
     } catch {
-      // Network down — keep the canned fallback so the demo never dead-ends.
+      toast.error(t('errorNetwork'));
+      setThinking(false);
+      setPinnedDoc(null);
+      return;
     }
 
-    const o = spawnAnchor();
-    const userCard: CanvasCard = {
-      id: nextId(),
-      kind: 'user',
-      content: doc ? `Use ${doc.name} — ${text}` : text,
-      pos: { x: o.x, y: o.y },
-      width: USER_W,
-      attachedDoc: doc ?? undefined,
-    };
-
     if (blocked) {
-      setCards((prev) => [
-        ...prev,
-        userCard,
-        {
-          id: nextId(),
-          kind: 'wall',
-          content: wallMsg ?? '',
-          wall: { message: wallMsg ?? 'You have hit your free limit.', to: wallTo ?? 'plus' },
-          pos: { x: o.x + GAP_X, y: o.y },
-          width: CARD_W,
-          demoSeed: true,
-        },
-      ]);
+      setMessages((prev) => [...prev, { id: nextId(), role: 'wall', turn, message: blocked.message, to: blocked.to }]);
       setPinnedDoc(null);
       setDraft('');
       setThinking(false);
       return;
     }
 
-    const answer: CanvasCard = {
-      id: nextId(),
-      kind: 'answer',
-      content: reply.reply,
-      sources: reply.sources,
-      demoSeed,
-      pos: { x: o.x + GAP_X, y: o.y },
-      width: CARD_W,
-      attachedDoc: doc ?? undefined,
-    };
+    // No live answer (and no server fallback body) — keep the turn honest.
+    if (!answer) {
+      toast.error(t('errorNetwork'));
+      setThinking(false);
+      setPinnedDoc(null);
+      return;
+    }
 
-    // P8 tier-aware referral (F-09): reveal is driven by the REAL viewer tier +
-    // logged-in state, never a hardcoded 'free'.
-    const explicit = opts.referral || reply.referral;
-    const card = buildReferralCard({
+    // Artifacts ONLY when they genuinely apply to this turn.
+    const newArtifacts: Artifact[] = [];
+    const pinned: string[] = [];
+
+    if (FILING_INTENT.test(text)) {
+      newArtifacts.push({ id: nextId(), turn, kind: 'filing' });
+      pinned.push(t('filingAction'));
+    }
+
+    const referral = buildReferralCard({
       text,
       confidence: liveConfidence,
       tier: (me.tier || 'free') as Tier,
       loggedIn: me.loggedIn,
     });
-    const liveReferral = explicit || card ? card : null;
+    if (referral) {
+      newArtifacts.push({ id: nextId(), turn, kind: 'referral', referral });
+      pinned.push(t('verifiedPro'));
+    }
 
-    setCards((prev) => [
+    setMessages((prev) => [
       ...prev,
-      userCard,
-      answer,
-      // Filing settings & actions surface as a canvas card (§3.2.4)
       {
         id: nextId(),
-        kind: 'filing',
-        content: JSON.stringify(FILING_STEPS),
-        pos: { x: o.x, y: o.y + LANE_Y },
-        width: USER_W,
+        role: 'agent',
+        turn,
+        text: answer,
+        sources,
+        demoSeed,
+        pinned,
       },
-      // Referral trigger (§3.2.5) — live card (masked/revealed by tier) or fallback
-      ...(liveReferral
-        ? [{
-            id: nextId(),
-            kind: 'referral' as const,
-            content: liveReferral.pro.name,
-            referral: liveReferral,
-            pos: { x: o.x + GAP_X, y: o.y + LANE_Y },
-            width: CARD_W,
-          }]
-        : explicit
-          ? [{ id: nextId(), kind: 'referral' as const, content: 'Adaeze Consulting Ltd', pos: { x: o.x + GAP_X, y: o.y + LANE_Y }, width: CARD_W }]
-          : []),
     ]);
+    if (newArtifacts.length > 0) setArtifacts((prev) => [...prev, ...newArtifacts]);
     setPinnedDoc(null);
     setDraft('');
     setThinking(false);
@@ -710,12 +544,17 @@ export default function ChatCanvasPage() {
 
   /**
    * P3 F-20 — run a Skill chip. Live API first (P4 quota engine meters it);
-   * deterministic local fallback when offline. Result card is pinned to the
-   * board next to its input (feature-specs: "pinned to canvas").
+   * deterministic local fallback when offline. The result card pins to the
+   * canvas; the thread records the run.
    */
   async function runSkillChip(skill: SkillMeta, input: { amount?: number; paymentType?: string; vendor?: string; purpose?: string; notice?: string }) {
     if (thinking) return;
     setThinking(true);
+    const turn = turnCount + 1;
+    setTurnCount(turn);
+    const userText = `${skill.label} — ${skill.oneLiner}`;
+    setMessages((prev) => [...prev, { id: nextId(), role: 'user', turn, text: userText }]);
+
     let result: SkillResult | null = null;
     let upgradedTo: string | undefined;
     let blockedReason: string | undefined;
@@ -739,36 +578,39 @@ export default function ChatCanvasPage() {
       else blockedReason = local.reason;
     }
 
-    const userText =
-      skill.id === 'invoice-wht-check'
-        ? `Check WHT on a ${input.paymentType ?? 'payment'} of ${input.amount ?? 0}`
-        : skill.oneLiner;
-
-    const o = spawnAnchor();
-    const newCards: CanvasCard[] = [
-      { id: nextId(), kind: 'user', content: userText, pos: { x: o.x, y: o.y }, width: USER_W },
-    ];
-    if (result) {
-      newCards.push({ id: nextId(), kind: 'skill', content: skill.label, skill: result, pos: { x: o.x + GAP_X, y: o.y }, width: CARD_W, demoSeed: true });
-    } else if (upgradedTo) {
-      newCards.push({ id: nextId(), kind: 'wall', content: `${skill.label} — upgrade to ${upgradedTo}`, wall: { message: `${skill.label} requires the ${upgradedTo} tier.`, to: upgradedTo }, pos: { x: o.x + GAP_X, y: o.y }, width: CARD_W, demoSeed: true });
-    } else if (blockedReason) {
-      newCards.push({ id: nextId(), kind: 'wall', content: `${skill.label} — ${blockedReason}`, wall: { message: blockedReason, to: 'plus' }, pos: { x: o.x + GAP_X, y: o.y }, width: CARD_W, demoSeed: true });
+    if (upgradedTo || blockedReason) {
+      const to = upgradedTo ?? 'plus';
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId(),
+          role: 'wall',
+          turn,
+          message: blockedReason ?? `${skill.label} requires the ${to} tier.`,
+          to,
+        },
+      ]);
+    } else if (result) {
+      setArtifacts((prev) => [...prev, { id: nextId(), turn, kind: 'skill', label: skill.label, skill: result, demoSeed: true }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId(),
+          role: 'agent',
+          turn,
+          text: `**${skill.label}** — ${t('pinnedToCanvas')}.`,
+          sources: [],
+          demoSeed: true,
+          pinned: [skill.label],
+        },
+      ]);
     }
-    setCards((prev) => [...prev, ...newCards]);
     setThinking(false);
   }
 
-  /** P6 F-18 / scope 11 — share the canvas: a read-only link card is pinned
-   *  to the board (free tier → upgrade wall card instead). */
+  /** P6 F-18 — share the canvas: a read-only link artifact pins to the board
+   *  (free tier → upgrade wall in the thread instead). */
   async function shareCanvas() {
-    const o = spawnAnchor();
-    const base: Omit<CanvasCard, 'id' | 'kind'> = {
-      content: 'Shared canvas',
-      pos: { x: o.x, y: o.y },
-      width: USER_W,
-      demoSeed: true,
-    };
     try {
       const res = await fetch('/api/v1/collab/share', {
         method: 'POST',
@@ -776,33 +618,52 @@ export default function ChatCanvasPage() {
         body: JSON.stringify({ tier: me.tier || 'free', access: 'view' }),
       });
       const data = await res.json();
-      const linkCard: CanvasCard = {
-        ...base,
-        id: nextId(),
-        kind: res.ok ? 'share' : 'wall',
-        shareLink: res.ok
-          ? { url: String(data.url), access: 'view', ok: true }
-          : { url: '', access: '', ok: false, upgradeTo: data.upgradeTo },
-      };
-      if (!res.ok) linkCard.content = `Sharing is a paid feature — upgrade to ${data.upgradeTo ?? 'Plus'}`;
-      setCards((prev) => [...prev, linkCard]);
+      if (res.ok) {
+        setArtifacts((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            turn: turnCount || 1,
+            kind: 'share',
+            shareLink: { url: String(data.url), access: 'view', ok: true },
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: 'wall',
+            turn: turnCount || 1,
+            message: data.error ?? `Sharing is a paid feature — upgrade to ${data.upgradeTo ?? 'Plus'}.`,
+            to: data.upgradeTo ?? 'plus',
+          },
+        ]);
+      }
     } catch {
-      setCards((prev) => [
+      setArtifacts((prev) => [
         ...prev,
-        { ...base, id: nextId(), kind: 'share', content: 'Shared canvas (offline)', shareLink: { url: '/share/share_7f3a9c', access: 'view', ok: true } },
+        {
+          id: nextId(),
+          turn: turnCount || 1,
+          kind: 'share',
+          shareLink: { url: '/share/share_7f3a9c', access: 'view', ok: true },
+        },
       ]);
     }
   }
 
-  /** New chat: clear the stage, keep the greeting anchor. */
+  /** New chat: back to the hero composer with a clean board. */
   function newChat() {
-    setCards([{ id: nextId(), kind: 'answer', content: t('greeting'), sources: [t('demoNta')], pos: { x: 60, y: 40 }, width: CARD_W }]);
+    setMessages([]);
+    setArtifacts([]);
+    setTurnCount(0);
+    setConversationId(null);
     setPinnedDoc(null);
-    setCam({ x: 40, y: 40, z: 1 });
-    batchRef.current = 0;
+    setDraft('');
   }
 
-  /** P8 — pin a live document into the next turn's context (labeled on the answer). */
+  /** P8 — pin a live document into the next turn's context. */
   function attach(doc: LiveDoc) {
     setPinnedDoc((prev) => (prev?.id === doc.id ? null : doc));
   }
@@ -816,419 +677,409 @@ export default function ChatCanvasPage() {
   }
 
   // ————————————————————————————————————————————————————————————
+  // Composer (shared hero + dock)
+  // ————————————————————————————————————————————————————————————
+
+  const composer = (compact: boolean) => (
+    <form onSubmit={send} className="rounded-card border border-border-default bg-surface-overlay shadow-card p-3">
+      {/* P3 F-20 — Skills chip rail */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 pr-1">{t('skillsLabel')}:</span>
+        {SKILLS.map((skill) => (
+          <button
+            key={skill.id}
+            type="button"
+            onClick={() =>
+              void runSkillChip(skill, {
+                ...(skill.id === 'invoice-wht-check'
+                  ? { amount: 240_000, paymentType: 'Goods / services' }
+                  : skill.id === 'wht-recovery'
+                    ? { vendor: 'Zenith Supplies Ltd' }
+                    : {}),
+              })
+            }
+            title={skill.oneLiner}
+            disabled={thinking}
+            className="shrink-0 px-3 py-1.5 rounded-full border border-border-subtle bg-surface-raised text-[12px] font-medium text-text-secondary hover:text-text-primary hover:border-brand-primary-border transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {skill.label}
+            <span className="ml-1.5 text-[10px] text-text-muted">· {skill.costCredits}cr</span>
+          </button>
+        ))}
+      </div>
+      {/* Pinned document chip (attach-into-canvas, §3.2.3) */}
+      {pinnedDoc && (
+        <div className="flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-btn border border-brand-action-border bg-brand-action-bg">
+          <Paperclip size={12} className="text-brand-action shrink-0" />
+          <span className="min-w-0 flex-1 text-[11px] text-text-secondary truncate">{pinnedDoc.name}</span>
+          <button type="button" onClick={() => setPinnedDoc(null)} aria-label="Unpin document" className="text-text-muted hover:text-text-primary cursor-pointer">
+            <X size={12} />
+          </button>
+        </div>
+      )}
+      <div className="flex gap-2.5">
+        {/* Attach popover trigger — library lives here, not floating over cards */}
+        <div className="relative shrink-0" ref={attachRef}>
+          <Button
+            type="button"
+            variant="ghost"
+            size={compact ? 'sm' : 'md'}
+            aria-label={t('attach')}
+            title={t('attach')}
+            aria-expanded={attachOpen}
+            onClick={() => setAttachOpen((v) => !v)}
+            className={pinnedDoc ? 'border-brand-action-border text-brand-action' : undefined}
+          >
+            <Paperclip size={compact ? 13 : 15} />
+          </Button>
+          <AnimatePresence>
+            {attachOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="absolute bottom-full mb-2 left-0 w-[300px] max-w-[80vw] z-30 rounded-card border border-border-default bg-surface-overlay shadow-modal p-3"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2">{t('library')} · {library.length}</p>
+                <ul className="space-y-1.5 max-h-[240px] overflow-y-auto pr-1">
+                  {library.map((doc) => (
+                    <li key={doc.id}>
+                      <button
+                        type="button"
+                        onClick={() => attach(doc)}
+                        title={t('attach')}
+                        aria-label={`${t('attach')}: ${doc.name}`}
+                        aria-pressed={pinnedDoc?.id === doc.id}
+                        className={`w-full flex items-center gap-2.5 p-2 rounded-btn border transition-colors text-left cursor-pointer group ${
+                          pinnedDoc?.id === doc.id
+                            ? 'border-brand-action bg-brand-action-bg/50'
+                            : 'border-transparent hover:border-brand-primary-border hover:bg-brand-primary-bg/50'
+                        }`}
+                      >
+                        <span className="w-8 h-8 rounded-lg bg-brand-primary-bg text-brand-primary grid place-items-center shrink-0">
+                          <FileText size={14} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[12px] font-medium text-text-primary truncate">{doc.name}</span>
+                          <span className="block text-[10px] text-text-muted truncate">
+                            {doc.status === 'needs-review' ? 'Review' : 'Extracted'}
+                            {doc.amount != null ? ` · ${fmtNaira(doc.amount)}` : ''}
+                            {doc.category ? ` · ${doc.category}` : ''}
+                          </span>
+                        </span>
+                        {pinnedDoc?.id === doc.id ? (
+                          <Check size={14} className="text-brand-action shrink-0" />
+                        ) : (
+                          <Plus size={14} className="text-text-muted group-hover:text-brand-primary shrink-0" />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                  {library.length === 0 && <li className="text-[12px] text-text-muted py-2">—</li>}
+                </ul>
+                {connectors.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border-subtle">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1.5">{t('connectedContext')}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {connectors.map((c) => (
+                        <span key={c.service} className="px-2 py-0.5 rounded-badge bg-surface-inset border border-border-subtle text-[10px] font-medium text-text-secondary">
+                          {c.displayName}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <Link href="/dashboard/documents/upload" className="block mt-3">
+                  <Button variant="secondary" size="sm" fullWidth>
+                    <Paperclip size={13} /> {t('upload')}
+                  </Button>
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={t('placeholder')}
+          aria-label={t('placeholder')}
+          className="flex-1 min-w-0 h-10 rounded-btn bg-surface-base border border-border-strong px-4 text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-brand-primary transition-colors"
+        />
+        <Button type="submit" variant="primary" size={compact ? 'sm' : 'md'} aria-label={t('send')} disabled={thinking}>
+          {thinking ? <Sparkles size={14} className="animate-pulse" /> : <Send size={14} />}
+          <span className="hidden sm:inline">{t('send')}</span>
+        </Button>
+      </div>
+    </form>
+  );
+
+  /** Live-quota line under the docked composer (pricing §4: the lifetime bar
+   *  is "shown to nudge conversion" — render it, not just the numbers). */
+  const quotaLine = quota && (
+    <div className="mt-2 px-1">
+      <p className="text-[11px] text-text-muted">
+        {t('chatsToday')}{' '}
+        <span className="font-semibold text-text-secondary">
+          {quota.chats.today}
+          {quota.chats.cap !== -1 ? ` / ${quota.chats.cap}` : ''}
+        </span>{' '}
+        · {t('lifetime')} {quota.chats.lifetime}
+        {quota.chats.lifetimeCap !== -1 ? ` / ${quota.chats.lifetimeCap}` : ''} · {quota.tier}
+        {quota.upgradeHint && <span className="text-brand-action"> — {quota.upgradeHint.message}</span>}
+      </p>
+      {quota.chats.lifetimeCap !== -1 && (
+        <div className="mt-1.5 h-1 rounded-full bg-surface-inset overflow-hidden" title={`${quota.chats.lifetime} / ${quota.chats.lifetimeCap}`}>
+          <div
+            className="h-full rounded-full bg-brand-action transition-[width] duration-500"
+            style={{ width: `${Math.min(100, Math.round((quota.chats.lifetime / quota.chats.lifetimeCap) * 100))}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  // ————————————————————————————————————————————————————————————
   // Render
   // ————————————————————————————————————————————————————————————
 
-  const dotSize = 24 * cam.z;
-  const zPct = Math.round(cam.z * 100);
-  const thinkingPos = thinkingPosFor(cam, viewportSize.w, viewportSize.h);
-
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] min-h-[560px]">
-      {/* Canvas header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <div className="min-w-0">
-          <h1 className="flex items-center gap-2">
-            <Sparkles size={20} className="text-brand-action" aria-hidden />
-            {t('title')}
-            <Badge variant="info">canvas</Badge>
-          </h1>
-          <p className="text-text-secondary text-sm mt-1">
-            {t('threadHint')}{' '}
-            <Link href="/marketplace" className="text-brand-primary font-semibold hover:underline">
-              {t('findPro')}
-            </Link>
-          </p>
-        </div>
-        <div className="board-ui-chrome flex items-center gap-2 overflow-x-auto max-w-full pb-1">
-          <LanguageSwitcher className="shrink-0" />
-          <Button variant="secondary" size="sm" className="shrink-0" onClick={() => void shareCanvas()}>
-            <Share2 size={14} /> {t('share')}
-          </Button>
-          <Button variant="secondary" size="sm" className="shrink-0" onClick={newChat}>
-            <Link2 size={14} /> {t('newChat')}
-          </Button>
-        </div>
-      </div>
-
-      {/* ── The board: pannable/zoomable stage with positioned cards ── */}
-      <div className="relative flex-1 min-h-0">
-        {/* Stage viewport */}
-        <div
-          ref={viewportRef}
-          className="absolute inset-0 overflow-hidden rounded-card border border-border-subtle bg-surface-inset/40 cursor-grab active:cursor-grabbing touch-none select-none"
-          onPointerDown={onStagePointerDown}
-          onPointerMove={onStagePointerMove}
-          onPointerUp={onStagePointerUp}
-          onPointerCancel={onStagePointerUp}
-          role="application"
-          aria-label="Infinite canvas board"
-        >
-          {/* Dot-grid that parallax-shifts with the camera */}
-          <div
-            data-canvas-bg
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: 'radial-gradient(circle, var(--color-border-default) 1px, transparent 1px)',
-              backgroundSize: `${dotSize}px ${dotSize}px`,
-              backgroundPosition: `${cam.x}px ${cam.y}px`,
-              opacity: 0.55,
-            }}
-          />
-          {/* World (transformed card layer) */}
-          <div
-            className="absolute top-0 left-0"
-            style={{ transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.z})`, transformOrigin: '0 0' }}
-          >
-            {cards.map((card) => (
-              <BoardCard key={card.id} card={card} t={t} td={td} onDragStart={startCardDrag} />
-            ))}
-            {thinking && (
-              <div
-                data-board-card
-                className="absolute w-[300px] rounded-card border border-border-default bg-surface-overlay p-4 shadow-card"
-                style={thinkingPos}
-              >
-                <ThinkingIndicator t={t} />
+    <div className={`flex ${docked ? 'flex-col lg:flex-row' : 'flex-col'} gap-4 h-[calc(100vh-7rem)] min-h-[540px]`}>
+      {/* ── Docked chat sidebar (after the first message) ── */}
+      {docked && (
+        <aside className="w-full lg:w-[380px] shrink-0 lg:border-r lg:border-border-subtle lg:pr-4 flex flex-col min-h-0" aria-label={t('title')}>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-8 h-8 rounded-full bg-brand-primary text-text-inverse grid place-items-center shrink-0">
+                <Bot size={15} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-sm font-bold text-text-primary truncate">{t('title')}</h1>
+                <p className="text-[11px] text-text-muted truncate">{t('threadHint')}</p>
               </div>
-            )}
-          </div>
-
-          {/* Left undocked sidebar: library + connectors + credits (§3.2.2) */}
-          <div className="board-ui-chrome absolute top-3 left-3 bottom-[132px] w-[248px] max-w-[46vw] z-10 flex flex-col gap-3 overflow-y-auto pr-1">
-            <button
-              type="button"
-              onClick={() => setLibraryOpen((v) => !v)}
-              className="board-ui-chrome self-start flex items-center gap-1.5 px-2.5 py-1.5 rounded-btn border border-border-default bg-surface-overlay text-[12px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
-              aria-expanded={libraryOpen}
-            >
-              <BookOpen size={13} /> {t('chipsLabel')} · {library.length}
-            </button>
-            <AnimatePresence initial={false}>
-              {libraryOpen && (
-                <motion.div
-                  key="rail"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="flex flex-col gap-3"
-                >
-                  {/* Live library — processed documents from the store (P8 exit 2) */}
-                  <Card className="p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2">Library · live</p>
-                    <ul className="space-y-1.5 max-h-[26vh] overflow-y-auto pr-1">
-                      {library.map((doc) => (
-                        <li key={doc.id}>
-                          <button
-                            type="button"
-                            onClick={() => attach(doc)}
-                            title={`Attach ${doc.name}`}
-                            aria-label={`Attach ${doc.name}`}
-                            aria-pressed={pinnedDoc?.id === doc.id}
-                            className={`w-full flex items-center gap-2.5 p-2 rounded-btn border transition-colors text-left cursor-pointer group ${
-                              pinnedDoc?.id === doc.id
-                                ? 'border-brand-action bg-brand-action-bg/50'
-                                : 'border-transparent hover:border-brand-primary-border hover:bg-brand-primary-bg/50'
-                            }`}
-                          >
-                            <span className="w-8 h-8 rounded-lg bg-brand-primary-bg text-brand-primary grid place-items-center shrink-0">
-                              <FileText size={14} />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-[12px] font-medium text-text-primary truncate">{doc.name}</span>
-                              <span className="block text-[10px] text-text-muted truncate">
-                                {doc.status === 'needs-review' ? 'Review' : 'Extracted'}
-                                {doc.amount != null ? ` · ${fmtNaira(doc.amount)}` : ''}
-                                {doc.category ? ` · ${doc.category}` : ''}
-                              </span>
-                            </span>
-                            {pinnedDoc?.id === doc.id ? (
-                              <Check size={14} className="text-brand-action shrink-0" />
-                            ) : (
-                              <Plus size={14} className="text-text-muted group-hover:text-brand-primary shrink-0" />
-                            )}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href="/dashboard/documents/upload">
-                      <Button variant="secondary" size="sm" fullWidth className="mt-3">
-                        <Paperclip size={13} /> Upload
-                      </Button>
-                    </Link>
-                  </Card>
-
-                  {/* P8 — connected apps as prompt context (F-19) */}
-                  {connectors.length > 0 && (
-                    <Card className="p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2 flex items-center gap-1.5">
-                        <Zap size={11} className="text-brand-action" /> Connected context
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {connectors.map((c) => (
-                          <span key={c.service} className="px-2 py-0.5 rounded-badge bg-surface-inset border border-border-subtle text-[10px] font-medium text-text-secondary">
-                            {c.displayName}
-                          </span>
-                        ))}
-                      </div>
-                    </Card>
-                  )}
-
-                  {/* P8 — live quota-in-canvas (real counters, demo_seed) */}
-                  {quota && (
-                    <Card className="p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-2">
-                        Credits · {quota.tier}
-                      </p>
-                      <p className="text-[12px] text-text-secondary">
-                        Chats today{' '}
-                        <span className="font-semibold text-text-primary">
-                          {quota.chats.today}
-                          {quota.chats.cap !== -1 ? ` / ${quota.chats.cap}` : ''}
-                        </span>
-                        {' · '}
-                        lifetime {quota.chats.lifetime}
-                        {quota.chats.lifetimeCap !== -1 ? ` / ${quota.chats.lifetimeCap}` : ''}
-                      </p>
-                      {quota.upgradeHint && (
-                        <p className="text-[11px] text-brand-action mt-1.5">{quota.upgradeHint.message}</p>
-                      )}
-                    </Card>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Zoom chrome (bottom-right) */}
-          <div className="board-ui-chrome absolute bottom-3 right-3 z-10 flex items-center gap-1 rounded-btn border border-border-default bg-surface-overlay p-1 shadow-card">
-            <button type="button" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out" className="w-7 h-7 grid place-items-center rounded text-text-secondary hover:text-text-primary hover:bg-surface-inset cursor-pointer">
-              <Minus size={14} />
-            </button>
-            <button type="button" onClick={fitBoard} className="min-w-[46px] h-7 px-1.5 grid place-items-center rounded text-[11px] font-medium text-text-secondary hover:text-text-primary hover:bg-surface-inset cursor-pointer" title="Fit board">
-              {zPct}%
-            </button>
-            <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoom in" className="w-7 h-7 grid place-items-center rounded text-text-secondary hover:text-text-primary hover:bg-surface-inset cursor-pointer">
-              <Plus size={14} />
-            </button>
-            <button type="button" onClick={fitBoard} aria-label="Fit to board" className="w-7 h-7 grid place-items-center rounded text-text-secondary hover:text-text-primary hover:bg-surface-inset cursor-pointer">
-              <Maximize2 size={13} />
-            </button>
-          </div>
-        </div>
-
-        {/* ── Docked composer (Miro-style, floats beneath the board) ── */}
-        <div className="board-ui-chrome absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-[min(680px,calc(100%-56px))]">
-          <form onSubmit={send} className="rounded-card border border-border-default bg-surface-overlay shadow-card p-3">
-            {/* P3 F-20 — Skills v1 chip rail above the textarea */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted shrink-0 pr-1">{t('skillsLabel')}:</span>
-              {SKILLS.map((skill) => (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onClick={() =>
-                    void runSkillChip(skill, {
-                      ...(skill.id === 'invoice-wht-check'
-                        ? { amount: 240_000, paymentType: 'Goods / services' }
-                        : skill.id === 'wht-recovery'
-                          ? { vendor: 'Zenith Supplies Ltd' }
-                          : {}),
-                    })
-                  }
-                  title={skill.oneLiner}
-                  disabled={thinking}
-                  className="shrink-0 px-3 py-1.5 rounded-full border border-border-subtle bg-surface-raised text-[12px] font-medium text-text-secondary hover:text-text-primary hover:border-brand-primary-border transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {skill.label}
-                  <span className="ml-1.5 text-[10px] text-text-muted">· {skill.costCredits}cr</span>
-                </button>
-              ))}
             </div>
-            {/* Pinned document chip (attach-into-canvas, §3.2.3) */}
-            {pinnedDoc && (
-              <div className="flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-btn border border-brand-action-border bg-brand-action-bg">
-                <Paperclip size={12} className="text-brand-action shrink-0" />
-                <span className="min-w-0 flex-1 text-[11px] text-text-secondary truncate">{pinnedDoc.name}</span>
-                <button type="button" onClick={() => setPinnedDoc(null)} aria-label="Unpin document" className="text-text-muted hover:text-text-primary cursor-pointer">
-                  <X size={12} />
-                </button>
-              </div>
-            )}
-            <div className="flex gap-2.5">
-              <input
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={t('placeholder')}
-                aria-label={t('placeholder')}
-                className="flex-1 h-11 rounded-btn bg-surface-base border border-border-strong px-4 text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-brand-primary transition-colors"
-              />
-              <Button type="submit" variant="primary" size="lg" aria-label={t('send')} disabled={thinking}>
-                {thinking ? <Crosshair size={15} className="animate-pulse" /> : <Send size={15} />}
-                <span className="hidden sm:inline">{t('send')}</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button variant="ghost" size="sm" onClick={newChat} title={t('newChat')} aria-label={t('newChat')}>
+                <SquarePen size={14} />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => void shareCanvas()}>
+                <Share2 size={13} /> <span className="hidden xl:inline">{t('share')}</span>
               </Button>
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
 
-/** Transient thinking indicator position: view centre (world coords), lifted
- *  above the docked composer. */
-function thinkingPosFor(cam: { x: number; y: number; z: number }, vw: number, vh: number): { left: number; top: number } {
-  const cx = (vw / 2 - cam.x) / cam.z;
-  const cy = (vh / 2 - cam.y) / cam.z - 80 / cam.z;
-  return { left: cx - 150, top: cy - 120 };
-}
+          {/* Thread */}
+          <div ref={threadRef} className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3" aria-live="polite">
+            {messages.map((m) =>
+              m.role === 'user' ? (
+                <div key={m.id} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-card border border-brand-primary-border bg-brand-primary-bg/60 px-3.5 py-2.5">
+                    {m.doc && (
+                      <span className="mb-1.5 inline-flex items-center gap-1 text-[10px] text-text-muted">
+                        <Paperclip size={10} /> {m.doc.name}
+                      </span>
+                    )}
+                    <p className="text-sm leading-relaxed text-text-primary">{m.text}</p>
+                  </div>
+                </div>
+              ) : m.role === 'agent' ? (
+                <div key={m.id} className="flex justify-start">
+                  <div className="max-w-[92%] rounded-card border border-border-default bg-surface-overlay px-3.5 py-3">
+                    <AgentMarkdown text={m.text} />
+                    {m.pinned.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                        {m.pinned.map((p) => (
+                          <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-badge bg-brand-action-bg border border-brand-action-border text-[10px] font-medium text-text-secondary">
+                            <LayoutDashboard size={10} className="text-brand-action" /> {p}
+                          </span>
+                        ))}
+                        <span className="text-[10px] text-text-muted">{t('pinnedToCanvas')}</span>
+                      </div>
+                    )}
+                    {(m.sources.length > 0 || m.demoSeed) && (
+                      <div className="flex items-center gap-1.5 flex-wrap mt-2.5 pt-2.5 border-t border-border-subtle">
+                        {m.sources.length > 0 && (
+                          <>
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{t('sources')}:</span>
+                            {m.sources.map((s) => (
+                              <span key={s} className="px-2 py-0.5 rounded-badge bg-brand-primary-bg text-brand-primary text-[10px] font-medium">
+                                {s}
+                              </span>
+                            ))}
+                          </>
+                        )}
+                        {m.demoSeed && (
+                          <span
+                            className="px-2 py-0.5 rounded-badge bg-surface-inset border border-border-subtle text-text-muted text-[10px] font-medium"
+                            title="Answered from the offline demo knowledge base (no live LLM)"
+                          >
+                            {t('demoAnswer')}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                // Quota upgrade wall — rendered in the thread, not on the board
+                <div key={m.id} className="rounded-card border border-brand-action-border bg-brand-action-bg px-3.5 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-action mb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck size={13} /> {t('freeLimitReached')}
+                  </p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{m.message}</p>
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <Link href="/pricing">
+                      <Button variant="primary" size="sm">
+                        {t('upgradeTo', { tier: m.to === 'plus' ? 'Plus' : m.to })}
+                      </Button>
+                    </Link>
+                    <span className="text-[10px] text-text-muted">{t('demoBilling')}</span>
+                  </div>
+                </div>
+              )
+            )}
+            {thinking && (
+              <div className="flex justify-start">
+                <div className="rounded-card border border-border-default bg-surface-overlay px-3.5 py-3" aria-live="polite">
+                  <span className="text-sm text-text-muted flex items-center gap-2">
+                    <span className="inline-flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
+                    </span>
+                    {t('thinkingHint')}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
 
-/** Transient "agent is thinking" card — spawned at view centre while a turn runs. */
-function ThinkingIndicator({ t }: { t: ReturnType<typeof useTranslations> }) {
-  return (
-    <div className="flex items-start gap-2.5" aria-live="polite">
-      <span className="w-7 h-7 rounded-full bg-brand-primary text-text-inverse grid place-items-center shrink-0">
-        <Bot size={13} />
-      </span>
-      <div className="min-w-[220px]">
-        <span className="text-sm text-text-muted flex items-center gap-2">
-          <span className="inline-flex gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
-          </span>
-          {t('thinkingHint')}
-        </span>
-      </div>
+          {/* Composer pinned beneath the thread */}
+          <div className="pt-3">
+            {composer(true)}
+            {quotaLine}
+          </div>
+        </aside>
+      )}
+
+      {/* ── Hero state: centered composer before the first message ── */}
+      {!docked && (
+        <section className="flex-1 flex flex-col items-center justify-center gap-6 px-4 text-center">
+          <div className="max-w-xl">
+            <h1 className="flex items-center justify-center gap-2.5 text-2xl sm:text-3xl font-bold text-text-primary">
+              <Sparkles size={24} className="text-brand-action" aria-hidden />
+              {t('title')}
+            </h1>
+            <p className="text-text-secondary text-sm mt-2">
+              {t('threadHint')}{' '}
+              <Link href="/marketplace" className="text-brand-primary font-semibold hover:underline">
+                {t('findPro')}
+              </Link>
+            </p>
+          </div>
+          <div className="w-full max-w-[640px]">{composer(false)}</div>
+          {quotaLine}
+          <p className="text-[11px] text-text-muted max-w-md">{t('emptyHint')}</p>
+        </section>
+      )}
+
+      {/* ── Canvas: artifacts only, auto-arranged (docked state) ── */}
+      {docked && (
+        <section className="flex-1 min-w-0 flex flex-col min-h-0" aria-label={t('canvas')}>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-text-primary">
+              <LayoutDashboard size={15} className="text-brand-action" aria-hidden />
+              {t('canvas')}
+              <Badge variant="info">{artifacts.length}</Badge>
+            </h2>
+          </div>
+          <div
+            ref={canvasRef}
+            data-canvas-bg
+            className="flex-1 min-h-0 overflow-y-auto rounded-card border border-border-subtle bg-surface-inset/40 p-4"
+            style={{
+              backgroundImage: 'radial-gradient(circle, var(--color-border-default) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          >
+            {artifacts.length === 0 ? (
+              <div className="h-full min-h-[240px] grid place-items-center">
+                <p className="text-[13px] text-text-muted text-center max-w-xs">{t('canvasEmpty')}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
+                <AnimatePresence initial={false}>
+                  {artifacts.map((a) => (
+                    <motion.div
+                      key={a.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <ArtifactCard artifact={a} t={t} td={td} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// BoardCard — one positioned card on the stage (draggable via its top bar)
+// ArtifactCard — skill results, referrals, filing actions, share links
 // ---------------------------------------------------------------------------
 
-function BoardCard({
-  card,
+function ArtifactCard({
+  artifact,
   t,
   td,
-  onDragStart,
 }: {
-  card: CanvasCard;
+  artifact: Artifact;
   t: ReturnType<typeof useTranslations>;
   td: ReturnType<typeof useTranslations>;
-  onDragStart: (e: React.PointerEvent, card: CanvasCard) => void;
 }) {
-  const frame = (children: React.ReactNode, cls: string) => (
-    <div
-      data-board-card
-      className={`absolute rounded-card shadow-card ${cls}`}
-      style={{ left: card.pos.x, top: card.pos.y, width: card.width }}
-    >
-      {/* Drag handle bar */}
-      <div
-        onPointerDown={(e) => {
-          e.stopPropagation();
-          onDragStart(e, card);
-        }}
-        className="flex items-center gap-1.5 px-3.5 pt-2.5 cursor-move active:cursor-grabbing"
-        title="Drag to move on the board"
-      >
-        <span className="flex gap-0.5">
-          <span className="w-1 h-1 rounded-full bg-border-strong" />
-          <span className="w-1 h-1 rounded-full bg-border-strong" />
-          <span className="w-1 h-1 rounded-full bg-border-strong" />
-        </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-          {card.kind === 'user' ? 'You' : card.kind === 'answer' ? 'Agent' : card.kind === 'filing' ? 'Filing' : card.kind === 'referral' ? 'Referral' : card.kind === 'skill' ? 'Skill' : card.kind === 'wall' ? 'Limit' : card.kind === 'share' ? 'Share' : 'Card'}
-        </span>
-      </div>
-      <div className="px-3.5 pb-3.5 pt-1.5">{children}</div>
+  const head = (icon: React.ReactNode, label: string, accent: string) => (
+    <div className="flex items-center gap-2 mb-3">
+      <span className={accent}>{icon}</span>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
+      <Badge variant="brand" className="ml-auto shrink-0">
+        {t('turn', { n: artifact.turn })}
+      </Badge>
     </div>
   );
 
-  if (card.kind === 'user') {
-    return frame(
-      <div>
-        <div className="text-sm leading-relaxed text-text-primary">{card.content}</div>
-        {card.attachedDoc && (
-          <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-text-muted">
-            <Paperclip size={11} /> {card.attachedDoc.name}
-          </span>
+  if (artifact.kind === 'skill') {
+    return (
+      <Card className="p-4" accent="teal">
+        {head(<Sparkles size={13} />, artifact.label, 'text-brand-primary')}
+        {renderSkillBody(artifact.skill)}
+        {artifact.demoSeed && (
+          <p className="text-[10px] text-text-muted mt-2">demo_seed · output is illustrative, not live data</p>
         )}
-      </div>,
-      'border border-border-default bg-surface-raised'
+      </Card>
     );
   }
-  if (card.kind === 'wall') {
-    return frame(
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-action mb-2 flex items-center gap-1.5">
-          <ShieldCheck size={13} /> Free limit reached
-        </p>
-        <p className="text-sm text-text-secondary leading-relaxed">{card.wall?.message ?? card.content}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <Link href="/pricing">
-            <Button variant="primary" size="sm">
-              Upgrade to {card.wall?.to === 'plus' ? 'Plus' : card.wall?.to}
-            </Button>
-          </Link>
-          <span className="text-[10px] text-text-muted">demo_seed · mocked billing</span>
-        </div>
-      </div>,
-      'border border-brand-action-border bg-brand-action-bg'
-    );
-  }
-  if (card.kind === 'share') {
-    const s = card.shareLink;
-    if (!s?.ok) {
-      return frame(
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-action mb-2 flex items-center gap-1.5">
-            <Lock size={13} /> Paid feature
-          </p>
-          <p className="text-sm text-text-secondary">{card.content}</p>
-          <div className="mt-3">
-            <Link href="/pricing">
-              <Button variant="primary" size="sm">Upgrade</Button>
-            </Link>
-          </div>
-        </div>,
-        'border border-brand-action-border bg-brand-action-bg'
-      );
-    }
-    return frame(
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary mb-2 flex items-center gap-1.5">
-          <Share2 size={13} /> Read-only link ({s.access})
-        </p>
-        <p className="text-[12px] font-mono text-text-secondary break-all">{s.url}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <Link href={s.url} target="_blank" rel="noreferrer">
-            <Button variant="secondary" size="sm">Open preview</Button>
-          </Link>
-          <span className="text-[10px] text-text-muted">signup CTA inside · demo_seed</span>
-        </div>
-      </div>,
-      'border border-brand-primary-border bg-brand-primary-bg/40'
-    );
-  }
-  if (card.kind === 'filing') {
-    return frame(
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">Filing action</p>
+
+  if (artifact.kind === 'filing') {
+    return (
+      <Card className="p-4">
+        {head(<Check size={13} />, t('filingAction'), 'text-brand-action')}
         <ol className="space-y-2 mb-4">
           {FILING_STEPS.map((step, i) => (
             <li key={step} className="flex items-center gap-2.5 text-sm text-text-secondary">
-              <span className="w-5 h-5 rounded-full bg-brand-primary-bg text-brand-primary text-[10px] font-bold grid place-items-center">{i + 1}</span>
+              <span className="w-5 h-5 rounded-full bg-brand-primary-bg text-brand-primary text-[10px] font-bold grid place-items-center shrink-0">{i + 1}</span>
               {step}
             </li>
           ))}
         </ol>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="primary" size="sm" onClick={() => toast('Added to your 2025 filing', { description: 'Demo build — the filing draft now includes these figures.' })}>
-            <Check size={14} /> Add to filing
+            <Check size={14} /> {t('addToFiling')}
           </Button>
           <Link href="/dashboard/tax-filing">
             <Button variant="ghost" size="sm">
@@ -1236,76 +1087,66 @@ function BoardCard({
             </Button>
           </Link>
         </div>
-      </div>,
-      'border border-border-default bg-surface-overlay'
+      </Card>
     );
   }
-  if (card.kind === 'referral') {
-    const live = card.referral;
-    return frame(
-      <div>
-        <div className="flex items-center gap-2 mb-2">
+
+  if (artifact.kind === 'referral') {
+    const live = artifact.referral;
+    return (
+      <Card className="p-4" accent="green">
+        <div className="flex items-center gap-2 mb-3">
           <ShieldCheck size={15} className="text-brand-action" />
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Verified pro</p>
-          {live && (
-            <span className="ml-auto text-[10px] text-text-muted">
-              {live.contact.masked ? 'masked' : 'full contact'} · {live.contact.reason}
-            </span>
-          )}
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('verifiedPro')}</p>
+          <Badge variant="brand" className="ml-auto shrink-0">
+            {t('turn', { n: artifact.turn })}
+          </Badge>
         </div>
         <div className="flex items-center gap-3 mb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/avatars/avatar-01.png" alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-border-subtle" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-text-primary truncate">{live ? live.pro.name : card.content}</p>
+            <p className="text-sm font-semibold text-text-primary truncate">{live.pro.name}</p>
             <p className="text-[11px] text-text-muted">
-              {live ? `${live.pro.city}, ${live.pro.state}` : 'Lagos Island'} ·{' '}
-              {live ? `${live.pro.rating} ★ (${live.pro.reviewCount})` : '4.9 ★ (127)'}
+              {live.pro.city}, {live.pro.state} · {live.pro.rating} ★ ({live.pro.reviewCount})
             </p>
           </div>
-          <Link href={live ? `/marketplace/${live.pro.slug}` : '/marketplace/adaeze-consulting'} className="ml-auto shrink-0">
-            <Badge variant="brand">View</Badge>
+          <Link href={`/marketplace/${live.pro.slug}`} className="shrink-0">
+            <Button variant="secondary" size="sm">{t('viewProfile')}</Button>
           </Link>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {live && live.contact.masked ? (
+          {live.contact.masked ? (
             <span className="text-[11px] text-text-muted">
-              Phone <span className="text-text-primary font-medium">+234••• •••0••</span>
-              <span className="ml-2">— full contact on Plus (₦5,000/mo) or a paid login</span>
+              <span className="text-text-primary font-medium">+234••• •••0••</span> — {t('maskedNote')}
             </span>
           ) : (
-            <>
-              <Link
-                href={`tel:${(live?.contact.phone ?? '+2348011000001').replace(/[^+\d]/g, '')}`}
-                aria-label="Call pro (demo)"
-              >
+            live.contact.phone && (
+              <Link href={`tel:${live.contact.phone.replace(/[^+\d]/g, '')}`} aria-label="Call pro (demo)">
                 <Button variant="secondary" size="sm">
-                  <Phone size={13} /> {live?.contact.phone ?? '+2348011000001'}
+                  <Phone size={13} /> {live.contact.phone}
                 </Button>
               </Link>
-              <Link
-                href={
-                  live?.pro.slug
-                    ? `/marketplace/${live.pro.slug}`
-                    : `/marketplace/adaeze-consulting`
-                }
-                aria-label="Open pro profile (demo)"
-              >
-                <Button variant="secondary" size="sm">
-                  <MessageCircle size={13} /> {live?.contact.whatsapp ?? 'WhatsApp'}
-                </Button>
-              </Link>
-            </>
+            )
           )}
-          <span className="text-[10px] text-text-muted self-center">{t('demoNote')}</span>
+          <span className="text-[10px] text-text-muted">{t('demoNote')}</span>
         </div>
-      </div>,
-      'border border-brand-action-border bg-brand-action-bg'
+      </Card>
     );
   }
-  if (card.kind === 'skill') {
-    return frame(<SkillCardBody card={card} />, 'border border-brand-primary-border bg-brand-primary-bg/40');
-  }
-  // answer — agent markdown card
-  return frame(<AnswerBody card={card} t={t} />, 'border border-border-default bg-surface-overlay');
+
+  // share
+  const s = artifact.shareLink;
+  return (
+    <Card className="p-4" accent="teal">
+      {head(<Share2 size={13} />, `${t('share')} · ${s.access}`, 'text-brand-primary')}
+      <p className="text-[12px] font-mono text-text-secondary break-all">{s.url}</p>
+      <div className="mt-3 flex items-center gap-2">
+        <Link href={s.url} target="_blank" rel="noreferrer">
+          <Button variant="secondary" size="sm">{t('openPreview')}</Button>
+        </Link>
+        <span className="text-[10px] text-text-muted">demo_seed</span>
+      </div>
+    </Card>
+  );
 }

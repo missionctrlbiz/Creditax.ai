@@ -7,6 +7,7 @@ import {
   type VatInput,
 } from '@/ai/tax-rules';
 import { guard } from '@/lib/rate-limit';
+import { meter } from '@/ai/quota';
 
 type CalcBody = {
   kind: 'paye' | 'vat' | 'wht';
@@ -17,6 +18,8 @@ type CalcBody = {
   grossSales?: number;
   inputVat?: number;
   paymentType?: string;
+  /** P19: meter the calc against the caller's quota (pricing §6 — server-side). */
+  userId?: string;
 };
 
 /**
@@ -42,6 +45,24 @@ export async function POST(req: NextRequest) {
   }
   if (!body.kind) {
     return NextResponse.json({ error: '`kind` must be one of paye|vat|wht' }, { status: 400 });
+  }
+
+  // P19: tax-calc was previously unmetered (only chat enforced). Meter 2
+  // credits per calc when a user is present; anonymous demo calls stay free.
+  if (body.userId) {
+    const gate = meter(body.userId, 'tax-calc');
+    if (!gate.allowed) {
+      return NextResponse.json(
+        {
+          error: gate.reason,
+          blocked: true,
+          upgrade: gate.status.upgradeHint,
+          status: gate.status,
+          demo_seed: true,
+        },
+        { status: 403, headers: { 'X-Creditax-Quota': gate.reason ?? 'limit' } }
+      );
+    }
   }
 
   switch (body.kind) {

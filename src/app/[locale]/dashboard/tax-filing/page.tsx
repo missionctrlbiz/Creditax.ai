@@ -3,6 +3,7 @@
 import { motion, type Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Check, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -145,7 +146,7 @@ export default function TaxFilingStep3Page() {
                   </p>
                   <div className="flex gap-3">
                     <Button variant="primary" size="sm" onClick={() => toast('Deductions added to your 2025 filing', { description: 'All matched expenses are now in the filing draft.' })}>
-                      ✓ Yes, add all
+                      <Check size={14} /> Yes, add all
                     </Button>
                     <Button variant="secondary" size="sm" onClick={() => toast('Demo build — line-by-line review is mocked', { description: 'Deductions stay added in bulk for the demo journey.' })}>
                       Review each one
@@ -266,7 +267,7 @@ export default function TaxFilingStep3Page() {
             <Card accent="teal" className="p-6">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-brand-action-bg flex items-center justify-center flex-shrink-0">
-                  <span className="text-brand-action text-sm">✨</span>
+                  <Sparkles size={14} className="text-brand-action" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary mb-1">AI Insight</h3>
@@ -280,30 +281,36 @@ export default function TaxFilingStep3Page() {
         </motion.div>
       </div>
 
-      {/* Bottom Navigation Bar */}
+      {/* Step navigation — in the page flow (P20: the old fixed bottom bar
+          slid under the sidebar and centred against the full viewport) */}
       <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeInUp}
-        className="fixed bottom-0 left-0 right-0 bg-surface-raised border-t border-border-default p-4 z-20"
+        className="sticky bottom-0 bg-surface-raised/95 backdrop-blur-sm border-t border-border-default p-4 -mx-6 lg:-mx-8 mt-6"
       >
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
+        <div className="flex items-center justify-between">
           <div className="text-sm text-text-muted">
             Step 3 of 5
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" size="lg" onClick={() => router.push('/dashboard/tax-filing')}>
+            <Button variant="ghost" size="lg" onClick={() => router.back()}>
               ← Back
             </Button>
-            <Button variant="primary" size="lg" onClick={() => router.push('/dashboard/tax-filing')}>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() =>
+                toast('Demo build — the filing summary step is mocked', {
+                  description: 'Track B wires the real FIRS-ready summary draft; deductions are already staged.',
+                })
+              }
+            >
               Continue to Summary →
             </Button>
           </div>
         </div>
       </motion.div>
-
-      {/* Spacer for fixed bottom bar */}
-      <div className="h-24" />
     </div>
   );
 }

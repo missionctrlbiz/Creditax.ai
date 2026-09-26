@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { BrandedImage } from '@/components/shared/BrandedImage';
 
@@ -87,73 +86,79 @@ export function StakeholderSections() {
   ];
   return (
     <>
-      {STAKEHOLDERS.map((s, i) => (
-        <section
-          key={s.id}
-          id={s.id}
-          className={`py-20 md:py-24 border-t border-border-subtle ${
-            i % 2 === 1 ? 'bg-surface-raised' : ''
-          }`}
-        >
-          <div className="max-w-[1440px] mx-auto px-6 md:px-10">
-            <div
-              className={`grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center ${
-                s.flip ? 'lg:[&>*:first-child]:order-2' : ''
-              }`}
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.55 }}
+      {STAKEHOLDERS.map((s, i) => {
+        // gsap-web3gl-scrollytelling stacked-card deck (P22): every section is
+        // a full-height card that pins at the viewport top while the next one
+        // slides over it; the covered card recedes (scale + dim, driven by the
+        // engine). One image device per card, never twice in a row, and the
+        // closing card settles instead of trailing off.
+        const flipped = i % 2 === 1;
+        const textFx = flipped ? 'rise-side' : 'rise';
+        const imgFx = (['parallax', 'mask', 'pan', 'parallax', 'mask', 'settle'] as const)[i];
+        return (
+          <section
+            key={s.id}
+            id={s.id}
+            data-cx="stack-card"
+            className={`relative flex items-center min-h-screen mx-2 md:mx-4 rounded-[28px] border border-border-default shadow-card overflow-hidden ${
+              flipped ? 'bg-surface-raised' : 'bg-surface-base'
+            }`}
+          >
+            <div data-cx="stack-inner" className="w-full max-w-[1440px] mx-auto px-6 md:px-10 py-20">
+              <div
+                className={`grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center ${
+                  flipped ? 'lg:[&>*:first-child]:order-2' : ''
+                }`}
               >
-                <p className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-4">
-                  {s.eyebrow}
-                </p>
-                <h2 className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight mb-4 max-w-[520px]">
-                  {s.title}
-                </h2>
-                <p className="text-text-secondary text-base leading-relaxed max-w-[480px] mb-7">
-                  {s.body}
-                </p>
-                {s.ctaHref === '#join' ? (
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={() => {
-                      document
-                        .querySelector<HTMLButtonElement>('header button[aria-haspopup="dialog"]')
-                        ?.click();
-                    }}
-                  >
-                    {s.ctaLabel}
-                  </Button>
-                ) : (
-                  <Link href={s.ctaHref}>
-                    <Button variant={s.id === 'partners' ? 'secondary' : 'primary'} size="lg">
-                      {s.ctaLabel}
-                    </Button>
-                  </Link>
-                )}
-              </motion.div>
+                <div data-cx={textFx}>
+                  <p className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-4">
+                    {s.eyebrow}
+                  </p>
+                  <h2 className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight mb-4 max-w-[520px]">
+                    {s.title}
+                  </h2>
+                  <p className="text-text-secondary text-base leading-relaxed max-w-[480px] mb-7">
+                    {s.body}
+                  </p>
+                  {s.ctaHref === '#join' ? (
+                    <span data-cx="magnetic" className="inline-block">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={() => {
+                          document
+                            .querySelector<HTMLButtonElement>('header button[aria-haspopup="dialog"]')
+                            ?.click();
+                        }}
+                      >
+                        {s.ctaLabel}
+                      </Button>
+                    </span>
+                  ) : (
+                    <span data-cx="magnetic" className="inline-block">
+                      <Link href={s.ctaHref}>
+                        <Button variant={s.id === 'partners' ? 'secondary' : 'primary'} size="lg">
+                          {s.ctaLabel}
+                        </Button>
+                      </Link>
+                    </span>
+                  )}
+                </div>
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.55, delay: 0.08 }}
-                className="relative"
-              >
-                <BrandedImage
-                  src={s.img}
-                  alt={s.alt}
-                  className="rounded-[20px] border border-border-default shadow-card aspect-[4/3] bg-surface-inset"
-                />
-              </motion.div>
+                <div className="relative overflow-hidden rounded-[20px] border border-border-default shadow-card bg-surface-inset">
+                  <div data-cx={imgFx} className="will-change-transform">
+                    <BrandedImage
+                      src={s.img}
+                      alt={s.alt}
+                      className="rounded-[20px] border border-border-default shadow-card aspect-[4/3] bg-surface-inset"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
-      ))}
+          </section>
+        );
+      })}
     </>
   );
 }

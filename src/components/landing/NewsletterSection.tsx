@@ -24,7 +24,7 @@ export function NewsletterSection() {
 
   return (
     <section className="py-16 md:py-20 border-t border-border-subtle bg-surface-raised">
-      <div className="max-w-[720px] mx-auto px-6 text-center">
+      <div data-cx="settle" className="max-w-[720px] mx-auto px-6 text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-[0.1em] bg-brand-action text-text-inverse mb-4">
           <Send className="w-3 h-3" />
           {t('newsEyebrow')}

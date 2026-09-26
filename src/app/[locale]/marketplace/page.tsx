@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import {
@@ -20,6 +21,9 @@ import {
   Check,
   SlidersHorizontal,
   Locate,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 const CONTACT_TOAST = 'Demo build — contact actions are mocked';
@@ -186,6 +190,9 @@ export default function MarketplacePage() {
   const [serviceFilter, setServiceFilter] = useState<string | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(true);
   const [activeProId, setActiveProId] = useState<string | null>(professionals[0].id);
+  // User feedback: show the pros 4-up in a 2×2 grid and paginate the rest.
+  const PROS_PER_PAGE = 4;
+  const [proPage, setProPage] = useState(1);
 
   // P14 — live pro book (real lat/lng from /marketplace/pros). When the store
   // hydrates we place map markers on true coordinates instead of the
@@ -219,8 +226,10 @@ export default function MarketplacePage() {
     };
   }, []);
 
-  // Bounding box of the coords actually shown, padded, used to project
-  // real lat/lng into the overlay pin positions (percentages).
+  // Bounding box of the coords actually shown — INFLATED so the static map
+  // reads as a region, not a tight pin cluster (user feedback: "zoom out the
+  // map"). ONE box is shared by the Mapbox raster AND the overlay pin
+  // projection so the pins stay exactly aligned with the raster.
   const coordBox = useMemo(() => {
     const withCoords = (livePros.length > 0 ? livePros : []) as { location: { lat: number; lng: number } }[];
     if (withCoords.length === 0) return null;
@@ -234,8 +243,14 @@ export default function MarketplacePage() {
       minLng = Math.min(minLng, p.location.lng);
       maxLng = Math.max(maxLng, p.location.lng);
     }
-    const pad = Math.max(0.01, (maxLat - minLat) * 0.15);
-    return { minLat: minLat - pad, maxLat: maxLat + pad, minLng: minLng - pad, maxLng: maxLng + pad };
+    // At least 1.5° of context (~Lagos region) even for a tight city cluster,
+    // and 1.8× the raw span so a mixed Lagos+Abuja result breathes.
+    const MIN_SPAN = 1.5;
+    const spanLat = Math.max(MIN_SPAN, (maxLat - minLat) * 1.8);
+    const spanLng = Math.max(MIN_SPAN, (maxLng - minLng) * 1.8);
+    const cLat = (minLat + maxLat) / 2;
+    const cLng = (minLng + maxLng) / 2;
+    return { minLat: cLat - spanLat / 2, maxLat: cLat + spanLat / 2, minLng: cLng - spanLng / 2, maxLng: cLng + spanLng / 2 };
   }, [livePros]);
 
   // Project one pro's real coords to an overlay top/left percentage.
@@ -252,16 +267,18 @@ export default function MarketplacePage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
   const mapSrc = useMemo(() => {
     if (!mapboxToken) return null;
-    const withCoords = livePros.length > 0 ? livePros : [];
-    if (withCoords.length === 0) return null;
-    const markers = withCoords
+    if (!coordBox) return null;
+    const markers = livePros
       .map((p) => `pin-s+0D7377(${p.location.lng.toFixed(5)},${p.location.lat.toFixed(5)})`)
       .join(';');
-    // `auto` viewBox → Mapbox fits the markers into the requested width/height.
-    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${markers}/auto/800x620?access_token=${encodeURIComponent(
+    // Explicit inflated bbox (same box the pin overlay projects against)
+    // instead of `auto`, which hugged the markers — user wanted the map
+    // zoomed out to regional/national context.
+    const bbox = `${coordBox.minLng.toFixed(4)},${coordBox.minLat.toFixed(4)},${coordBox.maxLng.toFixed(4)},${coordBox.maxLat.toFixed(4)}`;
+    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${markers}/${bbox}/800x620?access_token=${encodeURIComponent(
       mapboxToken
     )}`;
-  }, [mapboxToken, livePros]);
+  }, [mapboxToken, coordBox, livePros]);
 
   const serviceOptions = Array.from(
     new Set(professionals.flatMap((pro) => pro.services))
@@ -277,6 +294,15 @@ export default function MarketplacePage() {
     const matchesVerified = !verifiedOnly || pro.verified;
     return matchesQuery && matchesService && matchesVerified;
   });
+
+  // 2×2 pagination — the last pros land on the next page. Page resets live in
+  // the filter wrappers below (no setState-in-effect).
+  const totalProPages = Math.max(1, Math.ceil(visiblePros.length / PROS_PER_PAGE));
+  const safeProPage = Math.min(proPage, totalProPages);
+  const pagedPros = visiblePros.slice((safeProPage - 1) * PROS_PER_PAGE, safeProPage * PROS_PER_PAGE);
+  const updateQuery = (q: string) => { setQuery(q); setProPage(1); };
+  const updateServiceFilter = (s: string | null) => { setServiceFilter(s); setProPage(1); };
+  const updateVerifiedOnly = (v: boolean) => { setVerifiedOnly(v); setProPage(1); };
 
   const activePro = professionals.find((pro) => pro.id === activeProId) ?? null;
 
@@ -418,7 +444,7 @@ export default function MarketplacePage() {
                 <input
                   type="search"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => updateQuery(e.target.value)}
                   placeholder="Search by firm name or service — VAT, PAYE, audit..."
                   aria-label="Search tax professionals"
                   className="w-full h-12 pl-12 pr-4 rounded-input bg-surface-raised border border-border-strong text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-brand-primary transition-all"
@@ -464,7 +490,7 @@ export default function MarketplacePage() {
                   <button
                     key={service}
                     type="button"
-                    onClick={() => setServiceFilter(active ? null : service)}
+                    onClick={() => updateServiceFilter(active ? null : service)}
                     aria-pressed={active}
                     className={`px-3.5 py-1.5 rounded-pill border text-[13px] font-medium transition-colors cursor-pointer ${
                       active
@@ -480,7 +506,7 @@ export default function MarketplacePage() {
 
             <button
               type="button"
-              onClick={() => setVerifiedOnly((v) => !v)}
+              onClick={() => updateVerifiedOnly(!verifiedOnly)}
               aria-pressed={verifiedOnly}
               className={`ml-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-pill border text-[13px] font-medium transition-colors cursor-pointer ${
                 verifiedOnly
@@ -681,9 +707,9 @@ export default function MarketplacePage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setQuery('');
-                        setServiceFilter(null);
-                        setVerifiedOnly(false);
+                        updateQuery('');
+                        updateServiceFilter(null);
+                        updateVerifiedOnly(false);
                       }}
                       className="h-10 px-5 rounded-btn text-sm font-semibold bg-brand-primary text-text-inverse shadow-btn-brand hover:brightness-110 transition-all cursor-pointer"
                     >
@@ -693,12 +719,12 @@ export default function MarketplacePage() {
                 ) : (
                   <motion.div
                     key={`${serviceFilter ?? 'all'}-${verifiedOnly}-${query}`}
-                    className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-5"
                     initial="hidden"
                     animate="visible"
                     variants={staggerContainer}
                   >
-                    {visiblePros.map((pro) => (
+                    {pagedPros.map((pro) => (
                       <motion.article
                         key={pro.id}
                         variants={fadeInUp}
@@ -751,10 +777,19 @@ export default function MarketplacePage() {
                           </div>
 
                           {pro.verified ? (
-                            <Badge variant="success" className="mt-3 self-start">
-                              <ShieldCheck className="w-3 h-3" />
-                              Verified
-                            </Badge>
+                            <div className="mt-3 self-start flex flex-wrap gap-1.5">
+                              <Badge variant="success">
+                                <ShieldCheck className="w-3 h-3" />
+                                Verified
+                              </Badge>
+                              {/* pricing §2 priority placement (was the dead `featured` flag) */}
+                              {pro.featured && (
+                                <Badge variant="brand">
+                                  <ArrowUpRight className="w-3 h-3" />
+                                  Priority
+                                </Badge>
+                              )}
+                            </div>
                           ) : (
                             <Badge variant="warning" className="mt-3 self-start">
                               Unverified
@@ -774,8 +809,15 @@ export default function MarketplacePage() {
 
                           <div className="mt-4 pt-4 border-t border-border-subtle flex flex-wrap items-end justify-between gap-3">
                             <div>
-                              <p className="font-mono text-brand-action font-semibold tabular-nums">
-                                {pro.price}
+                              <p className="price-figure text-[15px] text-brand-action">
+                                {pro.price.startsWith('₦') ? (
+                                  <>
+                                    <span className="naira">₦</span>
+                                    {pro.price.slice(1)}
+                                  </>
+                                ) : (
+                                  pro.price
+                                )}
                               </p>
                               <p className="text-[11px] text-text-muted">{pro.priceNote}</p>
                             </div>
@@ -804,6 +846,35 @@ export default function MarketplacePage() {
                       </motion.article>
                     ))}
                   </motion.div>
+                )}
+
+                {/* 2×2 pagination — the last pros land on the next page */}
+                {totalProPages > 1 && (
+                  <div className="flex items-center justify-between gap-3 mt-5">
+                    <p className="text-[12px] text-text-muted">
+                      Page {safeProPage} of {totalProPages} · {visiblePros.length} pros
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Previous page"
+                        disabled={safeProPage <= 1}
+                        onClick={() => setProPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft size={14} /> Prev
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        aria-label="Next page"
+                        disabled={safeProPage >= totalProPages}
+                        onClick={() => setProPage((p) => Math.min(totalProPages, p + 1))}
+                      >
+                        Next <ChevronRight size={14} />
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

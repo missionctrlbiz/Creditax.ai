@@ -14,6 +14,7 @@ const PUBLICATIONS = blogPosts.slice(0, 6).map((p) => ({
   category: p.category,
   title: p.title,
   excerpt: p.excerpt,
+  image: p.image,
   source: 'Creditax Journal',
   date: p.date,
 }));
@@ -52,7 +53,7 @@ export function PublicationsCarousel() {
             <p className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-3">
               {t('pubsEyebrow')}
             </p>
-            <h2 className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight">
+            <h2 data-cx="words" className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight">
               {t('pubsTitle')}
             </h2>
           </div>
@@ -94,25 +95,38 @@ export function PublicationsCarousel() {
                 className="min-w-0 flex-[0_0_85%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] pl-4"
               >
                 <Link href={`/blog/${p.slug}`} className="block group h-full">
-                  <article className="h-full rounded-card border border-border-default bg-surface-overlay p-6 shadow-card flex flex-col gap-3 transition-transform duration-200 group-hover:-translate-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-primary">
-                        {p.category}
-                      </span>
-                      <span className="text-text-muted text-[11px]">{p.date}</span>
-                    </div>
-                    <h3 className="text-base font-semibold leading-snug line-clamp-3 group-hover:text-brand-primary transition-colors">
-                      {p.title}
-                    </h3>
-                    <p className="text-text-secondary text-sm leading-relaxed line-clamp-3 flex-1">
-                      {p.excerpt}
-                    </p>
-                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
-                      <span className="text-text-muted text-[12px]">{p.source}</span>
-                      <ArrowUpRight
-                        size={15}
-                        className="text-text-muted group-hover:text-brand-primary transition-colors"
-                      />
+                  {/* P21: blog covers now lead each card (they existed in the
+                      blog data but were dropped from this carousel). */}
+                  <article className="h-full rounded-card border border-border-default bg-surface-overlay shadow-card flex flex-col transition-transform duration-200 group-hover:-translate-y-1 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.image}
+                      alt=""
+                      width={640}
+                      height={360}
+                      loading="lazy"
+                      className="w-full h-36 object-cover border-b border-border-subtle"
+                    />
+                    <div className="p-6 flex flex-col gap-3 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-primary">
+                          {p.category}
+                        </span>
+                        <span className="text-text-muted text-[11px]">{p.date}</span>
+                      </div>
+                      <h3 className="text-base font-semibold leading-snug line-clamp-2 group-hover:text-brand-primary transition-colors">
+                        {p.title}
+                      </h3>
+                      <p className="text-text-secondary text-sm leading-relaxed line-clamp-2 flex-1">
+                        {p.excerpt}
+                      </p>
+                      <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
+                        <span className="text-text-muted text-[12px]">{p.source}</span>
+                        <ArrowUpRight
+                          size={15}
+                          className="text-text-muted group-hover:text-brand-primary transition-colors"
+                        />
+                      </div>
                     </div>
                   </article>
                 </Link>

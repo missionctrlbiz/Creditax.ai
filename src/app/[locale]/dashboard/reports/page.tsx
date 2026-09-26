@@ -195,13 +195,13 @@ export default function ReportsPage() {
           <Card className="overflow-hidden">
             <div className="divide-y divide-border-subtle">
               {reports.map((report, index) => (
-                <motion.button
+                <motion.div
                   key={report.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => setSelectedReport(report)}
-                  className={`w-full p-4 text-left flex items-center justify-between hover:bg-surface-inset/30 transition-colors ${
+                  className={`w-full p-4 text-left flex items-center justify-between hover:bg-surface-inset/30 transition-colors cursor-pointer ${
                     selectedReport.id === report.id ? 'bg-brand-primary-bg/30' : ''
                   }`}
                 >
@@ -227,20 +227,20 @@ export default function ReportsPage() {
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="text-xs text-text-muted">{report.size}</span>
                     <div className="flex items-center gap-1">
-                       <div
-                         role="button"
-                         tabIndex={0}
-                         onClick={downloadCsv}
+                       <button
+                         type="button"
+                         aria-label="Download report as CSV"
+                         onClick={(e) => { e.stopPropagation(); downloadCsv(); }}
                          className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
                        >
                          <svg className="w-4 h-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                          </svg>
-                       </div>
-                       <div
-                         role="button"
-                         tabIndex={0}
-                         onClick={() => toast('Demo build — report sharing is mocked', { description: 'Canvas share links (paid) ship in Track B.' })}
+                       </button>
+                       <button
+                         type="button"
+                         aria-label="Share report"
+                         onClick={(e) => { e.stopPropagation(); toast('Demo build — report sharing is mocked', { description: 'Canvas share links (paid) ship in Track B.' }); }}
                          className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
                        >
                          <svg className="w-4 h-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -249,20 +249,20 @@ export default function ReportsPage() {
                            <circle cx="18" cy="19" r="3" />
                            <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
                          </svg>
-                       </div>
-                       <div
-                         role="button"
-                         tabIndex={0}
-                         onClick={() => toast('Demo build — report deletion is mocked', { description: 'Fixture reports stay in place so the demo journey completes.' })}
+                       </button>
+                       <button
+                         type="button"
+                         aria-label="Delete report"
+                         onClick={(e) => { e.stopPropagation(); toast('Demo build — report deletion is mocked', { description: 'Fixture reports stay in place so the demo journey completes.' }); }}
                          className="p-1.5 rounded hover:bg-surface-inset transition-colors cursor-pointer"
                        >
                          <svg className="w-4 h-4 text-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                          </svg>
-                       </div>
+                       </button>
                     </div>
                   </div>
-                </motion.button>
+                </motion.div>
               ))}
             </div>
           </Card>

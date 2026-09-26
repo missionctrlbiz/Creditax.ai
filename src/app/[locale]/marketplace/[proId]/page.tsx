@@ -12,7 +12,13 @@ import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { getSession as getUnifiedSession } from '@/lib/auth';
 import type { Tier } from '@/lib/seed/demoSeed';
-import { contactRevealPolicy, maskPhone, maskEmail, type RevealPolicy } from '@/ai/contact-gate';
+import {
+  contactRevealPolicy,
+  maskPhone,
+  maskEmail,
+  type RevealPolicy,
+} from '@/ai/contact-gate';
+import { seedProfessionals, type DemoProfessional } from '@/lib/seed/demoSeed';
 
 /** Valid tiers — an unexpected session tier string resolves to free (masked). */
 const TIER_SET: ReadonlySet<string> = new Set(['free', 'plus', 'professional', 'enterprise']);
@@ -415,6 +421,56 @@ const fadeInUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
 };
 
+const SEED_IMAGES = [
+  '/images/marketplace/pro-team-01.jpg',
+  '/images/marketplace/pro-team-02.jpg',
+  '/images/marketplace/pro-team-03.jpg',
+  '/images/marketplace/pro-team-04.jpg',
+  '/images/marketplace/pro-team-05.jpg',
+  '/images/marketplace/office-01.jpg',
+];
+
+/** Project a demoSeed professional into the profile-page Pro shape (slug + id both resolve). */
+function proFromSeed(sp: DemoProfessional, index: number): Pro {
+  const area = `${sp.location.city}, ${sp.location.state}`;
+  return {
+    id: sp.slug,
+    name: sp.name,
+    verified: sp.verified,
+    cac: sp.cacNumber,
+    image: SEED_IMAGES[index % SEED_IMAGES.length],
+    rating: sp.rating,
+    reviewCount: sp.reviewCount,
+    distance: '—',
+    location: area,
+    memberSince: '2023',
+    responseTime: 'Usually replies within 4 hours',
+    address: sp.location.address,
+    phone: sp.phone,
+    email: sp.email,
+    website: '',
+    about: [
+      `${sp.name} (${sp.owner}) is a demo-seeded professional on the Creditax marketplace, offering ${sp.services.join(', ')} in ${area}.`,
+      'Profile data comes from the inlined demo seed (demo_seed: true) — live CAC verification and contact reveal ship with the marketplace backend.',
+    ],
+    services: sp.services.map((name) => ({
+      name,
+      turnaround: 'As needed',
+      price: 'Contact for quote',
+    })),
+    highlights: [],
+    reviews: [],
+  };
+}
+
+/** Resolve by static PROS key, seed slug, or seed id (`p-1`). */
+function resolvePro(id: string): Pro | undefined {
+  if (PROS[id]) return PROS[id];
+  const idx = seedProfessionals.findIndex((p) => p.slug === id || p.id === id);
+  if (idx < 0) return undefined;
+  return proFromSeed(seedProfessionals[idx], idx);
+}
+
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
@@ -463,7 +519,7 @@ export default function ProProfilePage() {
   const params = useParams();
   const rawId = params?.proId;
   const id = Array.isArray(rawId) ? rawId[0] : (rawId ?? '');
-  const pro = PROS[id];
+  const pro = resolvePro(id);
 
   // P5 F-14b — contact gating (Marketplace contact reveal, pricing-and-access §2).
   // P7/P8: read the unified session after mount (PB with mock fallback) so the
@@ -483,22 +539,6 @@ export default function ProProfilePage() {
       active = false;
     };
   }, []);
-
-  const policy: RevealPolicy = contactRevealPolicy({ loggedIn: viewer.loggedIn, tier: viewer.tier });
-  const shownPhone = policy.revealed ? pro.phone : maskPhone(pro.phone);
-  const shownEmail = policy.revealed ? pro.email : maskEmail(pro.email);
-
-  const showDemoToast = () => {
-    if (!policy.revealed) {
-      toast(`Contact is masked — ${policy.hint}`, {
-        description: 'Sign in at a paid tier to reveal phone, email and WhatsApp.',
-      });
-      return;
-    }
-    toast(DEMO_TOAST, {
-      description: 'Real contact details unlock once the marketplace backend ships.',
-    });
-  };
 
   if (!pro) {
     return (
@@ -525,7 +565,25 @@ export default function ProProfilePage() {
     );
   }
 
-  const similar = Object.values(PROS).filter((p) => p.id !== pro.id).slice(0, 3);
+  const policy: RevealPolicy = contactRevealPolicy({ loggedIn: viewer.loggedIn, tier: viewer.tier });
+  const shownPhone = policy.revealed ? pro.phone : maskPhone(pro.phone);
+  const shownEmail = policy.revealed ? pro.email : maskEmail(pro.email);
+
+  const showDemoToast = () => {
+    if (!policy.revealed) {
+      toast(`Contact is masked — ${policy.hint}`, {
+        description: 'Sign in at a paid tier to reveal phone, email and WhatsApp.',
+      });
+      return;
+    }
+    toast(DEMO_TOAST, {
+      description: 'Real contact details unlock once the marketplace backend ships.',
+    });
+  };
+
+  const similar = Object.values(PROS)
+    .filter((p) => p.id !== pro.id)
+    .slice(0, 3);
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-base">
@@ -797,14 +855,18 @@ export default function ProProfilePage() {
                         Website
                       </dt>
                       <dd>
-                        <a
-                          href={pro.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-brand-action hover:underline break-all"
-                        >
-                          {pro.website.replace('https://', '')}
-                        </a>
+                        {pro.website ? (
+                          <a
+                            href={pro.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-brand-action hover:underline break-all"
+                          >
+                            {pro.website.replace('https://', '')}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-text-muted">—</span>
+                        )}
                       </dd>
                     </div>
                   </div>

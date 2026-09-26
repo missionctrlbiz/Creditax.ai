@@ -8,7 +8,7 @@
  * delivery layer). Every response is flagged `demo_seed` / `delivered:false`.
  */
 
-import { getPb } from '@/lib/pocketbase';
+import { pbServer } from '@/lib/pb-server';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
 
 export interface WebhookRegistration {
@@ -62,7 +62,7 @@ export async function registerChatWebhook(input: {
 
   if (pocketbaseEnabled() && (await probePocketBase())) {
     try {
-      const rec = await getPb().collection('webhooks').create({
+      const rec = await pbServer().collection('webhooks').create({
         url,
         user_id: input.userId ?? '',
         events: JSON.stringify(events),

@@ -6,6 +6,7 @@ import {
 } from '@/ai/credit-scoring';
 import { monoEnabled } from '@/ai/mono';
 import { guard } from '@/lib/rate-limit';
+import { meter } from '@/ai/quota';
 
 /**
  * GET /api/v1/credit/score — VantageScore-shaped credit snapshot.
@@ -29,6 +30,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const kv = req.nextUrl.searchParams.get('kv') ?? '';
   const kvn = req.nextUrl.searchParams.get('kvn') ?? '';
+  const userId = req.nextUrl.searchParams.get('userId') ?? '';
+
+  // P19: a real BVN-verified pull (kv/kvn) is a metered action (BVN teaser,
+  // 25cr accounting) — page hydrations without kv/kvn stay free.
+  if (userId && kv && kvn) {
+    const gate = meter(userId, 'bvns');
+    if (!gate.allowed) {
+      return NextResponse.json(
+        {
+          error: gate.reason,
+          blocked: true,
+          upgrade: gate.status.upgradeHint,
+          status: gate.status,
+          demo_seed: true,
+        },
+        { status: 403, headers: { 'X-Creditax-Quota': gate.reason ?? 'limit' } }
+      );
+    }
+  }
 
   let result: CreditScoreResult;
   let monoAttempted = false;

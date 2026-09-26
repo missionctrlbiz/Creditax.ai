@@ -6,7 +6,7 @@
     "apiDocs": "API Docs",
     "blog": "Blog",
     "login": "Log in",
-    "joinList": "Join the list",
+    "joinList": "Join the Waitlist",
     "home": "Home",
     "about": "About"
   },
@@ -15,7 +15,7 @@
     "title1": "Tax Smart.",
     "title2": "Borrow Smart.",
     "sub": "File correctly. Borrow cheaper. The tax & credit platform that turns compliance into creditworthiness.",
-    "cta": "Join the list",
+    "cta": "Join the Waitlist",
     "login": "Log in",
     "chip1": "Tax calculations in ₦",
     "chip2": "Cited AI answers",
@@ -81,7 +81,8 @@
     "marketplace": "Marketplace",
     "search": "Search…",
     "notifications": "Notifications",
-    "language": "Language"
+    "language": "Language",
+    "expand": "Expand"
   },
   "chat": {
     "title": "AI Tax Assistant",
@@ -107,7 +108,28 @@
     "clear": "Clear",
     "demoAnswer": "demo answer",
     "thinkingHint": "Thinking…",
-    "skillsLabel": "Skills"
+    "skillsLabel": "Skills",
+    "canvas": "Canvas",
+    "canvasEmpty": "Skill results, verified-pro referrals and filing actions pin here as you chat — arranged by turn.",
+    "emptyHint": "Skill results, pro referrals and filing actions will pin to the canvas beside you — answers stay in this thread.",
+    "attach": "Attach a document",
+    "library": "Library",
+    "connectedContext": "Connected context",
+    "upload": "Upload",
+    "chatsToday": "Chats",
+    "lifetime": "lifetime",
+    "freeLimitReached": "Free limit reached",
+    "upgradeTo": "Upgrade to {tier}",
+    "pinnedToCanvas": "pinned to canvas",
+    "filingAction": "Filing action",
+    "addToFiling": "Add to filing",
+    "verifiedPro": "Verified pro",
+    "maskedNote": "full contact on Plus (₦5,000/mo) or a paid login",
+    "openPreview": "Open preview",
+    "viewProfile": "View",
+    "turn": "Turn {n}",
+    "errorNetwork": "Couldn't reach the assistant — check your connection and try again.",
+    "demoBilling": "demo_seed · mocked billing"
   },
   "footer": {
     "tagline": "Tax Smart. Borrow Smart.",
@@ -216,7 +238,7 @@
     "stake6Cta": "See SME plans"
   },
   "waitlist": {
-    "title": "Join the list",
+    "title": "Join the Waitlist",
     "desc": "Early access opens in batches. Drop your email and we'll notify you the moment Creditax launches.",
     "placeholder": "you@email.com",
     "submit": "Notify me at launch →",
@@ -241,7 +263,12 @@
     "viewOutputs": "View tax outputs",
     "checkCredit": "Check credit score",
     "recentActivity": "Recent activity",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "askTitle": "Ask your AI tax assistant",
+    "askPlaceholder": "Ask a tax question or drop a document to start",
+    "askCta": "Ask",
+    "filingSignals": "Filing signals",
+    "liveFeedBadge": "Live demo feed"
   },
   "share": {
     "sharedCanvas": "Shared canvas",

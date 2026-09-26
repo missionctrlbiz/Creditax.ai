@@ -143,7 +143,7 @@ export default function AdminProfessionalsPage() {
       {/* Page Header */}
       <motion.div variants={itemVariants} className="mb-8">
         <h1>Tax Professionals</h1>
-        <p className="text-text-muted mt-1">Manage verification and professional accounts</p>
+        <p className="text-text-muted mt-1">Nobody appears on the marketplace until their CAC documents clear verification here.</p>
       </motion.div>
 
       {/* Stats — P10: hydrated from the live application store */}

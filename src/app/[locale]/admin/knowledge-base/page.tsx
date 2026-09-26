@@ -126,7 +126,7 @@ export default function AdminKnowledgeBasePage() {
       <motion.div variants={itemVariants} className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1>Knowledge Base</h1>
-          <p className="text-text-muted mt-1">Documents that power the AI Tax Assistant&apos;s answers.</p>
+          <p className="text-text-muted mt-1">What the agent is allowed to know — every doc published here is searchable by chat on the next question.</p>
         </div>
         <Button variant="primary" size="md" className="self-start" onClick={() => setEditorOpen((v) => !v)}>
           <FilePlus size={15} />

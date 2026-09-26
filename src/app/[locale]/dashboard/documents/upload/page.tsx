@@ -142,7 +142,10 @@ export default function DocumentUploadPage() {
           )
         );
       };
-      fetch('/api/v1/documents/upload', {
+      // P19 fix: this used to POST /api/v1/documents/upload — a route that
+      // does not exist (every upload 404'd and fell back to the hardcoded
+      // ₦125,000 constants even though the real extractor was live).
+      fetch('/api/v1/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: doc.name, userId: 'demo' }),

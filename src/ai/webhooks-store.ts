@@ -7,7 +7,7 @@
  * Every record is `demo_seed: true`.
  */
 
-import { getPb } from '@/lib/pocketbase';
+import { pbServer } from '@/lib/pb-server';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
 
 export interface WebhookEndpoint {
@@ -51,7 +51,7 @@ export function createWebhook(input: { url: string; userId?: string; events?: st
     probePocketBase()
       .then((up) =>
         up
-          ? getPb().collection('webhooks').create({
+          ? pbServer().collection('webhooks').create({
               id,
               url: rec.url,
               user_id: rec.user_id,

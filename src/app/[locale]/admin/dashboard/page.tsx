@@ -40,7 +40,9 @@ const systemHealth = [
   { name: 'API Server', status: 'operational', detail: '99.97% uptime', statusColor: 'success' },
   { name: 'RAG Engine', status: 'operational', detail: 'p95: 420ms', statusColor: 'success' },
   { name: 'Database', status: 'operational', detail: '47ms query avg', statusColor: 'success' },
-  { name: 'Auth Service', status: 'degraded', detail: 'Elevated latency', statusColor: 'warning' },
+  // P20: was 'degraded / Elevated latency' — contradicted the all-green
+  // status page the demo script lands on (beat 7-8). Honest demo = healthy.
+  { name: 'Auth Service', status: 'operational', detail: 'p95: 180ms', statusColor: 'success' },
 ];
 
 const systemEvents = [
@@ -140,6 +142,8 @@ export default function AdminDashboardPage() {
             Admin Dashboard
             {summary && <Badge variant="info">live · demo_seed</Badge>}
           </h1>
+          {/* §3.3 explainer header */}
+          <p className="text-text-muted text-sm mt-1">Users, pros, what the AI knows, and the audit trail — every board that runs Creditax.</p>
           <p className="text-text-muted mt-1">Platform overview and management</p>
         </div>
       </motion.div>

@@ -17,8 +17,8 @@
  * anywhere in the ranking) rather than guessed from the vector dimension.
  */
 
-import { getPb } from '@/lib/pocketbase';
-import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
+import PocketBase from 'pocketbase';
+import { probePocketBase, pocketbaseEnabled, pocketbaseUrl } from '@/lib/pb-features';
 import { seedKbDocs } from '@/lib/seed/demoSeed';
 import { chunkMarkdown } from './chunker';
 import { embedTexts, embedQuery, providerFromVector, filterSameDimension, type EmbeddingProvider } from './embeddings';
@@ -231,11 +231,16 @@ function mapPbChunk(r: Record<string, unknown>): StoredChunk {
   };
 }
 
+/** Server-safe PB client — `@/lib/pocketbase` is a client module (`use client`). */
+function pb(): PocketBase {
+  return new PocketBase(pocketbaseUrl());
+}
+
 class PocketBaseVectorStore implements VectorStore {
   readonly backend = 'pocketbase' as const;
 
   async listDocuments(): Promise<StoredDocument[]> {
-    const res = await getPb().collection('kb_docs').getList(1, 100);
+    const res = await pb().collection('kb_docs').getList(1, 100);
     return res.items.map((r: Record<string, unknown>) => ({
       id: r.id as string,
       title: r.title as string,
@@ -245,29 +250,29 @@ class PocketBaseVectorStore implements VectorStore {
   }
 
   async listChunks(): Promise<StoredChunk[]> {
-    const res = await getPb().collection('kb_chunks').getFullList();
+    const res = await pb().collection('kb_chunks').getFullList();
     return res.map((r: Record<string, unknown>) => mapPbChunk(r));
   }
 
   async ingest(title: string, slug: string, markdown: string): Promise<IngestResult> {
     const chunks = chunkMarkdown(markdown);
     const { vectors, provider } = await embedTexts(chunks.map((c) => c.text));
-    const pb = getPb();
+    const client = pb();
 
     let docId: string;
-    const existing = await pb.collection('kb_docs').getFullList({ filter: `slug = "${slug}"` });
+    const existing = await client.collection('kb_docs').getFullList({ filter: `slug = "${slug}"` });
     if (existing.length > 0) {
       docId = existing[0].id;
-      await pb.collection('kb_docs').update(docId, { title, status: 'published', content: markdown });
+      await client.collection('kb_docs').update(docId, { title, status: 'published', content: markdown });
     } else {
-      const created = await pb.collection('kb_docs').create({ title, slug, status: 'published', content: markdown, demo_seed: 1 });
+      const created = await client.collection('kb_docs').create({ title, slug, status: 'published', content: markdown, demo_seed: 1 });
       docId = created.id;
     }
 
-    const old = await pb.collection('kb_chunks').getFullList({ filter: `document_id = "${docId}"` });
-    for (const r of old) await pb.collection('kb_chunks').delete(r.id);
+    const old = await client.collection('kb_chunks').getFullList({ filter: `document_id = "${docId}"` });
+    for (const r of old) await client.collection('kb_chunks').delete(r.id);
     for (let i = 0; i < chunks.length; i++) {
-      await pb.collection('kb_chunks').create({
+      await client.collection('kb_chunks').create({
         document_id: docId,
         chunk_text: chunks[i].text,
         chunk_index: i,
@@ -318,7 +323,20 @@ let cached: VectorStore | null = null;
 export async function getVectorStore(): Promise<VectorStore> {
   if (cached) return cached;
   const usePb = pocketbaseEnabled() && (await probePocketBase());
-  cached = usePb ? new PocketBaseVectorStore() : new SeededVectorStore();
+  if (!usePb) {
+    cached = new SeededVectorStore();
+    return cached;
+  }
+  // Prefer PB, but a reachable host with missing collections/errors must not
+  // dead-end the demo — fall back to the inlined seed (Track A contract).
+  try {
+    const store = new PocketBaseVectorStore();
+    await store.listDocuments();
+    cached = store;
+  } catch (err) {
+    console.warn('[vector-store] PocketBase unavailable — using seeded store', err);
+    cached = new SeededVectorStore();
+  }
   return cached;
 }
 

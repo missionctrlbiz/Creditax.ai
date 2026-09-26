@@ -34,9 +34,11 @@ export type MeteredAction =
   | 'credit-refresh'
   | 'bvns'
   | 'tin-cac'
-  | 'api';
+  | 'api'
+  | 'skill';
 
-/** Credits per action (§4 "Internal Credit Accounting"). */
+/** Credits per action (§4 "Internal Accounting"). `skill` costs are per-Skill
+ *  (skills.ts SKILLS[].costCredits) and passed via meter opts.cost. */
 export const CREDIT_COST: Record<MeteredAction, number> = {
   chat: 1,
   'tax-calc': 2,
@@ -46,6 +48,7 @@ export const CREDIT_COST: Record<MeteredAction, number> = {
   bvns: 25,
   'tin-cac': 5,
   api: 1,
+  skill: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -211,10 +214,10 @@ export interface MeterResult {
  * Consume credits for an action. Returns allowed:false + reason when the
  * cap is hit so the caller can surface an upgrade wall (F-12).
  */
-export function meter(userId: string, action: MeteredAction, opts: { tier?: Tier } = {}): MeterResult {
+export function meter(userId: string, action: MeteredAction, opts: { tier?: Tier; cost?: number } = {}): MeterResult {
   const rec = getOrCreate(userId, opts.tier);
   const caps = TIER_CAPS[rec.tier];
-  const cost = CREDIT_COST[action];
+  const cost = opts.cost ?? CREDIT_COST[action];
 
   // Per-action guardrails before charging credits.
   if (action === 'chat') {
@@ -266,19 +269,10 @@ export function meter(userId: string, action: MeteredAction, opts: { tier?: Tier
 
 export function setTier(userId: string, tier: Tier): QuotaRecord {
   const rec = getOrCreate(userId, tier);
-  // Keep the record but re-baseline counters to the new tier's seed so the
-  // demo reflects the tier's published limits (pricing §2).
+  // Flip the tier but KEEP the user's live counters — an upgrade must never
+  // re-baseline progress mid-demo (the free user's 54/60 lifetime story used
+  // to reset here). Caps come live from TIER_CAPS[tier] on every read.
   rec.tier = tier;
-  const seed = seedQuotas.find((q) => q.userId === userId && q.tier === tier);
-  if (seed) {
-    rec.creditsToday = seed.chatToday * CREDIT_COST.chat + seed.calcsToday * CREDIT_COST['tax-calc'] + seed.uploadsToday * CREDIT_COST.upload;
-    rec.chatsToday = seed.chatToday;
-    rec.chatsLifetime = seed.lifetimeChats;
-    rec.calcsToday = seed.calcsToday;
-    rec.uploadsToday = seed.uploadsToday;
-    rec.bvnUsed = seed.bvnsUsed;
-    rec.bvnTeaserRemaining = seed.bvnsFreeTeaser - seed.bvnsUsed;
-  }
   store.set(userId, rec);
   return rec;
 }

@@ -290,7 +290,7 @@ export default function AdminUsersPage() {
       {/* Page Header */}
       <motion.div variants={itemVariants} className="mb-8">
         <h1>Users</h1>
-        <p className="text-text-muted mt-1">Manage platform users and roles</p>
+        <p className="text-text-muted mt-1">Every account, its tier and status — suspensions and invites take effect immediately.</p>
       </motion.div>
 
       {/* Stats Row */}

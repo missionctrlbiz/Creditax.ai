@@ -223,7 +223,7 @@ export default function ClientsPage() {
           <Link href="/pro/verify">
             <Button variant="primary" size="md">
               <Plus size={15} />
-              Add Client
+              Verify &amp; Add Client
             </Button>
           </Link>
         </div>

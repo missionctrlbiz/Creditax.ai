@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { UpgradeWall } from '@/components/shared/UpgradeWall';
 import { TIER_PLANS } from '@/ai/quota';
+import { useRouter } from '@/i18n/navigation';
 
 type Period = '7d' | '30d' | '90d' | 'custom';
 
@@ -35,6 +36,8 @@ function QuotaTile({ label, value, sub }: { label: string; value: string; sub: s
 
 export default function UsagePage() {
   const [period, setPeriod] = useState<Period>('30d');
+  // P20: locale-preserving navigation (window.location bounced /yo/ to /en/).
+  const router = useRouter();
   const [chartView, setChartView] = useState<'hourly' | 'daily' | 'weekly'>('daily');
   const [quota, setQuota] = useState<LiveQuota | null>(null);
 
@@ -536,7 +539,7 @@ export default function UsagePage() {
             <p className="text-text-muted text-sm mb-4">
               Get unlimited API calls, dedicated infrastructure, and custom rate limits.
             </p>
-            <Button variant="primary" fullWidth onClick={() => { window.location.href = '/pricing'; }}>
+            <Button variant="primary" fullWidth onClick={() => { router.push('/pricing'); }}>
               Talk to Sales →
             </Button>
           </Card>

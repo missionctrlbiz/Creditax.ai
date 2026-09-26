@@ -75,6 +75,16 @@ export function unreadCount(userId = 'u-consumer'): number {
   return unread;
 }
 
+/** P19: mark every notification for a user read — the bell badge could
+ *  never clear before (read:false was written, nothing flipped it). */
+export function markAllRead(userId = 'u-consumer'): { unread: number; demo_seed: true } {
+  for (const n of feedFor(userId)) n.read = true;
+  for (const e of events) {
+    if (e.userId === userId) e.read = true;
+  }
+  return { unread: 0, demo_seed: true };
+}
+
 // ---------------------------------------------------------------------------
 // Filing deadlines — deterministic, computed from the calendar (F-08)
 // ---------------------------------------------------------------------------

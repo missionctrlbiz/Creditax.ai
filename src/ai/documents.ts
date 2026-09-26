@@ -12,7 +12,7 @@
 import { extractDocument, type ExtractedDoc } from './doc-extract';
 import { fmtNaira } from './tax-rules';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
-import { getPb } from '@/lib/pocketbase';
+import { pbServer } from '@/lib/pb-server';
 
 export interface ProcessedDocument extends ExtractedDoc {
   user_id: string;
@@ -64,7 +64,7 @@ export async function processDocument(input: {
 
   if (await pbUp()) {
     try {
-      await getPb().collection('documents').create({
+      await pbServer().collection('documents').create({
         name: doc.name,
         user_id: doc.user_id,
         status: doc.status,

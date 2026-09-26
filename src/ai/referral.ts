@@ -104,11 +104,12 @@ export function buildReferralCard(input: {
   if (!refer && !input.force) return null;
 
   // Paid tiers (Plus / Professional / Enterprise) see full contact details.
-  // pricing-and-access.md §2: Free = masked, Plus/Pro = Full, Ent = priority.
+  // pricing-and-access.md §2 + contact-gate: Free = masked EVEN when logged
+  // in (masked_free), Plus/Pro = Full, Ent = priority. Login alone never
+  // reveals.
   const revealPaid =
     input.tier === 'plus' || input.tier === 'professional' || input.tier === 'enterprise';
-  const revealLogged = input.loggedIn === true;
-  const masked = !(revealPaid || revealLogged);
+  const masked = !revealPaid;
 
   return {
     pro: {

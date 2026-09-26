@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
+import { useRouter } from '@/i18n/navigation';
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -34,6 +35,8 @@ export default function CreditOverviewPage() {
     { label: 'Savings Pattern', points: 20, percentage: 40, color: 'warning' },
   ]);
   const [creditDemoSeed, setCreditDemoSeed] = useState(false);
+  // P20: locale-preserving navigation (window.location bounced /yo/ to /en/).
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -87,7 +90,7 @@ export default function CreditOverviewPage() {
 
   // P12 — real handlers for the quick actions.
   const handleUploadStatement = () => {
-    window.location.href = '/dashboard/documents/upload';
+    router.push('/dashboard/documents/upload');
   };
   const handleDownloadReport = () => {
     const csv = [
@@ -382,7 +385,7 @@ export default function CreditOverviewPage() {
         variants={fadeInUp}
         className="mt-6 flex justify-end"
       >
-        <Button variant="link" className="text-brand-primary" onClick={() => { window.location.href = '/dashboard/credit/detail'; }}>
+        <Button variant="link" className="text-brand-primary" onClick={() => { router.push('/dashboard/credit/detail'); }}>
           View detailed breakdown
         </Button>
       </motion.div>

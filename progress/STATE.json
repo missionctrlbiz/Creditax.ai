@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "none (p17 complete)",
+  "current_phase": "none (p21 backlog defined; p19+p20 complete)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -22,13 +22,19 @@
     "p14-mapbox-geo",
     "p15-mono-payments",
     "p16-key-sweep",
-    "p17-full-access-followups"
+    "p17-full-access-followups",
+    "p18-canvas-chat-rework",
+    "p19-quota-truth",
+    "p20-ui-consistency",
+    "p21-demo-completeness"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
     "Codebase currently uses PocketBase (src/lib/pocketbase.ts, pb_migrations) while AGENTS.md still says Supabase. Follow the existing code unless a phase explicitly changes infra.",
     "package.json has no `test` script; verification is `npm run build` + `npm run lint` via /usr/local/bin/node.",
-    "GATE (2026-09-24): p13\u2013p16 are all `gated_until_p12_complete`. DO NOT start any of them until the p12 session is fully finished and its tree is committed clean. The skill checks this gate at the start of any gated run and DEFERS (re-arms itself) if unmet. Keys are now live in .env (gitignored) \u2014 see env_keys_note; never commit .env or its values."
+    "GATE (2026-09-24): p13–p16 are all `gated_until_p12_complete`. DO NOT start any of them until the p12 session is fully finished and its tree is committed clean. The skill checks this gate at the start of any gated run and DEFERS (re-arms itself) if unmet. Keys are now live in .env (gitignored) — see env_keys_note; never commit .env or its values.",
+    "P18 (2026-09-24, ZCode full-access): /dashboard/chat REBUILT per the user's direct spec — chat docks to a left sidebar after the first message; the canvas holds ARTIFACTS only (skill results, referrals, filing-intent actions, share links), auto-arranged in a grid with Turn badges; plain answers stay in the thread. Demo-screenshots B01/B02 (canvas) are now STALE — re-capture before the next deck/demo run.",
+    "P19+P20 (2026-09-24, ZCode full-access): full-plan audit (3 parallel sweeps: research docs vs code, UI consistency, backend truth) surfaced 4 false claims + 5 UI P0s + MVP-plan gaps. P19 closed the backend truth issues; P20 closed the UI/demo-path gaps. KNOWN LIMITATION (documented, Track B): /api/v1/admin/* routes have NO server-side auth — pb-auth sessions live in localStorage (client), so httpOnly-cookie session enforcement waits for Track B auth; the UI layouts gate, the API surface stays open (demo-only data)."
   ],
   "phases": [
     {
@@ -141,7 +147,7 @@
           "build": "pass (full-access run 2026-09-24)"
         },
         "honesty_check": "pass (deterministic extractor labeled demo_seed, no fake OCR)",
-        "note": "extract\u2192report\u2192poll verified offline; reports table demo_seed default aligned to 1. Async via polling (webhook OR polling satisfied)."
+        "note": "extract→report→poll verified offline; reports table demo_seed default aligned to 1. Async via polling (webhook OR polling satisfied)."
       },
       "last_updated": "2026-09-24T12:00:00+01:00"
     },
@@ -237,7 +243,7 @@
       },
       "exit_criteria": [
         "F-08 filing-deadline alerts + doc-processed events into the bell (F-08)",
-        "F-09 low-confidence / audit-intent triggers a verified-pro referral card with masked\u2192logged-in contact reveal (F-09)",
+        "F-09 low-confidence / audit-intent triggers a verified-pro referral card with masked→logged-in contact reveal (F-09)",
         "F-20 four Skill chips (WHT recovery, TCC readiness, notice explainer, invoice WHT check) each as a canvas result card with fixed I/O, credit cost, tier gate (F-20)",
         "npm run lint passes; demo_seed honesty maintained"
       ],
@@ -252,7 +258,7 @@
           "build": "pass (full-access run 2026-09-24)"
         },
         "honesty_check": "pass (demo_seed type-enforced on all Skill/Referral/Notification shapes; no fake OCR/live data)",
-        "note": "Reviewer-flagged fix applied: referral now reveals contact for Plus tier (pricing-and-access \u00a72). 4 skill chips + live bell + referral card wired into chat canvas."
+        "note": "Reviewer-flagged fix applied: referral now reveals contact for Plus tier (pricing-and-access §2). 4 skill chips + live bell + referral card wired into chat canvas."
       }
     },
     {
@@ -266,7 +272,7 @@
         "subscriptions-collection": "done"
       },
       "exit_criteria": [
-        "F-11 server-side quota engine: quotas collection + credit counting per pricing-and-access \u00a74 (chat=1, calc=2, upload=3, report=2, BVN=25) with daily/lifetime counters",
+        "F-11 server-side quota engine: quotas collection + credit counting per pricing-and-access §4 (chat=1, calc=2, upload=3, report=2, BVN=25) with daily/lifetime counters",
         "F-12 named-limit upgrade walls on the 6th chat / 60-cap + live /dashboard/usage with real counters",
         "F-13 subscriptions collection; upgrade = set tier + toast (mocked Paystack is Track B)",
         "npm run lint passes"
@@ -281,7 +287,7 @@
           "lint": "pass (exit 0)",
           "build": "pass (full-access run 2026-09-24)"
         },
-        "honesty_check": "pass (20 demo_seed flags across P4 outputs; \u20a6-only pricing; anonymous chat un-metered by design)",
+        "honesty_check": "pass (20 demo_seed flags across P4 outputs; ₦-only pricing; anonymous chat un-metered by design)",
         "note": "Non-blocking reviewer notes deferred to Track B: per-action daily guardrails for credit-refresh/tin-cac/api, setTier upsert into PB subscriptions."
       }
     },
@@ -296,7 +302,7 @@
       },
       "exit_criteria": [
         "F-14b marketplace profile contact masked until logged-in per tier rules",
-        "F-16 admin KB editor save \u2192 re-embed \u2192 new rules instantly searchable in chat (money shot; audit log)",
+        "F-16 admin KB editor save → re-embed → new rules instantly searchable in chat (money shot; audit log)",
         "F-17b admin users tab wired to data",
         "npm run lint passes"
       ],
@@ -311,7 +317,7 @@
           "build": "pass (full-access run 2026-09-24)"
         },
         "honesty_check": "pass (demo_seed truthful on publish/audit/users; marketplace masked-contact + sample-data labels)",
-        "note": "Money shot verified: POST /admin/kb/publish writes into the same module-cached vector store /api/v1/chat reads. Reviewer flags applied: R1 strict-searchable + R2 server status mapping. R3\u2013R6 non-blocking/Track-B."
+        "note": "Money shot verified: POST /admin/kb/publish writes into the same module-cached vector store /api/v1/chat reads. Reviewer flags applied: R1 strict-searchable + R2 server status mapping. R3–R6 non-blocking/Track-B."
       }
     },
     {
@@ -342,7 +348,7 @@
           "build": "pass (full-access run 2026-09-24)"
         },
         "honesty_check": "pass (demo_seed:true on all P6 collab/connector/share outputs; visible UI badges)",
-        "note": "F-18 paid-only invite/share gate (free\u2192403+upgradeTo:plus) + read-only /share/[slug] preview with signup CTA; F-19 CONNECTORS_PER_TIER free=2 cap enforcement + Drive-as-context; collections seeded; 4-locale i18n consistent. Chain complete: all phases in STATE.json order reviewed_pass."
+        "note": "F-18 paid-only invite/share gate (free→403+upgradeTo:plus) + read-only /share/[slug] preview with signup CTA; F-19 CONNECTORS_PER_TIER free=2 cap enforcement + Drive-as-context; collections seeded; 4-locale i18n consistent. Chain complete: all phases in STATE.json order reviewed_pass."
       }
     },
     {
@@ -357,7 +363,7 @@
         "i18n-font-vars": "done"
       },
       "exit_criteria": [
-        "Layouts (dashboard/pro/admin) gate on a single session source \u2014 pb-auth with mock fallback (pb-data reachable flag), NOT localStorage-only; role+tier resolve from the same object",
+        "Layouts (dashboard/pro/admin) gate on a single session source — pb-auth with mock fallback (pb-data reachable flag), NOT localStorage-only; role+tier resolve from the same object",
         "login/signup persist a session the guards read (no double source of truth)",
         "en.json dashboard.tagline added; font vars (font-inter/syne/jetbrains-mono) + .container utility wired in globals.css",
         "all 4 locales still i18n-consistent; tsc 0 + lint 0"
@@ -373,7 +379,7 @@
           "build": "not_gated (p7 exit criteria = tsc+lint only)"
         },
         "honesty_check": "pass (PB preferred, mock fallback labeled source:'mock'; demo users demo_seed)",
-        "note": "First gate FAIL: .container utility missing from globals.css despite criterion text; added (@layer utilities) and re-gated PASS. Reviewer also verified login/signup persist via pb-auth.loginAs (PB auth store or mock setSession) \u2014 single write path; all three layouts read only src/lib/auth.ts."
+        "note": "First gate FAIL: .container utility missing from globals.css despite criterion text; added (@layer utilities) and re-gated PASS. Reviewer also verified login/signup persist via pb-auth.loginAs (PB auth store or mock setSession) — single write path; all three layouts read only src/lib/auth.ts."
       }
     },
     {
@@ -389,9 +395,9 @@
         "locale-answers": "done"
       },
       "exit_criteria": [
-        "Chat POST sends {userId, locale, tier} so server-side quota metering actually fires from the canvas (5th free chat \u2192 403 upgrade wall renders)",
+        "Chat POST sends {userId, locale, tier} so server-side quota metering actually fires from the canvas (5th free chat → 403 upgrade wall renders)",
         "Canvas library = live processed documents (attach pins doc context into the next turn), not the static LIBRARY array",
-        "Referral reveal is tier-aware (reveals for Plus/Pro login; masked for free) \u2014 no more hardcoded tier 'free'",
+        "Referral reveal is tier-aware (reveals for Plus/Pro login; masked for free) — no more hardcoded tier 'free'",
         "Skill chips + connected apps shown as prompt-context on the canvas; localized agent answers EN/YO/HA/IG verified on the chat flow; tsc 0 + lint 0"
       ],
       "last_updated": "2026-09-24T12:00:00+01:00",
@@ -404,7 +410,7 @@
           "lint": "pass (exit 0, --max-warnings 0)",
           "build": "not_gated (p8 exit criteria = tsc+lint)"
         },
-        "note": "Independent gate verified the canvas board structure (pan/zoom camera + world transform + positioned cards, NOT a chat thread), all 4 exit criteria against actual code (POST {userId,locale,tier,docId}; 403 wall from quota.meter; live library via seedDocumentsForUser; doc context into runRag; tier-aware referral; skill+connector chips; locale-aware LLM). Seed quotas u-consumer 4/5 day, 54/60 lifetime \u2192 the 5th free chat hits the wall on camera."
+        "note": "Independent gate verified the canvas board structure (pan/zoom camera + world transform + positioned cards, NOT a chat thread), all 4 exit criteria against actual code (POST {userId,locale,tier,docId}; 403 wall from quota.meter; live library via seedDocumentsForUser; doc context into runRag; tier-aware referral; skill+connector chips; locale-aware LLM). Seed quotas u-consumer 4/5 day, 54/60 lifetime → the 5th free chat hits the wall on camera."
       }
     },
     {
@@ -418,10 +424,10 @@
         "pro-apply-live": "done"
       },
       "exit_criteria": [
-        "Pro login \u2192 /pro/dashboard hydrates client list + bulk-calc summary from the marketplace/application/pro stores (demo_seed, not constants)",
+        "Pro login → /pro/dashboard hydrates client list + bulk-calc summary from the marketplace/application/pro stores (demo_seed, not constants)",
         "/pro/clients + [id] reflect live application/verification status",
         "/pro/verify stepper + /pro/apply submit reflect the real application record",
-        "complete pro journey (login\u2192dashboard\u2192calc\u2192verify\u2192sign-out) lands on live data; tsc 0 + lint 0"
+        "complete pro journey (login→dashboard→calc→verify→sign-out) lands on live data; tsc 0 + lint 0"
       ],
       "last_updated": "2026-09-24T12:00:00+01:00",
       "last_review": {
@@ -433,7 +439,7 @@
           "lint": "pass (exit 0, --max-warnings 0)",
           "build": "not_gated (p9 exit criteria = tsc+lint)"
         },
-        "note": "Independent gate verified: pro-portal store (src/ai/pro-portal.ts) + 5 API routes; all 5 pro pages hydrate live store data (dashboard/clients/detail/calculations/verify) with offline fallbacks; apply captures the real application record. Non-blocking: calc-type\u2192bulk-type single mapping, proId hard-coded u-pro, cosmetic Edit/More stubs."
+        "note": "Independent gate verified: pro-portal store (src/ai/pro-portal.ts) + 5 API routes; all 5 pro pages hydrate live store data (dashboard/clients/detail/calculations/verify) with offline fallbacks; apply captures the real application record. Non-blocking: calc-type→bulk-type single mapping, proId hard-coded u-pro, cosmetic Edit/More stubs."
       }
     },
     {
@@ -478,7 +484,7 @@
       "exit_criteria": [
         "/status all-green + pricing/usage consistent (demo scope 10), fetched not hardcoded",
         "developers quickstart/sandbox/reference wired to the api-keys + webhooks stores",
-        "pricing \u2194 usage \u2194 quota page numbers agree; tsc 0 + lint 0"
+        "pricing ↔ usage ↔ quota page numbers agree; tsc 0 + lint 0"
       ],
       "last_updated": "2026-09-24T12:00:00+01:00",
       "last_review": {
@@ -490,7 +496,7 @@
           "lint": "pass (exit 0, --max-warnings 0)",
           "build": "not_gated (p11 exit criteria = tsc+lint)"
         },
-        "note": "Independent gate verified all 3 exit criteria: (1) /status all-green AND fetched via new /api/v1/status route (5 services operational, all-resolved incidents, demo_seed), page live badge + all-resolved fallback; (2) dev story wired to real stores \u2014 /dashboard/keys live, sandbox hydrates test key + rotate endpoint, quickstart live sandbox key, webhooks list+save via /api/v1/webhooks; reference is static docs (allowed); (3) pricing/usage/quota numbers agree (TIER_PLANS \u20a60/\u20a65,000/\u20a625,000, TIER_CAPS free 5/5/2+60 lifetime, plus 100/50/20+5 BVN)."
+        "note": "Independent gate verified all 3 exit criteria: (1) /status all-green AND fetched via new /api/v1/status route (5 services operational, all-resolved incidents, demo_seed), page live badge + all-resolved fallback; (2) dev story wired to real stores — /dashboard/keys live, sandbox hydrates test key + rotate endpoint, quickstart live sandbox key, webhooks list+save via /api/v1/webhooks; reference is static docs (allowed); (3) pricing/usage/quota numbers agree (TIER_PLANS ₦0/₦5,000/₦25,000, TIER_CAPS free 5/5/2+60 lifetime, plus 100/50/20+5 BVN)."
       }
     },
     {
@@ -522,7 +528,7 @@
       },
       "last_review2": {
         "verdict": "pass",
-        "reviewer": "independent subagent (deep-analysis) \u2014 first gate FAIL, all flags fixed, re-gated",
+        "reviewer": "independent subagent (deep-analysis) — first gate FAIL, all flags fixed, re-gated",
         "at": "2026-09-23T23:40:00+01:00",
         "gates": {
           "tsc": "pass (exit 0)",
@@ -538,7 +544,7 @@
       "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
       "attempts": 1,
-      "scope": "Plug real LLM/embedding provider keys from .env into the RAG pipeline so chat answers use live providers where a key exists, keeping the demo_seed offline fallback intact (never fake the flag). GROUNDING FIRST: reconcile the LLM provider three-way mismatch \u2014 .env.example + research/API-Research.md say LITELLM.dev is the canonical primary LLM, committed src/ai/rag/llm.ts reads KIMCHI_* vars, and the live .env has BOTH key sets. Decide the canonical provider from the docs, wire it, and record the decision in KEY-MAP.md.",
+      "scope": "Plug real LLM/embedding provider keys from .env into the RAG pipeline so chat answers use live providers where a key exists, keeping the demo_seed offline fallback intact (never fake the flag). GROUNDING FIRST: reconcile the LLM provider three-way mismatch — .env.example + research/API-Research.md say LITELLM.dev is the canonical primary LLM, committed src/ai/rag/llm.ts reads KIMCHI_* vars, and the live .env has BOTH key sets. Decide the canonical provider from the docs, wire it, and record the decision in KEY-MAP.md.",
       "items": {
         "llm-provider-reconcile": "done",
         "llm-provider-wiring": "done",
@@ -561,8 +567,8 @@
           "lint": "pass (exit 0, --max-warnings 0)",
           "build": "pass (full-access run 2026-09-24)"
         },
-        "honesty_check": "pass (live LITELLM answer \u2192 demo_seed:false; local-synthesizer path \u2192 true; dim-consistency prevents cross-provider 0-scores)",
-        "note": "Ground: LITELLM=canonical primary (live 200, model agnes/agnes-3.0-flash), KIMCHI=legacy second leg, model resolver LITELLM_MODEL\u2192KIMCHI_MODEL\u2192minimax-m2.7. Embeddings cascade OpenRouter\u2192HF\u2192Vertex\u2192local-hash all legs implemented; Vertex runtime-skipped (unused-track-B) while VERTEX_* creds empty. Sticky provider lock + filterSameDimension keep query/corpus on one vector width. .env.example LITELLM_MODEL fixed (minimax absent from live catalog). Non-blocking: PROVIDER_DIMS.openrouter static 768 lags live 2048 (runtime dimension field keeps ranking honest); HF host-path must match HF_EMBED_MODEL."
+        "honesty_check": "pass (live LITELLM answer → demo_seed:false; local-synthesizer path → true; dim-consistency prevents cross-provider 0-scores)",
+        "note": "Ground: LITELLM=canonical primary (live 200, model agnes/agnes-3.0-flash), KIMCHI=legacy second leg, model resolver LITELLM_MODEL→KIMCHI_MODEL→minimax-m2.7. Embeddings cascade OpenRouter→HF→Vertex→local-hash all legs implemented; Vertex runtime-skipped (unused-track-B) while VERTEX_* creds empty. Sticky provider lock + filterSameDimension keep query/corpus on one vector width. .env.example LITELLM_MODEL fixed (minimax absent from live catalog). Non-blocking: PROVIDER_DIMS.openrouter static 768 lags live 2048 (runtime dimension field keeps ranking honest); HF host-path must match HF_EMBED_MODEL."
       },
       "last_updated": "2026-09-24T12:00:00+01:00"
     },
@@ -602,7 +608,7 @@
       "status": "reviewed_pass",
       "gate": "gated_until_p12_complete",
       "attempts": 1,
-      "scope": "Plug Mono SANDBOX keys (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox) into the credit data provider interface + a payments/charge sandbox path. Sandbox only \u2014 never wired to production; keep demo_seed honest and label everything sandbox. Payments: research/API-Research.md recommends Flutterwave as the PSP for a Nigerian-focused MVP (Paystack as alternate); wire the PSP that has live sandbox keys in .env and record the choice in progress/KEY-MAP.md.",
+      "scope": "Plug Mono SANDBOX keys (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox) into the credit data provider interface + a payments/charge sandbox path. Sandbox only — never wired to production; keep demo_seed honest and label everything sandbox. Payments: research/API-Research.md recommends Flutterwave as the PSP for a Nigerian-focused MVP (Paystack as alternate); wire the PSP that has live sandbox keys in .env and record the choice in progress/KEY-MAP.md.",
       "items": {
         "mono-connect-sandbox": "done",
         "credit-data-provider-swap": "done",
@@ -659,7 +665,7 @@
           "lint": "pass (exit 0, --max-warnings 0)",
           "build": "pass (full-access run 2026-09-24)"
         },
-        "honesty_check": "pass (no live key value in any tracked file; .env gitignored; only .env.example placeholders + public demo CREDITAX_API_KEY; B2/Cloudinary/Trigger/Resend/Twilio honestly unused-track-B \u2014 zero code consumers, verified by grep)",
+        "honesty_check": "pass (no live key value in any tracked file; .env gitignored; only .env.example placeholders + public demo CREDITAX_API_KEY; B2/Cloudinary/Trigger/Resend/Twilio honestly unused-track-B — zero code consumers, verified by grep)",
         "note": "Catch-all sweep: all 38 .env keys triaged (wired/sandboxed/reserved/unused-track-B) in KEY-MAP.md + new progress/KEY-AUDIT.md decision log. Two false P7/P4 claims corrected in code: RATE_LIMIT_PER_MINUTE now read by rate-limit.ts configuredRpmLimit(); AUTH_SESSION_SECRET demoted wired->reserved (zero consumers). P16 wirings: status route surfaces CREDITAX_ENV; PB URL chain (pb-features/pocketbase/pb-auth) honors NEXT_PUBLIC_POCKETBASE_FALLBACK_URL. No new deps; Track B integrations documented, not faked."
       },
       "last_updated": "2026-09-24T12:00:00+01:00"
@@ -669,7 +675,7 @@
       "status": "reviewed_pass",
       "gate": "gated_full_access_machine",
       "attempts": 1,
-      "scope": "Blocked follow-ups the sandboxed authoring box could not finish. Runs on a full-access machine (real network, no OS EPERM sandbox, browser + dev server). NOT new runner phases, NOT scheduled tasks \u2014 run them in opencode from the hand-off prompt in progress/CONTINUATION-FULL-ACCESS.md, one commit per step (prefix fa-<n>:).",
+      "scope": "Blocked follow-ups the sandboxed authoring box could not finish. Runs on a full-access machine (real network, no OS EPERM sandbox, browser + dev server). NOT new runner phases, NOT scheduled tasks — run them in opencode from the hand-off prompt in progress/CONTINUATION-FULL-ACCESS.md, one commit per step (prefix fa-<n>:).",
       "items": {
         "fa-1-build-gate-closeout": "done",
         "fa-2-mapbox-live-smoke": "done",
@@ -702,6 +708,184 @@
         "note": "p17 closed on full-access machine. Remaining live flips are operator actions (supply test_sk Mono secret + sandbox kv/kvn; PSP test keys) — no code change needed. Never committed .env or key values."
       },
       "last_updated": "2026-09-24T14:45:00+01:00"
+    },
+    {
+      "id": "p18-canvas-chat-rework",
+      "status": "author_verified",
+      "gate": "gated_full_access_machine",
+      "attempts": 1,
+      "scope": "User-directed rework of the core demo surface (not a runner-generated phase): the previous P8 board dumped a user card + answer card + filing card + referral card onto the canvas for EVERY turn (4 cards/turn), spawned them at viewport centre with 46px offsets so they overlapped, buried the greeting behind the floating library panel, let the composer cover card buttons, showed duplicate citation chips, and had no chat thread at all. Rebuilt chat-first per the user's instruction: 'a chat that docks to the sidebar after the first message'.",
+      "items": {
+        "chat-dock-sidebar": "done",
+        "thread-with-sources": "done",
+        "artifacts-only-canvas": "done",
+        "filing-intent-gate": "done",
+        "citations-dedupe": "done",
+        "attach-popover": "done",
+        "multi-turn-conversationId": "done",
+        "i18n-new-keys-4-locales": "done",
+        "remove-pan-zoom-mess": "done",
+        "layout-height-fix": "done"
+      },
+      "exit_criteria": [
+        "Empty state = centered hero composer; after the first message the chat docks into a left sidebar (thread + composer + live quota line) with the canvas beside it (user-verified live at 1440x900 and 375x812)",
+        "Thread shows real agent answers (markdown + deduped citations + honest demo/live badge); the 5th free chat renders the quota wall IN THE THREAD with the Upgrade CTA",
+        "Canvas holds artifacts only: skill results (F-20), tier-aware referrals (F-09), filing actions (gated on filing intent in the question), share links (F-18) — each in an auto-arranged grid card tagged with its Turn number; nothing dumps onto the board uninvited",
+        "Attach popover carries the live library + connected context + upload; pinned doc lands in the next turn's server-side context (docId)",
+        "POST /api/v1/chat carries conversationId so P1 multi-turn history actually engages from the canvas",
+        "22 new chat.* i18n keys added to all 4 locales (en/yo/ha/ig) — replaces the hardcoded English strings the old board shipped",
+        "tsc 0, lint 0 (--max-warnings 0), npm run build green (exit 0)"
+      ],
+      "verification": {
+        "reviewer": "author-run (ZCode session) — NOT an independent subagent gate; live browser verification via control-browser",
+        "at": "2026-09-24T18:30:00+01:00",
+        "gates": {
+          "tsc": "pass (exit 0)",
+          "lint": "pass (exit 0, --max-warnings 0; also fixed 3 pre-existing unused-var warnings in scripts/build-investor-deck.mjs from fa-6)",
+          "build": "pass (full run 2026-09-24, exit 0)"
+        },
+        "live_probes": [
+          "Hero state renders centered composer + skills rail + attach popover + quota line",
+          "First message docks the chat sidebar; live LLM answer (LITELLM) with deduped citations, no demo badge on live answers",
+          "Filing-intent question pinned a Filing Action artifact (Turn 1) to the canvas; plain questions pin nothing",
+          "Skill chip run pinned the WHT recovery result (Turn 3) as a second grid card; thread shows the pinned-to-canvas chip",
+          "5/5 chat cap produced the upgrade wall inside the thread (not the board)",
+          "Attach popover lists 4 live library docs + connectors; mobile 375x812 stacks dock above canvas cleanly"
+        ],
+        "honesty_check": "pass (demo/live badge computed from the server demo_seed; wall labelled demo_seed · mocked billing; no fake live data introduced)"
+      },
+      "followups": [
+        "Re-capture demo-screenshots B01/B02 (canvas layout changed) before the next deck build",
+        "Skill confirm message text is i18n-composed from existing keys; a dedicated key can replace it later",
+        "Server wall message falls back to the generic 'You have hit your free limit.' when the quota engine returns no named-limit message — server-side message enrichment is Track B"
+      ],
+      "last_updated": "2026-09-24T18:30:00+01:00"
+    },
+    {
+      "id": "p19-quota-truth",
+      "status": "author_verified",
+      "attempts": 1,
+      "scope": "Full-plan audit P0/P1: the quota engine docblock claimed 'enforced on the server, never the client' but ONLY chat ever called meter() — tax-calc, upload, report, BVN and every Skill were free; the referral cards unmasked contacts for logged-in FREE users (contradicting contact-gate masked_free); the public GET /api/v1/marketplace/[slug] shipped RAW phone/email (bypassing the masked UI); the upload page POSTed to /api/v1/documents/upload which does not exist (every upload 404'd to hardcoded constants); setTier re-baselined live counters on tier change; admin/summary shipped a hardcoded KB corpus; 5 server modules imported getPb() from a 'use client' module.",
+      "items": {
+        "meter-tax-calc": "done",
+        "meter-upload": "done",
+        "meter-report": "done",
+        "meter-bvn-kv": "done",
+        "meter-skills": "done",
+        "referral-masked-free": "done",
+        "marketplace-api-mask": "done",
+        "upload-route-404": "done",
+        "seed-upload-cap": "done",
+        "setTier-keeps-counters": "done",
+        "admin-summary-live": "done",
+        "pb-server-helper": "done",
+        "rate-limit-widen": "done",
+        "notifications-mark-read": "done",
+        "reports-list-route": "done",
+        "tcc-cost-3cr": "done"
+      },
+      "exit_criteria": [
+        "meter() fires server-side for chat, tax-calc, upload, report, skills (per-skill cost via opts.cost) and BVN (kv/kvn path); each returns the 403 wall shape the clients already render",
+        "Referral contact masked unless tier is paid (login alone never reveals) — matches contact-gate masked_free",
+        "GET /api/v1/marketplace/[slug] returns masked contacts only",
+        "Upload page POSTs the real /api/v1/documents route; live extraction lands instead of the hardcoded fallback",
+        "Seed u-consumer uploadsToday 2→1 so the first demo upload succeeds and the SECOND hits the wall",
+        "setTier flips tier only — live counters survive upgrades",
+        "admin/summary reads the live vector store (docs) + live quota store (chats) — verified live: KB corpus 6, free chats 5/5",
+        "src/lib/pb-server.ts replaces the 'use client' getPb() import in documents/conversations/api-keys/webhooks-store/rag-webhooks",
+        "Rate-limit guard() covers chat/documents/reports POSTs (was 5 routes only)",
+        "PATCH /api/v1/notifications marks all read (bell badge can clear); GET /api/v1/reports exposes report history (listReports had no route)",
+        "TCC skill cost aligned to feature-specs §A: 3 credits (was 2)"
+      ],
+      "verification": {
+        "reviewer": "author-run (ZCode) — NOT an independent gate",
+        "at": "2026-09-24T19:40:00+01:00",
+        "gates": {
+          "tsc": "pass",
+          "lint": "pass (--max-warnings 0)",
+          "build": "pass (exit 0)"
+        },
+        "note": "Metering verified by code-read + the live 5/5 wall behaviour; upload route verified by code-read (page now POSTs the documented route)."
+      },
+      "last_updated": "2026-09-24T19:40:00+01:00"
+    },
+    {
+      "id": "p20-ui-consistency",
+      "status": "author_verified",
+      "attempts": 1,
+      "scope": "Full-plan audit UI batch: 5 P0 UI defects (invalid &pos; entities rendering raw on the demo-path credit page; a fixed bottom bar on tax-filing sliding under the sidebar and centring against the viewport; a dead-end 'Continue to Summary' CTA pushing its own route; interactive divs nested inside a button row on reports; a dead sort select on documents) plus the MVP-plan gaps: the §3.1 dashboard-first empty-state composer never existed (demo beat 1-2 depends on it), the roles §3.3 admin explainer-header rule was unimplemented, admin dashboard showed 'Auth Service: degraded' against the all-green status script beat, pro 'priority placement' (pricing §2) was a dead `featured` flag, and the lifetime-60 progress bar was counted but never rendered.",
+      "items": {
+        "pos-entities": "done",
+        "tax-filing-bottom-bar": "done",
+        "tax-filing-dead-cta": "done",
+        "reports-nested-buttons": "done",
+        "documents-sort-wired": "done",
+        "locale-preserving-nav": "done",
+        "header-button-in-link": "done",
+        "emoji-to-lucide": "done",
+        "header-cta-md": "done",
+        "appshell-aria-persona-search": "done",
+        "pro-add-client-label": "done",
+        "firs-duplicate-link": "done",
+        "dashboard-composer": "done",
+        "chat-q-handoff": "done",
+        "admin-explainer-headers": "done",
+        "auth-service-operational": "done",
+        "priority-placement": "done",
+        "lifetime-progress-bar": "done"
+      },
+      "exit_criteria": [
+        "Credit detail renders typographic quotes, not &pos; garbage",
+        "Tax-filing step nav is sticky in-flow (no sidebar collision); Back = router.back(); Summary CTA toasts the honest mock note",
+        "Reports rows are divs with real aria-labelled buttons (stopPropagation) — valid HTML, keyboard reachable",
+        "Documents sort select filters the table; bulk bar uses Button variants; upload nav preserves locale via @/i18n/navigation (credit + usage too)",
+        "Landing header login is a styled Link, not Link>button",
+        "Emoji glyphs replaced with lucide (keys/documents/tax-filing/settings/credit-detail); keys modal close has aria-label",
+        "AppShell: collapse aria-label switches expand/collapse (shell.expand added x4 locales); dead decorative search removed; persona derives from session",
+        "Dashboard composer card (§3.1 verbatim placeholder) submits to /dashboard/chat?q= — chat auto-asks once and docks (verified live end-to-end: composer → live cited answer → filing artifact Turn 1)",
+        "All 7 admin pages carry a one-line purpose header (§3.3); Auth Service operational",
+        "Marketplace: priority pros sort first (search + RAG paths) and render a Priority badge; dashboard quota line renders the lifetime progress bar"
+      ],
+      "verification": {
+        "reviewer": "author-run (ZCode) — NOT an independent gate; live browser verification",
+        "at": "2026-09-24T19:40:00+01:00",
+        "gates": {
+          "tsc": "pass",
+          "lint": "pass (--max-warnings 0)",
+          "build": "pass (exit 0)"
+        },
+        "live_probes": [
+          "Dashboard composer → chat ?q= auto-ask → live LITELLM answer + Filing Action artifact (Turn 1) — full beat 1-2 on camera",
+          "Admin dashboard: explainer header + all-green System Health + live KB corpus 6 + 5/5 chats",
+          "Marketplace Priority badge on the featured pro card",
+          "Lifetime progress bar under the chat composer; session-derived header name"
+        ]
+      },
+      "last_updated": "2026-09-24T19:40:00+01:00"
+    },
+    {
+      "id": "p21-demo-completeness",
+      "status": "todo",
+      "attempts": 0,
+      "scope": "Backlog the full-plan audit surfaced but this pass deliberately did NOT build (scope discipline / Track-A honesty): deep i18n for the ~35 pages still carrying hardcoded English (demo surfaces are covered; full-site is Track B per mvp plan scope item 1), Skills 03 (Ajo/Coop Ledger) + 04 (Employer Compliance Badge) from feature-specs §A 'build now', TCC bundle-assembly step, and the admin API server-side auth wrapper (blocked on Track B httpOnly-cookie sessions).",
+      "items": {
+        "i18n-depth-demo-pages": "todo",
+        "skills-ajo-ledger": "todo",
+        "skills-employer-badge": "todo",
+        "tcc-bundle-assembly": "todo",
+        "admin-api-auth-wrapper": "todo (Track B blocked)",
+        "screenshot-recapture-B01-B02": "todo (canvas layout changed in p18; investor deck crops are stale)",
+        "dollar-amount-sweep": "todo (grep repo for $ prices; ₦-only rule)"
+      },
+      "exit_criteria": [
+        "Demo-path pages (keys, documents, credit, marketplace, pro/*, admin/*, status, developers) read copy from messages/*.json across all 4 locales",
+        "Skills 03+04 implemented with fixed I/O contracts, credit costs and tier gates per feature-specs §A, chips wired into the composer rail",
+        "TCC readiness offers the 5cr bundle-assembly step",
+        "requireAdmin() wrapper on /api/v1/admin/* once Track B cookie sessions land (until then: documented open surface, demo data only)",
+        "Re-capture demo-screenshots B01/B02 + any changed boards; refresh the investor deck crops",
+        "Repo-wide $-price sweep passes (₦ only, per pricing-and-access currency rule)"
+      ],
+      "last_updated": "2026-09-24T19:40:00+01:00"
     }
   ],
   "cleaned_up": {
@@ -750,5 +934,5 @@
     "gated_until_p12_complete": "DO NOT start any p13/p14/p15/p16 work until (a) the p12-demo-polish session is fully finished and its tree is committed clean (no in-flight changes), and (b) no other runner session is active. The skill checks this gate at the start of any gated run: if unmet, it DEFERS by re-arming itself later instead of proceeding. This gate is set by the user on 2026-09-24.",
     "gated_full_access_machine": "SATISFIED 2026-09-24 — p17 ran on the full-access machine (real network, no OS-sandbox EPERM, browser + dev server). All fa items closed (fa-3 blocked_honest for missing test_sk/kv, fa-4 skipped_no_keys). Gate retained for historical reference only."
   },
-  "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked \u2014 NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog. P17 is the blocked full-access batch; its hand-off prompt lives in progress/OPENCODE-CONTINUATION.md."
+  "env_keys_note": "Real keys are now present in .env (gitignored; only .env.example is tracked — NEVER commit .env or its values). Available: LLM (KIMCHI_API_KEY, LITELLM_API_KEY, OPENROUTER_API_KEY, HF_API_KEY), PocketBase (POCKETBASE_URL + SUPERUSER), Mapbox (NEXT_PUBLIC_MAPBOX_TOKEN, MAPBOX_ACCESS_TOKEN), Mono SANDBOX (MONO_API_KEY, MONO_BASE_URL, MONO_ENVIRONMENT=sandbox), B2 (BACKBLAZE_B2_*), Cloudinary (CLOUDINARY_*), payments (PAYSTACK_*, FLUTTERWAVE_*), jobs (TRIGGER_PROJECT_KEY), comms (RESEND_API_KEY, TWILIO_*). Authoritative key->usage map: progress/KEY-MAP.md. Read key VALUES only when a phase wires them; mask them in all logs/STATE/changelog. P17 is the blocked full-access batch; its hand-off prompt lives in progress/OPENCODE-CONTINUATION.md."
 }

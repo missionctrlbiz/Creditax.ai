@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { AlertTriangle, Check, Copy, Eye, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -180,8 +181,9 @@ export default function ApiKeysPage() {
             </p>
           )}
         </div>
-        <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-          + Create New Key
+        {/* P20: header CTAs are size="md" everywhere (documents/pro use md). */}
+        <Button variant="primary" size="md" onClick={() => setShowCreateModal(true)}>
+          Create New Key
         </Button>
       </div>
 
@@ -189,10 +191,10 @@ export default function ApiKeysPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 p-4 rounded-card border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)]"
+        className="mb-8 p-4 rounded-card border border-warning-border bg-warning-bg"
       >
         <p className="text-text-primary text-sm flex items-start gap-2">
-          <span className="text-[var(--color-warning)]">⚠</span>
+          <AlertTriangle size={15} className="text-warning shrink-0 mt-0.5" />
           <span>
             Keep your API keys secure. Never share them in public repositories or client-side code.
             Rotate keys immediately if compromised.{' '}
@@ -214,7 +216,7 @@ export default function ApiKeysPage() {
           >
             <Card
               accent={apiKey.environment === 'live' ? 'green' : 'teal'}
-              className="p-6 hover:border-[var(--color-border-strong)] transition-colors"
+              className="p-6 hover:border-border-strong transition-colors"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -229,17 +231,16 @@ export default function ApiKeysPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleReveal(apiKey.id)}
-                    className="text-brand-primary"
                   >
-                    👁 Reveal
+                    <Eye size={13} /> Reveal
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => copyKey(apiKey.key)}
-                    className="text-text-muted"
                   >
-                    {copiedKey === apiKey.key ? '✓ Copied' : '📋 Copy'}
+                    {copiedKey === apiKey.key ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedKey === apiKey.key ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
               </div>
@@ -331,10 +332,12 @@ export default function ApiKeysPage() {
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-xl font-bold text-text-primary">Create New API Key</h2>
                   <button
+                    type="button"
+                    aria-label="Close"
                     onClick={() => setShowCreateModal(false)}
                     className="text-text-muted hover:text-text-primary cursor-pointer"
                   >
-                    ✕
+                    <X size={16} />
                   </button>
                 </div>
 
@@ -356,7 +359,7 @@ export default function ApiKeysPage() {
                       <button
                         onClick={() => setNewKey({ ...newKey, environment: 'live' })}
                         className={`
-                          flex-1 py-2.5 px-4 rounded-[10px] text-sm font-medium transition-all cursor-pointer
+                          flex-1 py-2.5 px-4 rounded-btn text-sm font-medium transition-all cursor-pointer
                           ${
                             newKey.environment === 'live'
                               ? 'bg-brand-action text-text-inverse'
@@ -369,7 +372,7 @@ export default function ApiKeysPage() {
                       <button
                         onClick={() => setNewKey({ ...newKey, environment: 'test' })}
                         className={`
-                          flex-1 py-2.5 px-4 rounded-[10px] text-sm font-medium transition-all cursor-pointer
+                          flex-1 py-2.5 px-4 rounded-btn text-sm font-medium transition-all cursor-pointer
                           ${
                             newKey.environment === 'test'
                               ? 'bg-brand-primary text-text-inverse'
@@ -395,7 +398,7 @@ export default function ApiKeysPage() {
                       ].map((scope) => (
                         <label
                           key={scope.id}
-                          className="flex items-start gap-3 p-4 rounded-card border border-border-default cursor-pointer hover:border-[var(--color-border-strong)] transition-colors"
+                          className="flex items-start gap-3 p-4 rounded-card border border-border-default cursor-pointer hover:border-border-strong transition-colors"
                         >
                           <input
                             type="checkbox"

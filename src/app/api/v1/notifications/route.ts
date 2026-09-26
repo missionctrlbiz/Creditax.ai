@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { listNotifications, filingDeadlines, postEvent, unreadCount } from '@/ai/notifications';
+import { listNotifications, filingDeadlines, postEvent, unreadCount, markAllRead } from '@/ai/notifications';
 import type { DemoNotification } from '@/lib/seed/demoSeed';
 
 type NotifKind = DemoNotification['kind'];
@@ -46,4 +46,14 @@ export async function POST(req: NextRequest) {
   }
   const n = postEvent({ userId: body.userId, kind: e.kind as NotifKind, title: e.title, body: e.body, due: e.due });
   return NextResponse.json({ notification: n, unread: unreadCount(n.userId), demo_seed: true });
+}
+
+/**
+ * PATCH /api/v1/notifications?userId=u-consumer — P19: mark all read so the
+ * bell badge can actually clear (previously read:false was written and
+ * nothing ever flipped it).
+ */
+export async function PATCH(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get('userId') ?? 'u-consumer';
+  return NextResponse.json({ userId, ...markAllRead(userId) });
 }

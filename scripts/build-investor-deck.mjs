@@ -104,21 +104,6 @@ im.save(${JSON.stringify(dest)}, optimize=True)
   return dest;
 }
 
-function imageSlide(slide, imgPath, caption, n, total, { dark = true } = {}) {
-  if (dark) bgDark(slide);
-  else slide.background = { color: BRAND.light };
-  title(slide, caption);
-  accentBar(slide);
-  // frame
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 1.4, w: 12.2, h: 5.35,
-    fill: { color: dark ? '101820' : 'FFFFFF' },
-    line: { color: dark ? '1A2430' : 'D0DEE2', width: 1 },
-  });
-  slide.addImage({ path: imgPath, x: 0.7, y: 1.55, w: 11.9, h: 5.05, sizing: { type: 'contain', w: 11.9, h: 5.05 } });
-  footer(slide, n, total);
-}
-
 function twoColImage(slide, left, right, caption, n, total) {
   bgDark(slide);
   title(slide, caption);
@@ -132,7 +117,6 @@ async function main() {
   const TOTAL = 12;
 
   // Prep key captures
-  const imgLanding = await prepImage('A01-landing-hook-desktop.png', 'landing-top.png', { cropTopRatio: 0.12, maxW: 1800 });
   const imgAnswer = await prepImage('B02-first-cited-answer-desktop.png', 'answer.png');
   const imgCredit = await prepImage('C01-credit-snapshot-desktop.png', 'credit.png');
   const imgPricing = await prepImage('C03-pricing-tiers-desktop.png', 'pricing.png');
@@ -141,7 +125,6 @@ async function main() {
   const imgAdmin = await prepImage('F01-admin-dashboard-desktop.png', 'admin.png');
   const imgStatus = await prepImage('G01-status-all-green-desktop.png', 'status.png');
   const imgUpload = await prepImage('B03-upload-attach-desktop.png', 'upload.png');
-  const imgCanvas = await prepImage('B01-canvas-empty-desktop.png', 'canvas.png');
 
   // 1 — Cover
   {

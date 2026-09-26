@@ -15,7 +15,7 @@
     "title1": "Ówó-órí ní Ìmọ̀.",
     "title2": "Gbàwó ní Ìmọ̀.",
     "sub": "Ṣe òfin dáadáa. Gbà owó rọrùn. Plẹ́ẹ̀kù ouǹtọ̀ àti krediti tó yí òfin padà sí ìgbàgbọ́ aláfojúrí.",
-    "cta": "Ka si atokọ",
+    "cta": "Forukọ sí Waitlist",
     "login": "Wọ inu",
     "chip1": "Ìṣirò owó-órí ní ₦",
     "chip2": "Àdáhùn tí ní ìtọ́kasí",
@@ -81,7 +81,8 @@
     "marketplace": "Ọja",
     "search": "Wá…",
     "notifications": "Ìkéde",
-    "language": "Èdè"
+    "language": "Èdè",
+    "expand": "Ṣí àlá"
   },
   "chat": {
     "title": "Olùrànlọ́wọ́ Oùn AI",
@@ -107,7 +108,28 @@
     "clear": "Pa á",
     "demoAnswer": "dáhùn demo",
     "thinkingHint": "À ńíyà…",
-    "skillsLabel": "Skills"
+    "skillsLabel": "Skills",
+    "canvas": "Kánvás",
+    "canvasEmpty": "Àwọn èsì Skill, ìtọ́kasí amòye, àti ìṣe títi-fáìlì máa ń wá ibí nígbà tí o bá ń sọ̀rọ̀ — ṣètò nípasẹ̀ ìgbà.",
+    "emptyHint": "Àwọn èsì Skill, ìtọ́kasí amòye, àti ìṣe títi-fáìlì yóò wá Kánvás tí ó ńbẹ ẹ̀gbẹ́ rẹ — àwọn àdáhùn sílẹ̀ nínú ìjíròrò yìí.",
+    "attach": "Fi ìwé kàn",
+    "library": "Àwọn ìwé",
+    "connectedContext": "Àwọn app tí a so mọ́",
+    "upload": "Fi wọlé",
+    "chatsToday": "Ìjíròrò",
+    "lifetime": "láyé gbogbo",
+    "freeLimitReached": "O ti dé àlà ọ̀fẹ́",
+    "upgradeTo": "Gbé soke sí {tier}",
+    "pinnedToCanvas": "a fi sí Kánvás",
+    "filingAction": "Ìṣe títi-fáìlì",
+    "addToFiling": "Fi sínú fáìlì",
+    "verifiedPro": "Amòye tí a fidi rẹ̀ múlẹ̀",
+    "maskedNote": "àsìkò ní kíkún lórí Plus (₦5,000/oṣù) tàbí ìwọlé owó",
+    "openPreview": "Ṣì àkótán",
+    "viewProfile": "Wo",
+    "turn": "Ìgbà {n}",
+    "errorNetwork": "Kò dé ibi tí aṣàwákíìrí wà — ṣayẹ̀wo asopọ̀ rẹ, kí o tún gbìyànjú.",
+    "demoBilling": "demo_seed · owó-órí àpẹẹrẹ"
   },
   "footer": {
     "tagline": "Oùn Gbọ́n. Gba Eṣẹẹ Gbọ́n.",
@@ -241,7 +263,12 @@
     "checkCredit": "Ṣàyẹ̀wò àmì ìgbẹ́kẹ̀lé",
     "recentActivity": "Ìṣẹ̀lẹ̀ tuntun",
     "viewAll": "Wo gbogbo rẹ̀",
-    "tagline": "Ówó-órí ní Ìmọ̀. Gbàwó ní Ìmọ̀."
+    "tagline": "Ówó-órí ní Ìmọ̀. Gbàwó ní Ìmọ̀.",
+    "askTitle": "Béèrè Olùrànlọ́wọ́ Oùn AI rẹ",
+    "askPlaceholder": "Bèèrè nípa owó-órí tàbí fi fáìlì kàn láti bẹ̀rẹ̀",
+    "askCta": "Bèèrè",
+    "filingSignals": "Àwọn àmì ìsìn",
+    "liveFeedBadge": "Físì àpẹẹrẹ"
   },
   "share": {
     "sharedCanvas": "Eto pinpin",

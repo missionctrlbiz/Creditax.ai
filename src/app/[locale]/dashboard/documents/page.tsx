@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { AlertTriangle, CheckCircle2, Download, RotateCw, X, XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
+import { useRouter } from '@/i18n/navigation';
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -41,7 +43,9 @@ export default function DocumentsPage() {
   const [selectedDocs, setSelectedDocs] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'list'>('table');
+  const [sortKey, setSortKey] = useState('newest');
   const [page, setPage] = useState(1);
+  const router = useRouter();
 
   const toggleDoc = (id: number) => {
     setSelectedDocs(prev =>
@@ -68,23 +72,33 @@ export default function DocumentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge variant="success">✓ Verified</Badge>;
+        return <Badge variant="success"><CheckCircle2 size={11} /> Verified</Badge>;
       case 'processing':
-        return <Badge variant="brand">🔄 Processing</Badge>;
+        return <Badge variant="brand"><RotateCw size={11} /> Processing</Badge>;
       case 'needs-review':
-        return <Badge variant="warning">⚠ Needs Review</Badge>;
+        return <Badge variant="warning"><AlertTriangle size={11} /> Needs Review</Badge>;
       case 'failed':
-        return <Badge variant="error">❌ Failed</Badge>;
+        return <Badge variant="error"><XCircle size={11} /> Failed</Badge>;
       default:
         return null;
     }
   };
 
-  const filteredDocs = documents.filter(doc => {
-    if (selectedFilter !== 'All' && doc.category !== selectedFilter) return false;
-    if (searchQuery && !doc.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  // P20: the sort select used to be a dead control (no value/onChange) —
+  // wire it to the filtered list.
+  const filteredDocs = documents
+    .filter(doc => {
+      if (selectedFilter !== 'All' && doc.category !== selectedFilter) return false;
+      if (searchQuery && !doc.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      // Fixture dates are display strings; id order is newest-first.
+      if (sortKey === 'oldest') return b.id - a.id;
+      if (sortKey === 'newest') return a.id - b.id;
+      if (sortKey === 'az') return a.name.localeCompare(b.name);
+      return b.name.localeCompare(a.name); // za
+    });
 
   const totalExtracted = documents.reduce((sum, d) => sum + (d.amount || 0), 0);
 
@@ -106,8 +120,7 @@ export default function DocumentsPage() {
             variant="primary"
             size="md"
             onClick={() => {
-              // Real page: the upload journey routes through POST /api/v1/documents/upload.
-              window.location.href = '/dashboard/documents/upload';
+              router.push('/dashboard/documents/upload');
             }}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,11 +186,16 @@ export default function DocumentsPage() {
             className="h-9"
           />
         </div>
-        <select className="h-9 px-3 rounded-input bg-surface-base border border-border-strong text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary">
-          <option>Date: Newest</option>
-          <option>Date: Oldest</option>
-          <option>Name: A-Z</option>
-          <option>Name: Z-A</option>
+        <select
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value)}
+          aria-label="Sort documents"
+          className="h-9 px-3 rounded-input bg-surface-base border border-border-strong text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary cursor-pointer"
+        >
+          <option value="newest">Date: Newest</option>
+          <option value="oldest">Date: Oldest</option>
+          <option value="az">Name: A-Z</option>
+          <option value="za">Name: Z-A</option>
         </select>
       </motion.div>
 
@@ -193,19 +211,21 @@ export default function DocumentsPage() {
             <span className="text-sm text-text-primary font-medium">
               {selectedDocs.length} document{selectedDocs.length > 1 ? 's' : ''} selected
             </span>
-            <div className="flex items-center gap-3">
-              <button
-                className="text-sm text-brand-primary hover:underline cursor-pointer"
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() =>
                   toast(`${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''} queued for download (demo)`, {
                     description: 'Bulk export streams from Backblaze B2 on Track B.',
                   })
                 }
               >
-                Download Selected
-              </button>
-              <button
-                className="text-sm text-error hover:underline cursor-pointer"
+                <Download size={13} /> Download Selected
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => {
                   toast(`${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''} deleted (demo)`, {
                     description: 'Deletion propagates to the storage layer on Track B.',
@@ -214,13 +234,10 @@ export default function DocumentsPage() {
                 }}
               >
                 Delete Selected
-              </button>
-              <button
-                onClick={() => setSelectedDocs([])}
-                className="text-sm text-text-muted hover:text-text-primary cursor-pointer"
-              >
-                Clear Selection ✕
-              </button>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedDocs([])}>
+                Clear Selection <X size={13} />
+              </Button>
             </div>
           </motion.div>
         )}

@@ -15,7 +15,7 @@
     "title1": "Haraji Mai Hikima.",
     "title2": "Rango Mai Hikima.",
     "sub": "Yi haraji daidai. Rangi ya fi sauƙi. Dandamali na haraji da rangi wanda ya mai da rijistar haraji ma'auni.",
-    "cta": "Riga jeri",
+    "cta": "Shiga jerin jira",
     "login": "Shiga",
     "chip1": "Lissafin haraji a ₦",
     "chip2": "Amsoshin da aka yi la'akari da su",
@@ -81,7 +81,8 @@
     "marketplace": "Kanti",
     "search": "Nemo…",
     "notifications": "Sanarwa",
-    "language": "Harsuna"
+    "language": "Harsuna",
+    "expand": "Buɗe"
   },
   "chat": {
     "title": "Taimakon Haraji AI",
@@ -107,7 +108,28 @@
     "clear": "Share",
     "demoAnswer": "amsa demo",
     "thinkingHint": "Farkewa…",
-    "skillsLabel": "Skills"
+    "skillsLabel": "Skills",
+    "canvas": "Allon zane",
+    "canvasEmpty": "Sakamakon Skills, nassiwar ƙwararru, da ayyukan cika haraji za su durke nan yayin tattaunawa — a tsara su da zagaye.",
+    "emptyHint": "Sakamakon Skills, nassiwar ƙwararru, da ayyukan cika haraji za su durke a allon zane a gefeka — amsoshi za su ci gaba a wannan tattaunawa.",
+    "attach": "Haɗa takarda",
+    "library": "Takardu",
+    "connectedContext": "Manyan apps masu alaƙa",
+    "upload": "Loda",
+    "chatsToday": "Muɗullan",
+    "lifetime": "har abada",
+    "freeLimitReached": "An kai iyakar kyauta",
+    "upgradeTo": "Haɓaka zuwa {tier}",
+    "pinnedToCanvas": "an durke a allon",
+    "filingAction": "Aikin cika haraji",
+    "addToFiling": "Ƙara zuwa fayil",
+    "verifiedPro": "Kwararre mai tabbaci",
+    "maskedNote": "cikakken bayani akan Plus (₦5,000/wata) ko biyan shiga",
+    "openPreview": "Buɗe duba",
+    "viewProfile": "Duba",
+    "turn": "Zagaye {n}",
+    "errorNetwork": "Ba a iya isa ga wakili ba — duba haɗin kai, ka sake gwadawa.",
+    "demoBilling": "demo_seed · biyan gwaji"
   },
   "footer": {
     "tagline": "Haraji Mai Hikima. Rangi Mai Arziki.",
@@ -241,7 +263,12 @@
     "checkCredit": "Duba makin aminci",
     "recentActivity": "Ayyukan kwanan nan",
     "viewAll": "Duba duka",
-    "tagline": "Haraji Mai Hikima. Rango Mai Hikima."
+    "tagline": "Haraji Mai Hikima. Rango Mai Hikima.",
+    "askTitle": "Tambayi mataimakin AI ɗinka",
+    "askPlaceholder": "Yi tambaya game da haraji ko ja takarda don farawa",
+    "askCta": "Tambaya",
+    "filingSignals": "Alamun aikawa",
+    "liveFeedBadge": "Zayyana demo"
   },
   "share": {
     "sharedCanvas": "Allon rarrawa",

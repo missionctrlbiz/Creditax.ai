@@ -10,7 +10,7 @@
  * core-api rate-limit (100 req/min per key).
  */
 
-import { getPb } from '@/lib/pocketbase';
+import { pbServer } from '@/lib/pb-server';
 import { probePocketBase, pocketbaseEnabled } from '@/lib/pb-features';
 
 export type KeyEnvironment = 'live' | 'test';
@@ -60,7 +60,7 @@ function persist(record: Omit<ApiKeyRecord, 'demo_seed'>): void {
   probePocketBase()
     .then((up) => {
       if (!up) return;
-      return getPb().collection('api_keys').create({
+      return pbServer().collection('api_keys').create({
         id: record.id,
         name: record.name,
         key: record.key,

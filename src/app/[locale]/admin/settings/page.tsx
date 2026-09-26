@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
       {/* Page Header */}
       <div className="mb-8">
         <h1>Admin Settings</h1>
-        <p className="text-text-muted mt-1">Platform-wide preferences. Prototype — changes stay on this page.</p>
+        <p className="text-text-muted mt-1">Platform-wide preferences. Prototype — changes stay on this page (no server writes yet).</p>
       </div>
 
       {/* General */}

@@ -288,7 +288,7 @@ export default function AdminAuditPage() {
       <motion.div variants={itemVariants} className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1>Audit Log</h1>
-          <p className="text-text-muted mt-1">Track all system changes and user actions</p>
+          <p className="text-text-muted mt-1">Who changed what, and when — KB publishes, approvals and admin overrides all land here.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" size="md" onClick={exportCsv}>

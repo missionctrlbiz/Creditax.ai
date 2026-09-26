@@ -408,8 +408,15 @@ export default function PricingPage() {
                     </div>
 
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className="font-mono text-text-primary font-bold tabular-nums">
-                        {price}
+                      <span className="price-figure text-3xl text-text-primary">
+                        {price.startsWith('₦') ? (
+                          <>
+                            <span className="naira">₦</span>
+                            {price.slice(1)}
+                          </>
+                        ) : (
+                          price
+                        )}
                       </span>
                       {plan.id !== 'enterprise' && (
                         <span className="text-sm text-text-secondary">

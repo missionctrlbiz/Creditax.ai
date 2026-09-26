@@ -69,10 +69,13 @@ export function Header() {
       <div className="flex items-center gap-3 md:gap-4">
         <LanguageSwitcher className="hidden sm:inline-flex" />
         <ThemeToggle />
-        <Link href="/login" className="hidden sm:block">
-          <button className="text-text-secondary text-sm bg-transparent border-none p-2 hover:text-text-primary cursor-pointer transition-colors">
-            {t('login')}
-          </button>
+        {/* P20: the Link used to wrap a <button> (invalid interactive-in-
+            interactive); style the Link itself instead. */}
+        <Link
+          href="/login"
+          className="hidden sm:block text-text-secondary text-sm p-2 hover:text-text-primary cursor-pointer transition-colors"
+        >
+          {t('login')}
         </Link>
         <JoinListModal
           trigger={

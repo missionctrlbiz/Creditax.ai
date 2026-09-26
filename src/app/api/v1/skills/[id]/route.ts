@@ -1,15 +1,18 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SKILLS, runSkill, canRunSkill, type SkillId, type SkillMeta } from '@/ai/skills';
+import { meter } from '@/ai/quota';
 import type { Tier } from '@/lib/seed/demoSeed';
 
 const VALID_TIERS: Tier[] = ['free', 'plus', 'professional', 'enterprise'];
 
 /**
  * P3 F-20 — run one Skill (deterministic demo output, Track A honesty).
- *   POST /api/v1/skills/:id  body { tier?, amount?, paymentType?, notice?, vendor?, purpose?, dueDate? }
+ *   POST /api/v1/skills/:id  body { tier?, userId?, amount?, paymentType?, notice?, vendor?, purpose?, dueDate? }
  *
- * Costs mirror pricing-and-access §4 so the P4 quota engine meters them.
- * `invoice-wht-check` is Plus-gated → 403 with an `upgrade_to` hint.
+ * P19: skills are actually METERED now — the per-Skill credit cost
+ * (SKILLS[].costCredits: 5/3/2/2) is charged via the P4 quota engine when a
+ * userId is present; hitting a cap returns 403 with `upgrade_to` so the
+ * canvas renders the wall. `invoice-wht-check` is Plus-gated → 403.
  */
 export async function POST(req: NextRequest) {
   const id = req.nextUrl.pathname.split('/').pop() as SkillId | undefined;
@@ -20,6 +23,7 @@ export async function POST(req: NextRequest) {
 
   let body: {
     tier?: Tier;
+    userId?: string;
     amount?: number;
     paymentType?: string;
     notice?: string;
@@ -34,6 +38,24 @@ export async function POST(req: NextRequest) {
   }
 
   const tier: Tier = body.tier && VALID_TIERS.includes(body.tier) ? body.tier : 'free';
+
+  // P19: charge the Skill's credit cost server-side (was claimed, never done).
+  if (body.userId) {
+    const gate = meter(body.userId, 'skill', { tier, cost: skill.costCredits });
+    if (!gate.allowed) {
+      return NextResponse.json(
+        {
+          error: gate.reason,
+          tier,
+          upgrade_to: gate.status.upgradeHint?.to ?? 'plus',
+          status: gate.status,
+          demo_seed: true,
+        },
+        { status: 403, headers: { 'X-Creditax-Quota': gate.reason ?? 'limit' } }
+      );
+    }
+  }
+
   const out = runSkill(
     skill.id,
     {

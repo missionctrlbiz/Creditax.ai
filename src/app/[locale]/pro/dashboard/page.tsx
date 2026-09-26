@@ -143,7 +143,7 @@ export default function ProDashboardPage() {
           <Link href="/pro/verify">
             <Button variant="primary" size="lg">
               <Plus size={16} />
-              Add Client
+              Verify &amp; Add Client
             </Button>
           </Link>
         </div>
@@ -221,7 +221,7 @@ export default function ProDashboardPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 mt-4 text-sm font-medium text-brand-primary hover:underline"
             >
-              View FIRS Calendar
+              Open the full FIRS calendar
               <ArrowUpRight size={14} />
             </Link>
           </Card>

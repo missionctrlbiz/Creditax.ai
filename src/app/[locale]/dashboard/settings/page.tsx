@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Link2, Users, Share2, Plus, HardDrive } from 'lucide-react';
+import { Link2, Users, Share2, Plus, HardDrive, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SettingsSection = 'account' | 'notifications' | 'security' | 'billing' | 'api' | 'team' | 'connectors';
@@ -198,7 +198,7 @@ export default function SettingsPage() {
                         defaultValue="emeka.obi@zenithfoods.ng"
                       />
                       <Badge variant="success" className="absolute right-3 top-[38px]">
-                        ✓ Verified
+                        <CheckCircle2 size={11} /> Verified
                       </Badge>
                     </div>
 

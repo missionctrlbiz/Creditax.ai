@@ -94,7 +94,7 @@ export default function AdminMarketplacePage() {
       <motion.div variants={itemVariants} className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1>Marketplace Approvals</h1>
-          <p className="text-text-muted mt-1">Review tax pro applications before they go live on the marketplace.</p>
+          <p className="text-text-muted mt-1">Applications waiting on a human decision — approving here lists the pro on the marketplace instantly.</p>
         </div>
         <Badge variant="warning" className="self-start">2 pending</Badge>
       </motion.div>
