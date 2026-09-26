@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "none (p21 backlog defined; p19+p20 complete)",
+  "current_phase": "none (p22 landing-cinematic complete + deployed; p21 backlog open)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -886,6 +886,12 @@
         "Repo-wide $-price sweep passes (₦ only, per pricing-and-access currency rule)"
       ],
       "last_updated": "2026-09-24T19:40:00+01:00"
+    },
+    {
+      "id": "p22-landing-cinematic",
+      "status": "author_verified",
+      "attempts": 1,
+      "scope": "Landing page cinematic motion per the gsap-web3gl-scrollytelling skill (distilled from ANIMATED GSAP WEB3GL WEBSITE DESIGN PROMPT-BANK.md, installed globally). CinematicFlow data-cx engine; stacked-card deck on Individuals→SMEs; pinned horizontal ritual stage; Lenis smooth scroll; magnetic CTAs + cursor spotlight. VPS deployment (creditax.missionctrl.com.ng) via bare-repo hook deploy."
     }
   ],
   "cleaned_up": {

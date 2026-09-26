@@ -1,1 +1,0 @@
-/Applications/AgnesCode.app/Contents/Resources/bin/node-setup-common.sh: line 13: /tmp/mcp.log: Operation not permitted
