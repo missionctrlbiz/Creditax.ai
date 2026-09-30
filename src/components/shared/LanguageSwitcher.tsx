@@ -4,6 +4,7 @@ import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { Languages } from 'lucide-react';
 import { setLocalePreference } from '@/lib/mock-auth';
+import { cn } from '@/lib/utils';
 
 const LOCALES = [
   { code: 'en', label: 'EN' },
@@ -19,7 +20,13 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
 
   return (
     <label
-      className={`inline-flex items-center gap-1.5 h-9 px-2.5 rounded-btn border border-border-subtle bg-surface-raised text-text-muted cursor-pointer hover:border-border-default transition-colors ${className}`}
+      className={cn(
+        'inline-flex items-center gap-1.5 h-9 px-2.5 rounded-btn border border-border-subtle bg-surface-raised text-text-muted cursor-pointer hover:border-border-default transition-colors',
+        // Caller-controlled visibility (e.g. `hidden sm:inline-flex` on
+        // mobile) must be able to win — raw string concat let the built-in
+        // `inline-flex` override `hidden`, so the switcher leaked onto mobile.
+        className
+      )}
       title="Language"
     >
       <Languages size={14} aria-hidden />

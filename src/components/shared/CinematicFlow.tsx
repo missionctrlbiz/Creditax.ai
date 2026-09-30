@@ -67,58 +67,64 @@ function splitWords(el: HTMLElement) {
 export function CinematicFlow() {
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
+    // Mobile URL-bar show/hide resizes the viewport constantly; without this
+    // every resize fires a full ScrollTrigger.refresh mid-scroll (jank).
+    ScrollTrigger.config({ ignoreMobileResize: true });
 
     const cleanups: Array<() => void> = [];
 
     const ctx = gsap.context(() => {
       // ── Hero: cinematic load sequence ────────────────────────────────
+      // fromTo (NOT from): end-states are explicit, so even if two effect
+      // setups ever overlap (StrictMode/HMR remount, throttled ticker), every
+      // run resolves to VISIBLE. A `.from()` records its end-state from the
+      // live DOM — if a previous run left targets mid-flight at opacity ~0,
+      // the new run would "complete" to hidden and the hero would flash then
+      // disappear forever. That is the exact failure this guards against.
       const hero = document.querySelector<HTMLElement>('[data-cx="hero"]');
       if (hero) {
         const h1 = hero.querySelector('h1');
         if (h1 && !h1.dataset.cxSplit) {
-          splitWords(h1);
+          // Mark BEFORE splitting so a re-entrant setup can never nest spans.
           h1.dataset.cxSplit = '1';
+          splitWords(h1);
         }
+        const heroTargets = hero.querySelectorAll('[data-cx-hero], .cx-word');
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-        tl.from(hero.querySelectorAll('[data-cx-hero="glow"]'), {
-          scale: 0.8,
-          opacity: 0,
-          duration: 1.4,
-          ease: 'power2.out',
-        })
-          .from(hero.querySelectorAll('[data-cx-hero="badge"]'), {
-            y: 14,
-            opacity: 0,
-            duration: 0.6,
-          }, '-=1.1')
-          .from(hero.querySelectorAll('.cx-word'), {
-            y: '0.7em',
-            opacity: 0,
-            filter: 'blur(8px)',
-            duration: 0.8,
-            stagger: 0.045,
-          }, '-=0.4')
-          .from(hero.querySelectorAll('[data-cx-hero="sub"]'), {
-            y: 16,
-            opacity: 0,
-            duration: 0.6,
-          }, '-=0.5')
-          .from(hero.querySelectorAll('[data-cx-hero="ctas"]'), {
-            y: 14,
-            opacity: 0,
-            duration: 0.6,
-          }, '-=0.45')
-          .from(hero.querySelectorAll('[data-cx-hero="chips"]'), {
-            y: 10,
-            opacity: 0,
-            duration: 0.5,
-          }, '-=0.4')
-          .from(hero.querySelectorAll('[data-cx-hero="visual"]'), {
-            scale: 0.92,
-            opacity: 0,
-            duration: 1,
-            ease: 'power2.out',
-          }, '-=0.8');
+        tl.fromTo(hero.querySelectorAll('[data-cx-hero="glow"]'),
+          { scale: 0.8, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 1.4, ease: 'power2.out' })
+          .fromTo(hero.querySelectorAll('[data-cx-hero="badge"]'),
+            { y: 14, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6 }, '-=1.1')
+          .fromTo(hero.querySelectorAll('.cx-word'),
+            { y: '0.7em', opacity: 0, filter: 'blur(8px)' },
+            { y: '0em', opacity: 1, filter: 'blur(0px)', duration: 0.8, stagger: 0.045 }, '-=0.4')
+          .fromTo(hero.querySelectorAll('[data-cx-hero="sub"]'),
+            { y: 16, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6 }, '-=0.5')
+          .fromTo(hero.querySelectorAll('[data-cx-hero="ctas"]'),
+            { y: 14, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6 }, '-=0.45')
+          .fromTo(hero.querySelectorAll('[data-cx-hero="chips"]'),
+            { y: 10, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5 }, '-=0.4')
+          .fromTo(hero.querySelectorAll('[data-cx-hero="visual"]'),
+            { scale: 0.92, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 1, ease: 'power2.out' }, '-=0.8');
+        // Leave the DOM clean after the run: no lingering inline opacity /
+        // transform / blur (cheaper compositing, no stale hidden states).
+        // Scoped to GSAP-injected props only — splitWords' own
+        // display/will-change on .cx-word is preserved.
+        const settleHero = () => {
+          gsap.set(heroTargets, { clearProps: 'opacity,visibility,transform,filter,scale' });
+        };
+        tl.eventCallback('onComplete', settleHero);
+        // Safety net, timer-based (rAF-independent): if the ticker ever
+        // stalls or the timeline is interrupted, the hero can never be left
+        // hidden — force-resolve visibility a beat after the run's duration.
+        const safety = window.setTimeout(settleHero, 4000);
+        cleanups.push(() => window.clearTimeout(safety));
       }
 
       // ── Headline word reveals (scrubbed → jump-proof) ────────────────
@@ -162,7 +168,9 @@ export function CinematicFlow() {
         });
       };
       rise('[data-cx="rise"]', { y: 28 });
-      rise('[data-cx="rise-side"]', { x: 56 });
+      // Side-slides read cramped on narrow screens — phones get a rise.
+      const narrow = window.innerWidth < 1024;
+      rise('[data-cx="rise-side"]', narrow ? { y: 28 } : { x: 56 });
 
       // ── Imagery devices ──────────────────────────────────────────────
       gsap.utils.toArray<HTMLElement>('[data-cx="mask"]').forEach((node) => {
@@ -205,42 +213,52 @@ export function CinematicFlow() {
       });
 
       // ── Stacked card deck (For Individuals → For SMEs) ───────────────
-      // Each card pins at the viewport top with pinSpacing:false so the next
-      // card slides over it; the covered card recedes (scale + dim) while the
-      // incoming one travels up. The last card stays in flow so the run
-      // resolves instead of pinning forever.
+      // Desktop (lg+) only: each card pins at the viewport top with
+      // pinSpacing:false so the next card slides over it; the covered card
+      // recedes (scale + dim) while the incoming one travels up. The last
+      // card stays in flow so the run resolves instead of pinning forever.
+      // On mobile the cards flow vertically with the standard reveals —
+      // pinning a card taller than a phone viewport pushes its content out
+      // of view before the next card covers it (scroll-craft: mobile is
+      // restructured, not shrunk).
       const stackCards = gsap.utils.toArray<HTMLElement>('[data-cx="stack-card"]');
-      stackCards.forEach((card, i) => {
-        if (i === stackCards.length - 1) return;
-        ScrollTrigger.create({
-          trigger: card,
-          start: 'top top',
-          end: 'bottom top',
-          pin: true,
-          pinSpacing: false,
-          anticipatePin: 1,
+      gsap.matchMedia().add('(min-width: 1024px)', () => {
+        stackCards.forEach((card, i) => {
+          if (i === stackCards.length - 1) return;
+          ScrollTrigger.create({
+            trigger: card,
+            start: 'top top',
+            end: 'bottom top',
+            pin: true,
+            pinSpacing: false,
+            // Force fixed pinning: on touch-capable browsers ST defaults to
+            // transform pinning, which translates pinned cards a full
+            // viewport down and lets sections slide UNDER each other.
+            pinType: 'fixed',
+            anticipatePin: 1,
+          });
+          const next = stackCards[i + 1];
+          // Scale the inner wrapper, never the pinned card itself — the
+          // recede tween must not write transform on the pinned element.
+          gsap.fromTo(
+            card.querySelector('[data-cx="stack-inner"]') ?? card,
+            { scale: 1 },
+            {
+              scale: 0.95,
+              ease: 'none',
+              scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: 0.5 },
+            }
+          );
+          gsap.fromTo(
+            card,
+            { filter: 'brightness(1)' },
+            {
+              filter: 'brightness(0.65)',
+              ease: 'none',
+              scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: 0.5 },
+            }
+          );
         });
-        const next = stackCards[i + 1];
-        // Scale the inner wrapper, never the pinned card itself — the recede
-        // tween must not write transform on the element ScrollTrigger pins.
-        gsap.fromTo(
-          card.querySelector('[data-cx="stack-inner"]') ?? card,
-          { scale: 1 },
-          {
-            scale: 0.93,
-            ease: 'none',
-            scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: 0.5 },
-          }
-        );
-        gsap.fromTo(
-          card,
-          { filter: 'brightness(1)' },
-          {
-            filter: 'brightness(0.55)',
-            ease: 'none',
-            scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: 0.5 },
-          }
-        );
       });
 
       gsap.utils.toArray<HTMLElement>('[data-cx="settle"]').forEach((node) => {
@@ -260,32 +278,42 @@ export function CinematicFlow() {
       // ── Pinned horizontal story stage ────────────────────────────────
       // ScrollTrigger pin (position:fixed) instead of CSS sticky — the
       // page-level overflow-x rules make sticky unreliable in Chromium.
-      gsap.utils.toArray<HTMLElement>('[data-cx="stage"]').forEach((stage) => {
-        const inner = stage.querySelector<HTMLElement>('[data-cx="stage-inner"]');
-        const track = stage.querySelector<HTMLElement>('[data-cx="track"]');
-        if (!inner || !track) return;
-        const panels = track.children.length;
-        if (panels < 2) return;
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: stage,
-            start: 'top top',
-            end: '+=250%',
+      // Desktop only: the stage is hidden below lg (mobile gets the
+      // vertical stack), and a trigger on a display:none element is garbage.
+      gsap.matchMedia().add('(min-width: 1024px)', () => {
+        gsap.utils.toArray<HTMLElement>('[data-cx="stage"]').forEach((stage) => {
+          const inner = stage.querySelector<HTMLElement>('[data-cx="stage-inner"]');
+          const track = stage.querySelector<HTMLElement>('[data-cx="track"]');
+          if (!inner || !track) return;
+          const panels = track.children.length;
+          if (panels < 2) return;
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: stage,
+              start: 'top top',
+              end: '+=250%',
             scrub: 0.6,
             pin: inner,
+            pinType: 'fixed',
             anticipatePin: 1,
-          },
+            },
+          });
+          tl.to(track, { xPercent: (-100 * (panels - 1)) / panels, ease: 'none' }, 0);
+          const progress = stage.querySelector<HTMLElement>('[data-cx="progress"]');
+          if (progress) {
+            tl.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none' }, 0);
+          }
         });
-        tl.to(track, { xPercent: (-100 * (panels - 1)) / panels, ease: 'none' }, 0);
-        const progress = stage.querySelector<HTMLElement>('[data-cx="progress"]');
-        if (progress) {
-          tl.fromTo(progress, { scaleX: 0 }, { scaleX: 1, ease: 'none' }, 0);
-        }
       });
 
       // ── Pointer polish: magnetic buttons + cursor spotlight ─────────
       if (window.matchMedia('(pointer: fine)').matches) {
-        const cleanups: Array<() => void> = [];
+        // NOTE: previously this shadowed the outer `cleanups` array, so the
+        // listeners + spotlight div leaked on every effect remount (dev
+        // StrictMode / HMR stacked duplicate fixed overlays). Push one
+        // combined disposer to the outer array instead.
+        const pointerCleanups: Array<() => void> = [];
+        cleanups.push(() => pointerCleanups.forEach((fn) => fn()));
 
         gsap.utils.toArray<HTMLElement>('[data-cx="magnetic"]').forEach((btn) => {
           const xTo = gsap.quickTo(btn, 'x', { duration: 0.4, ease: 'power3.out' });
@@ -301,7 +329,7 @@ export function CinematicFlow() {
           };
           btn.addEventListener('mousemove', move);
           btn.addEventListener('mouseleave', leave);
-          cleanups.push(() => {
+          pointerCleanups.push(() => {
             btn.removeEventListener('mousemove', move);
             btn.removeEventListener('mouseleave', leave);
           });
@@ -330,12 +358,24 @@ export function CinematicFlow() {
           sy(e.clientY);
         };
         window.addEventListener('mousemove', spotMove);
-        cleanups.push(() => {
+        pointerCleanups.push(() => {
           window.removeEventListener('mousemove', spotMove);
           spot.remove();
         });
       }
     });
+
+      // ── Late-layout hardening ──────────────────────────────────────
+      // Pin + scrub positions are measured at setup; webfont swaps and
+      // late image decodes shift layout afterwards, which strands LATER
+      // triggers (mid-deck onward) at stale positions — cards that never
+      // pin or never reveal. Re-measure once everything settles.
+      const lateRefresh = () => ScrollTrigger.refresh();
+      window.addEventListener('load', lateRefresh);
+      cleanups.push(() => window.removeEventListener('load', lateRefresh));
+      if (typeof document !== 'undefined' && document.fonts) {
+        document.fonts.ready.then(lateRefresh).catch(() => {});
+      }
 
     return () => {
       cleanups.forEach((fn) => fn());
@@ -352,8 +392,11 @@ export function CinematicFlow() {
         progress: +t.progress.toFixed(3),
         pinned: !!(t as { pin?: unknown }).pin,
         isActive: t.isActive,
+        pinType: (t as unknown as { pinType?: string }).pinType,
+        spacer: !!(t as unknown as { spacer?: unknown }).spacer,
       })),
       scrollY: Math.round(window.scrollY),
+      isTouch: ScrollTrigger.isTouch !== 0,
     });
   }, []);
 

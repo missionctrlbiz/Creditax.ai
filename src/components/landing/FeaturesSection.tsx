@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/Badge';
@@ -196,10 +196,10 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-20 md:py-24 border-t border-border-subtle bg-surface-base">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10">
-        <p data-cx="words" className="text-center text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-4">
+        <p data-cx="words" className="eyebrow text-center mb-4">
           {t('featuresEyebrow')}
         </p>
-        <h2 data-cx="words" className="text-center text-[1.75rem] md:text-[2rem] font-bold mb-4 tracking-tight">
+        <h2 data-cx="words" className="text-center text-2xl md:text-3xl font-bold mb-4 tracking-tight">
           {t('featuresTitle')}
         </h2>
         <p data-cx="settle" className="text-center text-text-secondary text-base max-w-[560px] mx-auto">

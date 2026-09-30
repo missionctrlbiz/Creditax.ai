@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { BrandedImage } from '@/components/shared/BrandedImage';
@@ -94,17 +94,21 @@ export function StakeholderSections() {
         // closing card settles instead of trailing off.
         const flipped = i % 2 === 1;
         const textFx = flipped ? 'rise-side' : 'rise';
-        const imgFx = (['parallax', 'mask', 'pan', 'parallax', 'mask', 'settle'] as const)[i];
+        // Imagery devices rotate with no repeats back-to-back. The closing
+        // card uses a device like every other card — never `settle` (a
+        // whole-section reveal): on a nested image it resolves against
+        // pin-shifted positions and can leave the SME visual hidden.
+        const imgFx = (['parallax', 'mask', 'pan', 'parallax', 'mask', 'pan'] as const)[i];
         return (
           <section
             key={s.id}
             id={s.id}
             data-cx="stack-card"
-            className={`relative flex items-center min-h-screen mx-2 md:mx-4 rounded-[28px] border border-border-default shadow-card overflow-hidden ${
+            className={`relative flex items-center mb-4 lg:mb-0 lg:min-h-screen mx-2 md:mx-4 rounded-[28px] border border-border-default shadow-card overflow-hidden ${
               flipped ? 'bg-surface-raised' : 'bg-surface-base'
             }`}
           >
-            <div data-cx="stack-inner" className="w-full max-w-[1440px] mx-auto px-6 md:px-10 py-20">
+            <div data-cx="stack-inner" className="w-full max-w-[1440px] mx-auto px-6 md:px-10 py-16 lg:py-20">
               <div
                 className={`grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center ${
                   flipped ? 'lg:[&>*:first-child]:order-2' : ''
@@ -137,7 +141,7 @@ export function StakeholderSections() {
                   ) : (
                     <span data-cx="magnetic" className="inline-block">
                       <Link href={s.ctaHref}>
-                        <Button variant={s.id === 'partners' ? 'secondary' : 'primary'} size="lg">
+                        <Button variant="primary" size="lg">
                           {s.ctaLabel}
                         </Button>
                       </Link>

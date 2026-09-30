@@ -44,6 +44,8 @@ function mockToDemo(role: PortalRole): DemoRole {
       return 'tax_pro';
     case 'admin':
       return 'admin';
+    case 'author':
+      return 'author';
     default:
       return 'consumer';
   }
@@ -56,8 +58,9 @@ function demoToMock(role: DemoRole): PortalRole {
     case 'admin':
       return 'admin';
     case 'author':
-      // Author signs into the admin board with a scoped grant (roles doc §1).
-      return 'admin';
+      // Author keeps its own mock role so the admin layout's scoped
+      // grant (blog + KB + audit) resolves correctly on switch.
+      return 'author';
     case 'consumer':
     default:
       return 'personal';

@@ -16,6 +16,8 @@ function titleFromPath(pathname: string, nav: NavItem[]): string {
 
 export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Strip the locale prefix so nav-href title matches are reliable.
+  const cleanPath = pathname.replace(/^\/(en|yo|ha|ig)(?=\/|$)/, '');
   // P7 role-gate: single session source (pb-auth with mock fallback via
   // src/lib/auth.ts). Only the Tax Pro role lives here.
   const [gate, setGate] = useState<'loading' | 'ok' | 'bounced'>('loading');
@@ -50,7 +52,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     <AppShell
       portal="pro"
       nav={PRO_NAV}
-      title={titleFromPath(pathname, PRO_NAV)}
+      title={titleFromPath(cleanPath, PRO_NAV)}
       eyebrow="proPortal"
     >
       {children}

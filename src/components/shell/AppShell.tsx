@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from '@/i18n/navigation';
+import { usePathname, Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,6 +20,7 @@ import {
   Menu,
   MessageSquare,
   Moon,
+  Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -73,6 +73,7 @@ const ICONS = {
   knowledge: <Sparkles size={18} />,
   audit: <History size={18} />,
   help: <HelpCircle size={18} />,
+  blog: <Newspaper size={18} />,
 };
 
 export const PERSONAL_NAV: NavItem[] = [
@@ -90,6 +91,7 @@ export const PERSONAL_NAV: NavItem[] = [
 
 export const PRO_NAV: NavItem[] = [
   { href: '/pro/dashboard', labelKey: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+  { href: '/pro/dashboard/chat', labelKey: 'taxAssistant', label: 'Tax Assistant', icon: ICONS.chat },
   { href: '/pro/clients', labelKey: 'clients', label: 'Clients', icon: ICONS.clients },
   { href: '/pro/calculations', labelKey: 'bulkCalcs', label: 'Bulk Calculations', icon: ICONS.calculator },
   { href: '/pro/verify', labelKey: 'verify', label: 'Verify (CAC/TIN)', icon: ICONS.verify },
@@ -99,6 +101,7 @@ export const PRO_NAV: NavItem[] = [
 
 export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/dashboard', labelKey: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+  { href: '/admin/dashboard/chat', labelKey: 'taxAssistant', label: 'Tax Assistant', icon: ICONS.chat },
   { href: '/admin/users', labelKey: 'users', label: 'Users', icon: ICONS.users },
   { href: '/admin/professionals', labelKey: 'professionals', label: 'Professionals', icon: ICONS.pros, badge: 3 },
   { href: '/admin/marketplace', labelKey: 'marketplace', label: 'Marketplace', icon: ICONS.marketplace },
@@ -114,6 +117,7 @@ export const ADMIN_NAV: NavItem[] = [
  * the "KB editor + publish + audit" board the exit criterion requires.
  */
 export const AUTHOR_NAV: NavItem[] = [
+  { href: '/admin/blog', labelKey: 'blog', label: 'Blog', icon: ICONS.blog },
   { href: '/admin/knowledge-base', labelKey: 'knowledgeBase', label: 'Knowledge Base', icon: ICONS.knowledge },
   { href: '/admin/audit', labelKey: 'auditLog', label: 'Audit Log', icon: ICONS.audit },
 ];
@@ -139,7 +143,7 @@ interface AppShellProps {
  *  - mobile drawer
  *  - avatar-only account menu (AccountMenu)
  */
-export function AppShell({ portal, nav, title, eyebrow, children }: AppShellProps) {
+export function AppShell({ portal, nav: navProp, title, eyebrow, children }: AppShellProps) {
   const pathname = usePathname();
   const t = useTranslations();
   const { theme, toggleTheme } = useTheme();
@@ -150,6 +154,37 @@ export function AppShell({ portal, nav, title, eyebrow, children }: AppShellProp
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Pro + Admin boards surface live metered usage (quota API) as sidebar
+  // badges so the assistant + bulk tools read their actual state, not static
+  // copy. The chat badge shows today's chats; the pro calcs badge today's
+  // bulk-calculations runs.
+  const [usageBadges, setUsageBadges] = useState<Record<string, string | number>>({});
+  useEffect(() => {
+    if (portal !== 'pro' && portal !== 'admin') return;
+    let active = true;
+    const userId = portal === 'pro' ? 'u-pro' : 'u-admin';
+    const chatHref = portal === 'pro' ? '/pro/dashboard/chat' : '/admin/dashboard/chat';
+    fetch(`/api/v1/quota?userId=${userId}`)
+      .then((res) => res.json())
+      .then((q: { chats: { today: number }; calcs: { today: number } }) => {
+        if (!active) return;
+        const next: Record<string, string | number> = {};
+        if (q.chats.today > 0) next[chatHref] = q.chats.today;
+        // Pros see their bulk-calc runs next to the tool (upgrade context).
+        if (portal === 'pro' && q.calcs.today > 0) next['/pro/calculations'] = q.calcs.today;
+        setUsageBadges(next);
+      })
+      .catch(() => {
+        /* quota endpoint unavailable (e.g. pb-server down) — badges stay off */
+      });
+    return () => {
+      active = false;
+    };
+  }, [portal]);
+  const nav = navProp.map((item) =>
+    usageBadges[item.href] != null ? { ...item, badge: usageBadges[item.href] } : item
+  );
 
   useEffect(() => {
     let active = true;

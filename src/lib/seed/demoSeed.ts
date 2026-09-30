@@ -17,13 +17,13 @@ export type LocaleCode = 'en' | 'yo' | 'ha' | 'ig';
 
 /**
  * Role → home landing. roles-and-experience.md §1: Author signs into the admin
- * board with a scoped grant (blog/KB write), so its home is /admin too.
+ * board with a scoped grant (blog/KB write), so its home is the blog board.
  */
 export const ROLE_HOME: Record<SeedRole, string> = {
   consumer: '/dashboard',
   tax_pro: '/pro/dashboard',
   admin: '/admin/dashboard',
-  author: '/admin/dashboard',
+  author: '/admin/blog',
 };
 
 export interface DemoUser {

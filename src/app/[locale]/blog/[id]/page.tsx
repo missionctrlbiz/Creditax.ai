@@ -1,11 +1,13 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { blogPosts, getPostById, getRelatedPosts } from '@/data/blog';
+import { findAuthorPost, type AuthorPost } from '@/ai/blog-admin';
 import {
   ArrowLeft,
   ArrowRight,
@@ -72,9 +74,41 @@ export default function BlogDetailPage() {
   const rawId = params?.id;
   const id = Array.isArray(rawId) ? rawId[0] : (rawId ?? '');
 
-  const post = getPostById(id);
+  // Seed corpus resolves synchronously (SSR-safe); author-published posts
+  // live in the Track A localStorage store and load on mount.
+  const seedPost = getPostById(id);
+  const [authorPost, setAuthorPost] = useState<AuthorPost | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
-  if (!post) {
+  useEffect(() => {
+    let active = true;
+    requestAnimationFrame(() => {
+      if (!active) return;
+      setAuthorPost(
+        (() => {
+          const found = findAuthorPost(id);
+          return found && found.status === 'published' ? found : null;
+        })()
+      );
+      setHydrated(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const post = seedPost ?? authorPost;
+
+  // An id that isn't in the seed corpus may still be an author post — hold
+  // briefly on mount rather than flash a false "not found".
+  if (!post && (!hydrated || !seedPost)) {
+    if (!hydrated) {
+      return (
+        <div className="min-h-screen flex items-center justify-center text-text-muted text-sm">
+          Loading…
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col min-h-screen bg-surface-base">
         <Header />
@@ -99,6 +133,7 @@ export default function BlogDetailPage() {
       </div>
     );
   }
+  if (!post) return null;
 
   const related = getRelatedPosts(post, 3);
   const idx = blogPosts.findIndex((p) => p.id === post.id);
@@ -138,7 +173,7 @@ export default function BlogDetailPage() {
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={AUTHOR_AVATARS[post.author]}
+                  src={AUTHOR_AVATARS[post.author] ?? '/images/avatars/avatar-05.png'}
                   alt=""
                   width={44}
                   height={44}

@@ -16,6 +16,10 @@ function titleFromPath(pathname: string, nav: NavItem[]): string {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // next/navigation usePathname keeps the locale prefix (/en/...); strip it
+  // so matches against locale-free nav hrefs and grants are reliable on every
+  // load (first client nav, hard reload, back/forward).
+  const cleanPath = pathname.replace(/^\/(en|yo|ha|ig)(?=\/|$)/, '');
   // P7 role-gate: single session source (pb-auth with mock fallback via
   // src/lib/auth.ts). Admin + Author (scoped content grant) live here.
   const [gate, setGate] = useState<'loading' | 'ok' | 'bounced'>('loading');
@@ -46,20 +50,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <div className="min-h-screen flex items-center justify-center text-text-muted text-sm">Loading…</div>;
   }
 
-  // P10 — Author is a scoped grant on the admin board: KB editor + publish +
-  // audit only (roles-and-experience §1). Admin gets the full board.
+  // P10 — Author is a scoped grant on the admin board: blog workflow +
+  // KB editor + publish + audit only (roles-and-experience §1). Admin gets
+  // the full board.
   const isAuthor = session?.role === 'author';
   const nav = isAuthor ? AUTHOR_NAV : ADMIN_NAV;
 
   // Scoped enforcement: an author visiting an admin-only section is bounced
-  // to their KB board (same role-gate pattern as the other boards).
-  if (isAuthor && !pathname.startsWith('/admin/knowledge-base') && !pathname.startsWith('/admin/audit')) {
+  // to their blog board (same role-gate pattern as the other boards).
+  const authorPaths = ['/admin/blog', '/admin/knowledge-base', '/admin/audit'];
+  if (isAuthor && !authorPaths.some((p) => cleanPath.startsWith(p))) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-text-secondary">
-          Your <b>Author</b> grant covers the Knowledge Base and Audit Log.
+          Your <b>Author</b> grant covers the Blog, Knowledge Base and Audit Log.
         </p>
-        <Link href="/admin/knowledge-base" className="text-brand-primary font-semibold hover:underline">
+        <Link href="/admin/blog" className="text-brand-primary font-semibold hover:underline">
           Open your content board →
         </Link>
       </div>
@@ -70,9 +76,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <AppShell
       portal="admin"
       nav={nav}
-      title={titleFromPath(pathname, nav)}
+      title={titleFromPath(cleanPath, nav)}
       eyebrow="admin"
-      searchPlaceholder={isAuthor ? 'Search KB docs, audit logs…' : 'Search users, pros, logs…'}
+      searchPlaceholder={isAuthor ? 'Search posts, KB docs, audit logs…' : 'Search users, pros, logs…'}
     >
       {children}
     </AppShell>

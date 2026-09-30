@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -40,7 +40,6 @@ const TEASER_PROS = [
 
 export function MarketplacePricingStrip() {
   const t = useTranslations('sections');
-  const n = useTranslations('nav');
   return (
     <section className="py-20 md:py-24 border-t border-border-subtle">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 space-y-20">
@@ -48,17 +47,22 @@ export function MarketplacePricingStrip() {
         <div>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
-              <p data-cx="words" className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-3">
+              <p data-cx="words" className="eyebrow mb-3">
                 {t('marketEyebrow')}
               </p>
-              <h2 data-cx="words" className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight">
+              <h2 data-cx="words" className="text-2xl md:text-3xl font-bold tracking-tight">
                 {t('marketTitle')}
               </h2>
               <p data-cx="settle" className="text-text-secondary text-sm mt-2 max-w-[520px]">{t('marketSub')}</p>
             </div>
-            <Link href="/marketplace" className="text-sm font-semibold text-brand-primary hover:underline shrink-0">
-              {t('marketCta')} →
-            </Link>
+            <span data-cx="magnetic" className="inline-block">
+              <Link href="/marketplace">
+                <Button variant="secondary">
+                  <ShieldCheck size={15} aria-hidden />
+                  {t('marketCta')}
+                </Button>
+              </Link>
+            </span>
           </div>
 
           {/* P21: the static Lagos map image is gone — the teaser is now a
@@ -115,7 +119,7 @@ export function MarketplacePricingStrip() {
         >
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
             <div>
-              <p className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-3">
+              <p className="eyebrow mb-3">
                 {t('pricingEyebrow')}
               </p>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
@@ -123,7 +127,7 @@ export function MarketplacePricingStrip() {
               </h2>
               <div className="flex flex-wrap items-baseline gap-3 mb-4">
                 <Badge variant="brand">Free forever tier</Badge>
-                <span className="price-figure text-5xl text-text-primary">
+                <span className="price-display text-5xl text-text-primary">
                   <span className="naira">₦</span>0
                 </span>
                 <span className="text-text-secondary text-sm">/month to start</span>
@@ -134,7 +138,7 @@ export function MarketplacePricingStrip() {
                 all priced in naira.
               </p>
             </div>
-            <div className="flex flex-col gap-3 w-full md:w-auto">
+            <div className="flex flex-col gap-2 w-full md:w-auto">
               <span data-cx="magnetic" className="block">
                 <Link href="/pricing">
                   <Button variant="primary" size="lg" fullWidth>
@@ -142,11 +146,12 @@ export function MarketplacePricingStrip() {
                   </Button>
                 </Link>
               </span>
-              <Link href="/login">
+              <Link href="/signup">
                 <Button variant="ghost" size="lg" fullWidth>
-                  {n('login')}
+                  {t('pricingStart')}
                 </Button>
               </Link>
+              <p className="text-[11px] text-text-muted text-center">{t('pricingStartNote')}</p>
             </div>
           </div>
         </div>

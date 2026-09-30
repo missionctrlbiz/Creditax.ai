@@ -16,6 +16,8 @@ function titleFromPath(pathname: string, nav: NavItem[]): string {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Strip the locale prefix so nav-href title matches are reliable.
+  const cleanPath = pathname.replace(/^\/(en|yo|ha|ig)(?=\/|$)/, '');
   // P7 role-gate: single session source (pb-auth with mock fallback via
   // src/lib/auth.ts). Role + tier resolve from the same object.
   // consumer (or unsigned) stays here; pro/admin/author bounce to their board.
@@ -51,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AppShell
       portal="personal"
       nav={PERSONAL_NAV}
-      title={titleFromPath(pathname, PERSONAL_NAV)}
+      title={titleFromPath(cleanPath, PERSONAL_NAV)}
       eyebrow="personal"
     >
       {children}

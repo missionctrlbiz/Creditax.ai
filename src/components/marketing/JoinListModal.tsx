@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { captureWaitlistEmail, type CaptureResult } from '@/lib/pocketbase';
 
-export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
+export function JoinListModal({ trigger, onClose }: { trigger: React.ReactNode; onClose?: () => void }) {
   const t = useTranslations('waitlist');
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -38,6 +38,8 @@ export function JoinListModal({ trigger }: { trigger: React.ReactNode }) {
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (!next) {
+      // Optional parent hook (e.g. close the mobile menu that holds this trigger).
+      onClose?.();
       // Reset shortly after close so the exit animation isn't jarring
       setTimeout(() => {
         setStatus('idle');

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from '@/i18n/navigation';
+import { usePathname, Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -24,10 +23,13 @@ function NavItems({
   pathname,
   onNavigate,
   className = '',
+  mobile = false,
 }: {
   pathname: string;
   onNavigate?: () => void;
   className?: string;
+  /** Mobile: full-width rows with a 44px tap target and larger text. */
+  mobile?: boolean;
 }) {
   const t = useTranslations('nav');
   return (
@@ -39,11 +41,19 @@ function NavItems({
             key={link.href}
             href={link.href}
             onClick={onNavigate}
-            className={`text-sm transition-colors ${
-              active
-                ? 'text-text-primary font-semibold'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
+            className={
+              mobile
+                ? `min-h-[44px] flex items-center rounded-btn px-2 py-2.5 text-[15px] transition-colors ${
+                    active
+                      ? 'text-text-primary font-semibold bg-hover-overlay'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-hover-overlay'
+                  }`
+                : `text-sm transition-colors ${
+                    active
+                      ? 'text-text-primary font-semibold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`
+            }
           >
             {t(link.key)}
           </Link>
@@ -59,7 +69,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 h-16 flex items-center justify-between px-6 md:px-10 max-w-[1440px] w-full mx-auto bg-surface-base/80 backdrop-blur-md z-50 select-none border-b border-border-subtle">
+    <header className="sticky top-0 h-16 flex items-center justify-between px-4 sm:px-6 md:px-10 max-w-[1440px] w-full mx-auto bg-surface-base/80 backdrop-blur-md z-50 select-none border-b border-border-subtle">
       <div className="flex items-center gap-2 h-8">
         <AppLogo height={32} />
       </div>
@@ -80,7 +90,11 @@ export function Header() {
         <JoinListModal
           trigger={
             <Button size="sm" aria-haspopup="dialog">
-              {t('joinList')}
+              {/* Short label below sm so the mobile header row fits the
+                  logo + language + theme + waitlist + burger without
+                  crowding; full label from sm up. */}
+              <span className="sm:hidden">{t('joinListShort')}</span>
+              <span className="hidden sm:inline">{t('joinList')}</span>
             </Button>
           }
         />
@@ -89,26 +103,37 @@ export function Header() {
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
-          className="md:hidden p-2 text-text-secondary hover:text-text-primary cursor-pointer"
+          className="md:hidden w-11 h-11 -my-1.5 grid place-items-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-hover-overlay cursor-pointer"
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="absolute top-16 left-0 right-0 md:hidden border-b border-border-default bg-surface-raised px-6 py-4 flex flex-col gap-4 shadow-card">
+        <div className="absolute top-16 left-0 right-0 md:hidden border-b border-border-default bg-surface-raised px-4 py-3 flex flex-col shadow-card max-h-[calc(100dvh-4rem)] overflow-y-auto">
           <NavItems
             pathname={pathname}
             onNavigate={() => setMobileOpen(false)}
-            className="flex flex-col gap-4"
+            mobile
+            className="flex flex-col"
           />
-          <Link
-            href="/login"
-            onClick={() => setMobileOpen(false)}
-            className="text-sm text-text-secondary hover:text-text-primary"
-          >
-            {t('login')}
-          </Link>
+          <div className="mt-2 pt-2 border-t border-border-subtle flex flex-col gap-1">
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="min-h-[44px] flex items-center px-2 rounded-btn text-[15px] text-text-secondary hover:text-text-primary hover:bg-hover-overlay transition-colors"
+            >
+              {t('login')}
+            </Link>
+            <JoinListModal
+              trigger={
+                <Button size="md" fullWidth variant="primary">
+                  {t('joinList')}
+                </Button>
+              }
+              onClose={() => setMobileOpen(false)}
+            />
+          </div>
         </div>
       )}
     </header>

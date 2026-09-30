@@ -1,6 +1,7 @@
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { SmoothScroll } from '@/components/shared/SmoothScroll';
+import { ScrollToTop } from '@/components/shared/ScrollToTop';
 import { CinematicFlow } from '@/components/shared/CinematicFlow';
 import { Hero } from '@/components/landing/Hero';
 import { FeaturesSection } from '@/components/landing/FeaturesSection';
@@ -33,6 +34,7 @@ export default function LandingPage() {
         <NewsletterSection />
       </main>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 }

@@ -260,7 +260,13 @@
     width: 100%;
     max-width: var(--container-max, 72rem);
     margin-inline: auto;
-    padding-inline: 1.25rem;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 40rem) {
+    .container {
+      padding-inline: 1.25rem;
+    }
   }
 
   @media (min-width: 64rem) {
@@ -444,6 +450,28 @@ textarea::placeholder {
 /* ── Utility: display font on demand ── */
 .font-display {
   font-family: var(--font-display);
+}
+
+/* ── Mobile-first safe additions ──
+   Component-level Tailwind responsive classes (px-4 sm:px-6, grid-cols
+   breakpoints, min-w on tables) handle layout; the rules below are only
+   things Tailwind utilities can't express or that are broadly safe: */
+
+/* iOS Safari zooms the page when an input is under 16px font-size.
+   Keep number inputs zoom-free on mobile. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Smooth momentum scrolling for horizontal scroll regions
+     (pricing comparison table, category pill rows, chip rails). */
+  .overflow-x-auto,
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ── P21 — auto-scrolling marquee (landing marketplace teaser) ── */

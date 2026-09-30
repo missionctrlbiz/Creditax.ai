@@ -10,8 +10,9 @@ export const ROLE_HOME: Record<PortalRole, string> = {
   personal: '/dashboard',
   pro: '/pro/dashboard',
   admin: '/admin/dashboard',
-  // Author signs into the admin board with a scoped content grant (roles doc §1).
-  author: '/admin/dashboard',
+  // Author signs into the admin board with a scoped content grant (roles doc §1)
+  // — home is the blog workflow (author-created content first).
+  author: '/admin/blog',
 };
 
 export const ROLE_LABEL: Record<PortalRole, string> = {

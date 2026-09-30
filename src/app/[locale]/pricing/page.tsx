@@ -365,9 +365,9 @@ export default function PricingPage() {
         </section>
 
         {/* ── Plan cards ── */}
-        <section className="px-6 md:px-10 pb-4">
+        <section className="px-4 sm:px-6 md:px-10 pb-4">
           <motion.div
-            className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch"
+            className="max-w-[1280px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
@@ -408,7 +408,7 @@ export default function PricingPage() {
                     </div>
 
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className="price-figure text-3xl text-text-primary">
+                      <span className="price-display text-3xl text-text-primary">
                         {price.startsWith('₦') ? (
                           <>
                             <span className="naira">₦</span>
@@ -465,35 +465,35 @@ export default function PricingPage() {
         </section>
 
         {/* ── Feature comparison ── */}
-        <section id="comparison" className="px-6 md:px-10 pt-16 pb-4 scroll-mt-24">
+        <section id="comparison" className="px-4 sm:px-6 md:px-10 pt-12 pb-4 scroll-mt-24">
           <div className="max-w-[1080px] mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5 }}
-              className="text-center mb-8"
+              className="text-center mb-6 sm:mb-8"
             >
               <h2 className="mb-3 tracking-tight">Full feature comparison</h2>
-              <p className="text-text-secondary max-w-[560px] mx-auto text-sm">
+              <p className="text-text-secondary max-w-[560px] mx-auto text-sm px-2">
                 Quotas reset daily at 00:00 WAT; monthly quotas reset on your billing
                 anniversary.
               </p>
             </motion.div>
 
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm text-left">
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 md:-mx-0">
+                <table className="w-full border-collapse text-sm text-left min-w-[700px]">
                   <thead>
                     <tr className="bg-surface-inset text-[11px] uppercase tracking-wider text-text-muted font-mono">
-                      <th scope="col" className="p-4 pl-6 font-semibold">
+                      <th scope="col" className="p-3 sm:p-4 pl-4 sm:pl-6 font-semibold whitespace-nowrap">
                         Feature
                       </th>
                       {PLANS.map((plan, i) => (
                         <th
                           key={plan.id}
                           scope="col"
-                          className={`p-4 text-center font-semibold ${
+                          className={`p-3 sm:p-4 text-center font-semibold min-w-[120px] whitespace-nowrap ${
                             i <= 1 ? 'text-brand-action bg-brand-action-bg' : 'text-text-secondary'
                           }`}
                         >
@@ -505,11 +505,13 @@ export default function PricingPage() {
                   <tbody className="divide-y divide-border-subtle">
                     {COMPARISON.map((row) => (
                       <tr key={row.feature} className="hover:bg-surface-inset/60 transition-colors">
-                        <td className="p-4 pl-6 font-medium text-text-primary">{row.feature}</td>
+                        <td className="p-3 sm:p-4 pl-4 sm:pl-6 font-medium text-text-primary whitespace-nowrap">
+                          {row.feature}
+                        </td>
                         {row.cells.map((cell, i) => (
                           <td
                             key={i}
-                            className={`p-4 text-center ${
+                            className={`p-3 sm:p-4 text-center min-w-[100px] whitespace-nowrap ${
                               i <= 1 ? 'bg-brand-action-bg' : ''
                             }`}
                           >
@@ -521,6 +523,9 @@ export default function PricingPage() {
                   </tbody>
                 </table>
               </div>
+              <p className="text-xs text-text-muted px-4 py-2 sm:hidden">
+                ← Swipe to see more columns →
+              </p>
             </Card>
 
             <p className="text-center mt-5 text-xs text-text-muted max-w-[760px] mx-auto leading-relaxed">

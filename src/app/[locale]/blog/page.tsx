@@ -6,6 +6,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 import { blogPosts, categories, type BlogPost } from '@/data/blog';
+import { allPosts } from '@/ai/blog-admin';
 import { captureWaitlistEmail } from '@/lib/pocketbase';
 import {
   Search,
@@ -131,7 +132,9 @@ function CategoryPills({
 }
 
 function AuthorAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const src = AUTHOR_AVATARS[name];
+  // Author-created posts (author 'Nneka Eze') aren't in the seed map — fall
+  // back to the author demo avatar rather than an undefined src.
+  const src = AUTHOR_AVATARS[name] ?? '/images/avatars/avatar-05.png';
   const dims =
     size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
   return (
@@ -587,12 +590,35 @@ export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [page, setPage] = useState(1);
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
+  // Author-published posts (Admin Author board → localStorage Track A store).
+  // Loaded after mount and merged over the static seed corpus, so "author
+  // publishes → public board shows it" is real within one browser session.
+  const [authorPosts, setAuthorPosts] = useState<BlogPost[]>([]);
 
-  const featuredPost = blogPosts.find((p) => p.featured) ?? blogPosts[0];
+  useEffect(() => {
+    let active = true;
+    requestAnimationFrame(() => {
+      if (!active) return;
+      setAuthorPosts(
+        allPosts().filter((p) => p.status === 'published' && !p.demo_seed)
+      );
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Seed corpus + any author-published posts (drafts stay off the public board).
+  const posts = useMemo<BlogPost[]>(
+    () => [...authorPosts, ...blogPosts],
+    [authorPosts]
+  );
+
+  const featuredPost = posts.find((p) => p.featured) ?? posts[0];
 
   // Spotlight rotation: featured + two category-varied stories (deterministic).
   const carouselPosts = useMemo(() => {
-    const rest = blogPosts.filter((p) => p.id !== featuredPost.id);
+    const rest = posts.filter((p) => p.id !== featuredPost.id);
     const seen = new Set<string>([featuredPost.category]);
     const varied = rest.filter((p) => {
       if (seen.has(p.category)) return false;
@@ -600,7 +626,7 @@ export default function BlogPage() {
       return true;
     });
     return [featuredPost, ...varied.slice(0, 2)];
-  }, [featuredPost]);
+  }, [featuredPost, posts]);
 
   const toggleBookmark = (id: number) =>
     setBookmarks((prev) => {
@@ -612,7 +638,7 @@ export default function BlogPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return blogPosts.filter((p) => {
+    return posts.filter((p) => {
       const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
       const matchesQuery =
         !q ||
@@ -622,13 +648,13 @@ export default function BlogPage() {
         p.tags.some((t) => t.toLowerCase().includes(q));
       return matchesCategory && matchesQuery;
     });
-  }, [query, activeCategory]);
+  }, [query, activeCategory, posts]);
 
   const categoryCounts = useMemo(() => {
     const q = query.trim().toLowerCase();
     const counts: Record<string, number> = { All: 0 };
     categories.forEach((cat) => (counts[cat] = 0));
-    blogPosts.forEach((p) => {
+    posts.forEach((p) => {
       const matchesQuery =
         !q ||
         p.title.toLowerCase().includes(q) ||
@@ -640,10 +666,10 @@ export default function BlogPage() {
       counts[p.category] += 1;
     });
     return counts;
-  }, [query]);
+  }, [query, posts]);
 
   const isDefaultView =
-    activeCategory === 'All' && query.trim() === '' && filtered.length === blogPosts.length;
+    activeCategory === 'All' && query.trim() === '' && filtered.length === posts.length;
 
   const gridPool = isDefaultView
     ? filtered.filter((p) => p.id !== featuredPost.id)

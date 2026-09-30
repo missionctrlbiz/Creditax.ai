@@ -19,10 +19,10 @@ export function HowItWorks() {
   return (
     <section className="border-t border-border-subtle">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 pt-20 md:pt-24">
-        <p className="text-center text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-4">
+        <p className="eyebrow text-center mb-4">
           {t('howEyebrow')}
         </p>
-        <h2 data-cx="words" className="text-center text-[1.75rem] md:text-[2rem] font-bold tracking-tight">
+        <h2 data-cx="words" className="text-center text-2xl md:text-3xl font-bold tracking-tight">
           {t('howTitle')}
         </h2>
       </div>

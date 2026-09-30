@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
@@ -50,10 +50,10 @@ export function PublicationsCarousel() {
       <div className="max-w-[1440px] mx-auto px-6 md:px-10">
         <div className="flex items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-brand-primary font-mono text-[11px] uppercase tracking-[0.18em] mb-3">
+            <p className="eyebrow mb-3">
               {t('pubsEyebrow')}
             </p>
-            <h2 data-cx="words" className="text-[1.75rem] md:text-[2rem] font-bold tracking-tight">
+            <h2 data-cx="words" className="text-2xl md:text-3xl font-bold tracking-tight">
               {t('pubsTitle')}
             </h2>
           </div>
@@ -109,7 +109,7 @@ export function PublicationsCarousel() {
                     />
                     <div className="p-6 flex flex-col gap-3 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-primary">
+                        <span className="eyebrow text-[10px]">
                           {p.category}
                         </span>
                         <span className="text-text-muted text-[11px]">{p.date}</span>

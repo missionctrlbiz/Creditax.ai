@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { useRouter } from 'next/navigation';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
-import { getSession, ROLE_HOME, type PortalRole } from '@/lib/mock-auth';
+import { getSession, ROLE_HOME, setSession, type PortalRole } from '@/lib/mock-auth';
 import { logout } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +66,7 @@ export function AccountMenu({
     email: null,
   });
   const [imgFailed, setImgFailed] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -135,12 +137,27 @@ export function AccountMenu({
 
           {ALL_ROLES.map(({ role: r, label }) => {
             const current = r === role;
+            // Get email from current session for switching
+            const sessionEmail = mounted && sessionState.email ? sessionState.email : 'demo@creditax.ai';
+
+            // A plain button (not a Link) inside the Radix item avoids the
+            // menu swallowing the anchor navigation. We update the mock
+            // session first, then router.push so the target portal's gate
+            // re-runs fresh and lands on the right board — no logout.
+            function switchToPortal(e: React.MouseEvent) {
+              e.preventDefault();
+              setOpen(false);
+              setSession(r, sessionEmail);
+              router.push(ROLE_HOME[r]);
+            }
+
             return (
-              <DropdownMenuPrimitive.Item key={r} asChild>
-                <Link
-                  href={ROLE_HOME[r]}
+              <DropdownMenuPrimitive.Item key={r} asChild onSelect={() => {}}>
+                <button
+                  type="button"
+                  onClick={switchToPortal}
                   className={cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer',
+                    'flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer',
                     'text-text-secondary hover:text-text-primary hover:bg-hover-overlay outline-none',
                     current && 'text-brand-primary font-medium bg-brand-primary-bg/50'
                   )}
@@ -148,9 +165,9 @@ export function AccountMenu({
                   {r === 'personal' && <User size={15} />}
                   {r === 'pro' && <LayoutDashboard size={15} />}
                   {r === 'admin' && <Shield size={15} />}
-                  <span className="flex-1">{label} dashboard</span>
+                  <span className="flex-1 text-left">{label} dashboard</span>
                   {current && <span className="w-1.5 h-1.5 rounded-full bg-brand-action" />}
-                </Link>
+                </button>
               </DropdownMenuPrimitive.Item>
             );
           })}

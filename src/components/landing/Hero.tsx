@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { LogoGraphic } from '@/components/shared/LogoGraphic';
@@ -38,7 +38,7 @@ export function Hero() {
 
           <h1
             data-cx-hero="headline"
-            className="font-display text-[2.5rem] md:text-[3.25rem] font-bold leading-[1.08] mb-5 tracking-tight"
+            className="text-[2.5rem] md:text-[3.25rem] font-bold leading-[1.08] mb-5 tracking-tight"
           >
             {t('hero.title1')}
             <br />
@@ -78,7 +78,7 @@ export function Hero() {
             {CHIPS.map((chip) => (
               <li
                 key={chip}
-                className="px-3 py-1.5 rounded-full border border-border-subtle bg-surface-raised text-[12px] font-medium text-text-secondary font-mono"
+                className="max-w-[180px] truncate px-3 py-1.5 rounded-full border border-border-subtle bg-surface-raised text-[12px] font-medium text-text-secondary"
               >
                 {chip}
               </li>
