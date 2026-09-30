@@ -1,0 +1,462 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Creditax.ai API",
+    "version": "v2.1.0",
+    "description": "API-first platform bridging tax compliance and creditworthiness for the Nigerian market. Naira-only pricing; every demo-build response is flagged `demo_seed: true`. Rate limiting: 100 requests/min per key (in-memory fixed window; a shared Redis store is the multi-instance upgrade). Re-verify tax figures against the current NTA/NTAA/FIRS schedule before production use.",
+    "contact": { "name": "Creditax.ai Developer Portal", "url": "/developers" }
+  },
+  "servers": [{ "url": "https://api.creditax.ai" }],
+  "security": [{ "apiKey": [] }],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Tax" },
+    { "name": "Credit" },
+    { "name": "Chat (RAG)" },
+    { "name": "Developer" },
+    { "name": "Quota & Billing" },
+    { "name": "Platform" },
+    { "name": "Pro Portal" },
+    { "name": "Admin" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key issued via POST /api/v1/api-keys. Demo keys are deterministic and masked (`sk_live_****...****8f3a`)."
+      }
+    },
+    "schemas": {
+      "DemoFlag": {
+        "type": "object",
+        "properties": {
+          "demo_seed": { "type": "boolean", "description": "True whenever the response is derived from deterministic demo data instead of a live provider." }
+        }
+      },
+      "RateLimit": {
+        "type": "object",
+        "properties": {
+          "rpm": { "type": "integer", "example": 100 },
+          "note": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      },
+      "RateLimitExceeded": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string", "example": "rate_limit_exceeded" },
+          "detail": { "type": "string" },
+          "retry_after_sec": { "type": "integer" },
+          "note": { "type": "string" },
+          "demo_seed": { "type": "boolean" }
+        },
+        "description": "Returned with HTTP 429 when the 100 req/min window is exhausted; `Retry-After` header is also set."
+      },
+      "TaxCalcRequest": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["paye", "vat", "wht"] },
+          "gross": { "type": "number", "description": "Naira amount (paye gross / wht payment amount)." },
+          "deductions": { "type": "number" },
+          "extraRelief": { "type": "number" },
+          "netSales": { "type": "number", "description": "VAT: sales before VAT." },
+          "grossSales": { "type": "number", "description": "VAT: sales including VAT." },
+          "inputVat": { "type": "number" },
+          "paymentType": { "type": "string", "example": "services" }
+        }
+      },
+      "TaxCalcResponse": {
+        "type": "object",
+        "description": "Deterministic Naira figures with a human-readable block and statutory references.",
+        "required": ["kind", "human", "reference", "demo_seed"],
+        "properties": {
+          "kind": { "type": "string" },
+          "annualPaye": { "type": "number" },
+          "monthlyPaye": { "type": "number" },
+          "effectiveRate": { "type": "number" },
+          "netVatPayable": { "type": "number" },
+          "witheld": { "type": "number" },
+          "human": { "type": "object" },
+          "reference": { "type": "array", "items": { "type": "string" } },
+          "demo_seed": { "type": "boolean" }
+        }
+      },
+      "ChatRequest": {
+        "type": "object",
+        "required": ["question"],
+        "properties": {
+          "question": { "type": "string" },
+          "locale": { "type": "string", "enum": ["en", "yo", "ha", "ig"], "default": "en" },
+          "topK": { "type": "integer", "minimum": 1, "maximum": 8, "default": 5 },
+          "conversationId": { "type": "string" },
+          "userId": { "type": "string" },
+          "tier": { "type": "string", "enum": ["free", "plus", "professional", "enterprise"] },
+          "meteredAction": { "type": "string", "enum": ["chat", "calc", "upload", "report", "bvn"] },
+          "docId": { "type": "string", "description": "Attached document pinned as context for this turn." },
+          "loggedIn": { "type": "boolean" },
+          "webhookUrl": { "type": "string", "format": "uri", "description": "Async delivery stub (always flagged delivered: false in Track A)." }
+        }
+      },
+      "ChatResponse": {
+        "type": "object",
+        "description": "Grounded RAG answer with citations and confidence; multi-turn via conversationId.",
+        "required": ["answer", "demo_seed"],
+        "properties": {
+          "answer": { "type": "string" },
+          "citations": { "type": "array", "items": { "type": "object" } },
+          "confidence": { "type": "number" },
+          "conversationId": { "type": "string" },
+          "webhook": { "type": "object" },
+          "quota": { "type": "object", "description": "Meter result when the caller passed a user context; a 403 upgrade wall renders when a free-tier cap is hit." },
+          "demo_seed": { "type": "boolean" }
+        }
+      },
+      "CreditScoreResponse": {
+        "type": "object",
+        "description": "VantageScore-shaped snapshot; score = f(income, stability, savings rate, debt burden, tax compliance).",
+        "required": ["score", "factors", "demo_seed"],
+        "properties": {
+          "score": { "type": "number" },
+          "factors": { "type": "array", "items": { "type": "object" } },
+          "simulator": { "type": "object" },
+          "demo_seed": { "type": "boolean" }
+        }
+      },
+      "ApiKeyRecord": {
+        "type": "object",
+        "required": ["id", "name", "key", "status", "demo_seed"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "key": { "type": "string", "description": "Masked: sk_live_****...****8f3a" },
+          "environment": { "type": "string", "enum": ["live", "test"] },
+          "scopes": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["active", "revoked"] },
+          "usage": { "type": "number", "description": "Live counter, bumped on each admitted request by the rate limiter." },
+          "limit": { "type": "number" },
+          "last_used": { "type": "string" },
+          "demo_seed": { "type": "boolean" }
+        }
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "required": ["id", "url", "events", "demo_seed"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "events": { "type": "array", "items": { "type": "string" } },
+          "active": { "type": "boolean" },
+          "secret": { "type": "string" },
+          "demo_seed": { "type": "boolean" }
+        }
+      },
+      "QuotaState": {
+        "type": "object",
+        "description": "Per-user daily/lifetime counters against the active tier's caps (free: 5 chats/day, 60 lifetime).",
+        "required": ["tier", "demo_seed"],
+        "properties": {
+          "tier": { "type": "string" },
+          "counts": { "type": "object" },
+          "caps": { "type": "object" },
+          "demo_seed": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/auth/verify": {
+      "post": {
+        "tags": ["Auth"],
+        "operationId": "verifyApiKey",
+        "summary": "Validate an API key",
+        "description": "Accepts `Authorization: Bearer <key>` or body `{ key }`. Structured verdict + scopes; rate-limited at 100 req/min.",
+        "responses": {
+          "200": { "description": "Structured verdict.", "content": { "application/json": { "schema": { "type": "object", "properties": { "valid": { "type": "boolean" }, "reason": { "type": "string" }, "environment": { "type": "string" }, "scopes": { "type": "array", "items": { "type": "string" } }, "rate_limit": { "$ref": "#/components/schemas/RateLimit" }, "demo_seed": { "type": "boolean" } } } } } },
+          "400": { "description": "Missing or malformed key.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limit window exhausted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateLimitExceeded" } } } }
+        }
+      }
+    },
+    "/api/v1/tax/calculate": {
+      "post": {
+        "tags": ["Tax"],
+        "operationId": "calculateTax",
+        "summary": "Deterministic PAYE / VAT / WHT figures (Naira)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaxCalcRequest" } } } },
+        "responses": {
+          "200": { "description": "Figures + statutory references.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TaxCalcResponse" } } } },
+          "400": { "description": "Invalid body.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limit window exhausted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateLimitExceeded" } } } }
+        }
+      }
+    },
+    "/api/v1/tax/brackets": {
+      "get": {
+        "tags": ["Tax"],
+        "operationId": "getTaxBrackets",
+        "summary": "Reference tables: PIT bands, VAT rate, WHT typical rates",
+        "responses": {
+          "200": { "description": "Naira-only reference tables.", "content": { "application/json": { "schema": { "type": "object", "properties": { "currency": { "type": "string" }, "pit": { "type": "object" }, "vat": { "type": "object" }, "wht": { "type": "object" }, "reference": { "type": "array", "items": { "type": "string" } }, "demo_seed": { "type": "boolean" } } } } } },
+          "429": { "description": "Rate limit window exhausted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateLimitExceeded" } } } }
+        }
+      }
+    },
+    "/api/v1/tax/rules/{topic}": {
+      "get": {
+        "tags": ["Tax"],
+        "operationId": "getRulesForTopic",
+        "summary": "Topic-scoped rule retrieval (KB chunks + deterministic tables)",
+        "parameters": [{ "name": "topic", "in": "path", "required": true, "schema": { "type": "string", "enum": ["paye", "vat", "wht", "tcc", "nta", "ntaa", "filing"] } }],
+        "responses": {
+          "200": { "description": "Retrieved chunks + citations + reference tables.", "content": { "application/json": { "schema": { "type": "object", "properties": { "topic": { "type": "string" }, "reference": { "type": "object" }, "chunks": { "type": "array" }, "demo_seed": { "type": "boolean" } } } } } },
+          "404": { "description": "Unknown topic.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/v1/credit/score": {
+      "get": {
+        "tags": ["Credit"],
+        "operationId": "getCreditScore",
+        "summary": "VantageScore-shaped snapshot (filing streak beats bank balance)",
+        "responses": {
+          "200": { "description": "Score + factor breakdown.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreditScoreResponse" } } } },
+          "429": { "description": "Rate limit window exhausted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateLimitExceeded" } } } }
+        }
+      }
+    },
+    "/api/v1/chat": {
+      "post": {
+        "tags": ["Chat (RAG)"],
+        "operationId": "ragChat",
+        "summary": "Grounded Nigerian tax-law answer with citations and confidence",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChatRequest" } } } },
+        "responses": {
+          "200": { "description": "Answer + citations + confidence + quota meter result.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChatResponse" } } } },
+          "400": { "description": "Missing question / invalid JSON.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Quota cap hit — upgrade wall payload on free-tier exhaustion." }
+        }
+      }
+    },
+    "/api/v1/api-keys": {
+      "get": {
+        "tags": ["Developer"],
+        "operationId": "listApiKeys",
+        "summary": "List API keys (demo-seeded on first access)",
+        "responses": { "200": { "description": "Key records.", "content": { "application/json": { "schema": { "type": "object", "properties": { "keys": { "type": "array", "items": { "$ref": "#/components/schemas/ApiKeyRecord" } }, "demo_seed": { "type": "boolean" } } } } } } }
+      },
+      "post": {
+        "tags": ["Developer"],
+        "operationId": "createApiKey",
+        "summary": "Create a key",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "environment": { "type": "string", "enum": ["live", "test"] }, "scopes": { "type": "array", "items": { "type": "string" } }, "limit": { "type": "number" } } } } } },
+        "responses": { "200": { "description": "Created record.", "content": { "application/json": { "schema": { "type": "object", "properties": { "key": { "$ref": "#/components/schemas/ApiKeyRecord" }, "demo_seed": { "type": "boolean" } } } } } }, "400": { "description": "Missing name.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } }
+      }
+    },
+    "/api/v1/api-keys/{id}": {
+      "delete": {
+        "tags": ["Developer"],
+        "operationId": "revokeApiKey",
+        "summary": "Revoke a key",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Revoked record." }, "404": { "description": "Unknown id." } }
+      }
+    },
+    "/api/v1/api-keys/{id}/rotate": {
+      "post": {
+        "tags": ["Developer"],
+        "operationId": "rotateApiKey",
+        "summary": "Rotate a key (new masked secret, same scopes)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Rotated record." }, "404": { "description": "Unknown or revoked id." } }
+      }
+    },
+    "/api/v1/webhooks": {
+      "get": {
+        "tags": ["Developer"],
+        "operationId": "listWebhooks",
+        "summary": "List webhook endpoints",
+        "responses": { "200": { "description": "Endpoint registry.", "content": { "application/json": { "schema": { "type": "object", "properties": { "endpoints": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEndpoint" } }, "demo_seed": { "type": "boolean" } } } } } } }
+      },
+      "post": {
+        "tags": ["Developer"],
+        "operationId": "createWebhook",
+        "summary": "Register a webhook endpoint",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["url"], "properties": { "url": { "type": "string", "format": "uri" }, "userId": { "type": "string" }, "events": { "type": "array", "items": { "type": "string" } } } } } } },
+        "responses": { "200": { "description": "Registered endpoint.", "content": { "application/json": { "schema": { "type": "object", "properties": { "endpoint": { "$ref": "#/components/schemas/WebhookEndpoint" } } } } } } }
+      }
+    },
+    "/api/v1/webhooks/{id}/toggle": {
+      "post": {
+        "tags": ["Developer"],
+        "operationId": "toggleWebhook",
+        "summary": "Enable/disable an endpoint",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Toggled state." } }
+      }
+    },
+    "/api/v1/quota": {
+      "get": {
+        "tags": ["Quota & Billing"],
+        "operationId": "getQuota",
+        "summary": "Quota state for a user (daily/lifetime counters vs tier caps)",
+        "parameters": [{ "name": "userId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Counters + caps.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QuotaState" } } } } }
+      }
+    },
+    "/api/v1/quota/meter": {
+      "post": {
+        "tags": ["Quota & Billing"],
+        "operationId": "meterAction",
+        "summary": "Meter one credit action (chat=1, calc=2, upload=3, report=2, bvn=25)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "action"], "properties": { "userId": { "type": "string" }, "action": { "type": "string", "enum": ["chat", "calc", "upload", "report", "bvn"] } } } } } },
+        "responses": { "200": { "description": "Metered result; `upgradeTo` present when a cap is hit." } }
+      }
+    },
+    "/api/v1/quota/tier": {
+      "post": {
+        "tags": ["Quota & Billing"],
+        "operationId": "setTier",
+        "summary": "Upgrade a user's tier (mocked Paystack; subscriptions collection)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["userId", "tier"], "properties": { "userId": { "type": "string" }, "tier": { "type": "string", "enum": ["free", "plus", "professional", "enterprise"] } } } } } },
+        "responses": { "200": { "description": "Subscription record.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QuotaState" } } } } }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "tags": ["Platform"],
+        "operationId": "getStatus",
+        "summary": "Service status board (demo: all-green, single source for /status)",
+        "responses": { "200": { "description": "5 services operational + all-resolved incidents.", "content": { "application/json": { "schema": { "type": "object", "properties": { "overall": { "type": "string" }, "services": { "type": "array" }, "incidents": { "type": "array" }, "demo_seed": { "type": "boolean" } } } } } } }
+      }
+    },
+    "/api/v1/documents": {
+      "get": {
+        "tags": ["Platform"],
+        "operationId": "listDocuments",
+        "summary": "List a user's processed documents (lazily seeded for demo users)",
+        "parameters": [{ "name": "userId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Document records." } }
+      }
+    },
+    "/api/v1/marketplace/search": {
+      "get": {
+        "tags": ["Platform"],
+        "operationId": "searchMarketplace",
+        "summary": "Hybrid marketplace search (semantic + geographic proximity)",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "lat", "in": "query", "schema": { "type": "number" } },
+          { "name": "lng", "in": "query", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "Ranked, verified pros with distance when geo is shared." } }
+      }
+    },
+    "/api/v1/marketplace/{slug}": {
+      "get": {
+        "tags": ["Platform"],
+        "operationId": "getMarketplacePro",
+        "summary": "Pro profile by slug (contact reveal follows the caller's tier policy)",
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Profile + tier-aware contact reveal." }, "404": { "description": "Unknown slug." } }
+      }
+    },
+    "/api/v1/pro/dashboard": {
+      "get": {
+        "tags": ["Pro Portal"],
+        "operationId": "getProDashboard",
+        "summary": "Pro book summary (clients, bulk-calc summary, verification record)",
+        "parameters": [{ "name": "proId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Dashboard payload (demo_seed)." } }
+      }
+    },
+    "/api/v1/pro/clients": {
+      "get": {
+        "tags": ["Pro Portal"],
+        "operationId": "listProClients",
+        "summary": "Client book for a pro; ?id= returns one client",
+        "parameters": [
+          { "name": "proId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Client records." } }
+      }
+    },
+    "/api/v1/pro/calculations": {
+      "post": {
+        "tags": ["Pro Portal"],
+        "operationId": "runBulkCalculations",
+        "summary": "Bulk tax calculations across the client book (type filter)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["proId"], "properties": { "proId": { "type": "string" }, "types": { "type": "array", "items": { "type": "string" } } } } } } },
+        "responses": { "200": { "description": "Bulk result summary (demo_seed)." } }
+      }
+    },
+    "/api/v1/pro/verify": {
+      "get": {
+        "tags": ["Pro Portal"],
+        "operationId": "getProVerification",
+        "summary": "Verification record (CAC lookup + certificate checks)",
+        "parameters": [{ "name": "proId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Verification record (demo_seed)." } }
+      }
+    },
+    "/api/v1/pro/apply": {
+      "post": {
+        "tags": ["Pro Portal"],
+        "operationId": "submitProApplication",
+        "summary": "Multi-step tax pro application (CAC number + certificate upload)",
+        "responses": { "200": { "description": "Application record with pending status." } }
+      }
+    },
+    "/api/v1/admin/summary": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "getAdminSummary",
+        "summary": "Aggregate counts: users, approval queue, KB corpus, free-tier quota usage",
+        "responses": { "200": { "description": "Summary payload (demo_seed)." } }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "listAdminUsers",
+        "summary": "User board (F-17b)",
+        "responses": { "200": { "description": "User records." } }
+      }
+    },
+    "/api/v1/admin/users/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "operationId": "updateAdminUser",
+        "summary": "Update name/email/tier/locale/status",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Updated record." }, "404": { "description": "Unknown id." } }
+      }
+    },
+    "/api/v1/admin/marketplace": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "listMarketplaceApplications",
+        "summary": "Approval queue (pending/verified applications)",
+        "responses": { "200": { "description": "Application records." } }
+      }
+    },
+    "/api/v1/admin/kb": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "getKbCorpus",
+        "summary": "KB corpus + publish audit log (F-16 money shot: publish → re-embed → chat improves)",
+        "responses": { "200": { "description": "KB documents + audit entries (demo_seed)." } }
+      }
+    }
+  }
+}
