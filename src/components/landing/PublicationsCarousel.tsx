@@ -14,7 +14,9 @@ const PUBLICATIONS = blogPosts.slice(0, 6).map((p) => ({
   category: p.category,
   title: p.title,
   excerpt: p.excerpt,
-  image: p.image,
+  // 1:1 cover variants (blur-padded, nothing cropped) — the wide covers are
+  // hard-cropped by the card frame at h-36, which butchered the artwork.
+  squareImage: p.image.replace('.png', '-sq.png'),
   source: 'Creditax Journal',
   date: p.date,
 }));
@@ -100,12 +102,12 @@ export function PublicationsCarousel() {
                   <article className="h-full rounded-card border border-border-default bg-surface-overlay shadow-card flex flex-col transition-transform duration-200 group-hover:-translate-y-1 overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={p.image}
+                      src={p.squareImage}
                       alt=""
-                      width={640}
-                      height={360}
+                      width={1664}
+                      height={1664}
                       loading="lazy"
-                      className="w-full h-36 object-cover border-b border-border-subtle"
+                      className="w-full aspect-square object-cover border-b border-border-subtle"
                     />
                     <div className="p-6 flex flex-col gap-3 flex-1">
                       <div className="flex items-center justify-between gap-2">

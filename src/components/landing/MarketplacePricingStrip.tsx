@@ -2,10 +2,9 @@
 
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { MapPin, Star, ShieldCheck } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { BrandedImage } from '@/components/shared/BrandedImage';
 
 const TEASER_PROS = [
@@ -112,37 +111,76 @@ export function MarketplacePricingStrip() {
           </div>
         </div>
 
-        {/* Pricing preview */}
+        {/* Pricing preview — reimaged as a tier ladder: the visitor sees the
+            actual ₦0 → ₦5,000 → ₦25,000 path (real figures from the pricing
+            page) instead of a single price + two generic buttons. */}
         <div
           data-cx="settle"
-          className="rounded-[20px] border border-border-default bg-surface-raised p-8 md:p-10 shadow-card"
+          className="relative rounded-[24px] border border-border-default bg-surface-raised shadow-card overflow-hidden"
         >
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
+          <div
+            className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-brand-primary/15 blur-[90px]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-primary/70 to-transparent"
+            aria-hidden
+          />
+
+          <div className="relative p-8 md:p-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
             <div>
               <p className="eyebrow mb-3">
                 {t('pricingEyebrow')}
               </p>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
                 {t('pricingTitle')}
               </h2>
-              <div className="flex flex-wrap items-baseline gap-3 mb-4">
-                <Badge variant="brand">Free forever tier</Badge>
-                <span className="price-display text-5xl text-text-primary">
-                  <span className="naira">₦</span>0
-                </span>
-                <span className="text-text-secondary text-sm">/month to start</span>
+
+              <div className="flex flex-wrap gap-2.5 mb-4" role="list" aria-label="Plans">
+                <div
+                  role="listitem"
+                  className="rounded-[14px] border border-brand-primary-border bg-brand-primary-bg px-4 py-3 min-w-[118px]"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-brand-primary mb-1.5">Free</p>
+                  <p className="price-figure text-xl text-text-primary leading-none">
+                    <span className="naira">₦</span>0
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1.5">forever · no card</p>
+                </div>
+                <div
+                  role="listitem"
+                  className="rounded-[14px] border border-border-default px-4 py-3 min-w-[118px]"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1.5">Plus</p>
+                  <p className="price-figure text-xl text-text-primary leading-none">
+                    <span className="naira">₦</span>5,000
+                    <span className="text-[10px] font-sans text-text-muted ml-0.5">/mo</span>
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1.5">freelancers &amp; SMEs</p>
+                </div>
+                <div
+                  role="listitem"
+                  className="rounded-[14px] border border-border-default px-4 py-3 min-w-[118px]"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1.5">Professional</p>
+                  <p className="price-figure text-xl text-text-primary leading-none">
+                    <span className="naira">₦</span>25,000
+                    <span className="text-[10px] font-sans text-text-muted ml-0.5">/mo</span>
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1.5">pros &amp; firms</p>
+                </div>
               </div>
-              <p className="text-text-secondary text-sm max-w-[480px] leading-relaxed">
-                Daily agent chats, tax calculations, and uploads on the free plan.
-                Plus and Pro unlock BVN verification, bulk tools, and higher limits —
-                all priced in naira.
+              <p className="text-[11px] text-text-muted">
+                Annual billing saves 20% on Plus and Professional.
               </p>
             </div>
-            <div className="flex flex-col gap-2 w-full md:w-auto">
+
+            <div className="flex flex-col gap-2 w-full lg:w-auto lg:min-w-[240px]">
               <span data-cx="magnetic" className="block">
                 <Link href="/pricing">
                   <Button variant="primary" size="lg" fullWidth>
                     {t('pricingCta')}
+                    <ArrowUpRight size={16} aria-hidden />
                   </Button>
                 </Link>
               </span>
