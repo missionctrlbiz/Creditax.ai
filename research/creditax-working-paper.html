@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creditax.ai Working Paper</title>
+<style>
+@page { size: A4; margin: 0; }
+:root {
+  --primary: #0D7377;
+  --primary-light: #14919B;
+  --accent: #32E875;
+  --bg-light: #F4F9F9;
+  --text: #1A2B3C;
+  --muted: #6B7B8C;
+  --border: rgba(13, 115, 119, 0.15);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-sans); color: var(--text); font-size: 10pt; line-height: 1.55; background: #fff; }
+
+.page {
+  width: 210mm; min-height: 296mm;
+  padding: 18mm 18mm 16mm;
+  position: relative;
+  page-break-after: always;
+  display: flex; flex-direction: column;
+}
+.page:last-child { page-break-after: avoid; }
+
+.runhead {
+  position: absolute; top: 9mm; left: 18mm; right: 18mm;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 2.5mm; border-bottom: 2px solid var(--primary);
+  background: #fff; z-index: 2;
+}
+.runhead .brand { font-weight: 700; font-size: 9pt; letter-spacing: 2px; color: var(--primary); }
+.runhead .section { font-family: var(--font-mono); font-size: 8pt; color: var(--muted); }
+
+.runfoot {
+  position: absolute; bottom: 7mm; left: 18mm; right: 18mm;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 2.5mm; border-top: 1px solid var(--border);
+  font-size: 8pt; color: var(--muted);
+  background: #fff; z-index: 2;
+}
+.runfoot .lab { font-weight: 600; color: var(--primary); letter-spacing: 1.5px; }
+.runfoot .num { font-family: var(--font-mono); }
+
+.body { flex: 1; margin-top: 11mm; margin-bottom: 10mm; }
+
+h1 { font-size: 22pt; font-weight: 700; line-height: 1.12; margin-bottom: 4mm; color: var(--text); }
+h2 { font-size: 15pt; font-weight: 700; line-height: 1.2; margin: 5mm 0 2.5mm; color: var(--text); }
+h3 { font-size: 11.5pt; font-weight: 600; margin: 3.5mm 0 1.8mm; color: var(--primary); }
+p  { margin-bottom: 2.4mm; }
+.lead { font-size: 11pt; line-height: 1.65; }
+.kicker { font-size: 8.5pt; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--primary); margin-bottom: 3mm; }
+.small { font-size: 8.5pt; color: var(--muted); }
+
+.stats { display: flex; gap: 3mm; flex-wrap: wrap; margin: 3mm 0; }
+.stat {
+  flex: 1; min-width: 30mm; background: var(--bg-light);
+  border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 2.5mm;
+  padding: 3.5mm 3mm; text-align: center;
+}
+.stat .fig { font-size: 15pt; font-weight: 700; color: var(--primary); line-height: 1.1; }
+.stat .lab { font-size: 7.5pt; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text); margin-top: 1.5mm; }
+.stat .sub { font-size: 8pt; color: var(--muted); margin-top: 1mm; }
+.stat.accent { border-left-color: var(--accent); }
+.stat.accent .fig { color: var(--primary-light); }
+
+table { width: 100%; border-collapse: collapse; margin: 2.8mm 0; font-size: 9pt; }
+th {
+  background: var(--primary); color: #fff; text-align: left;
+  padding: 2mm 2.6mm; font-weight: 600; font-size: 8.5pt;
+}
+td { padding: 1.9mm 2.6mm; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:nth-child(even) { background: var(--bg-light); }
+td.money { font-family: var(--font-mono); font-weight: 600; color: var(--primary); white-space: nowrap; }
+td.money-strong { font-family: var(--font-mono); font-weight: 700; color: var(--text); white-space: nowrap; }
+th.c, td.c { text-align: center; }
+tr.total td { background: var(--primary); color: #fff; font-weight: 700; border-bottom: none; }
+tr.total td.money { color: var(--accent); }
+
+.card {
+  background: var(--bg-light); border: 1px solid var(--border);
+  border-radius: 2.5mm; padding: 3.5mm 4mm; margin: 3mm 0;
+  page-break-inside: avoid;
+}
+.card .ttl { font-weight: 600; font-size: 10pt; color: var(--primary); margin-bottom: 1.2mm; }
+.card .txt { font-size: 9pt; }
+
+.quote {
+  border-left: 3px solid var(--primary-light); background: var(--bg-light);
+  padding: 2.5mm 4mm; margin: 2.8mm 0; font-size: 9.5pt; font-style: italic;
+  page-break-inside: avoid;
+}
+
+ol.flow { list-style: none; counter-reset: step; margin: 3.5mm 0; }
+ol.flow li { counter-increment: step; position: relative; padding-left: 10mm; margin-bottom: 2mm; page-break-inside: avoid; }
+ol.flow li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute; left: 0; top: 0.4mm;
+  font-family: var(--font-mono); font-size: 9.5pt; font-weight: 700; color: var(--primary);
+}
+
+ul.dash { list-style: none; margin: 2.5mm 0; }
+ul.dash li { position: relative; padding-left: 5.5mm; margin-bottom: 1.4mm; }
+ul.dash li::before { content: ""; position: absolute; left: 0; top: 2.2mm; width: 3mm; height: 1.5px; background: var(--primary-light); }
+
+.partband {
+  background: linear-gradient(135deg, #0D7377 0%, #14919B 100%);
+  color: #fff; border-radius: 2.5mm;
+  padding: 4.5mm 5.5mm; margin-bottom: 4mm;
+}
+.partband .pn { font-family: var(--font-mono); font-size: 8.5pt; color: #baf5d0; letter-spacing: 2px; }
+.partband .pt { font-size: 15pt; font-weight: 700; margin-top: 1.2mm; }
+.partband .pd { font-size: 9pt; color: #eafaf1; margin-top: 1.8mm; max-width: 155mm; }
+
+.logo { height: 13mm; }
+.cover { justify-content: center; }
+.cover .logo-row { display: flex; align-items: center; gap: 5mm; margin-bottom: 12mm; }
+.cover .meta { font-size: 9pt; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5mm; }
+.cover h1 { font-size: 32pt; color: var(--primary); margin-bottom: 4mm; }
+.cover h2.sub { font-size: 14pt; font-weight: 400; color: var(--text); margin: 0 0 14mm; max-width: 152mm; line-height: 1.45; }
+.cover .byline { margin-top: 8mm; font-size: 10pt; }
+.cover .byline b { display: block; color: var(--primary); font-size: 11pt; margin-bottom: 1mm; }
+
+.docctl { margin-top: 4mm; }
+.docctl table { font-size: 8pt; }
+.docctl td:first-child { font-weight: 600; color: var(--primary); width: 32mm; }
+
+.toc-line { display: flex; align-items: baseline; margin-bottom: 2mm; }
+.toc-line .no { font-family: var(--font-mono); font-weight: 700; color: var(--primary); width: 8mm; font-size: 9.5pt; }
+.toc-line .t { font-weight: 600; font-size: 10pt; }
+.toc-line .d { color: var(--muted); font-size: 8.5pt; margin-left: 2.5mm; }
+.toc-sub { margin: 1mm 0 3mm 8mm; }
+.toc-sub .toc-line .t { font-weight: 400; font-size: 9pt; }
+.toc-sub .toc-line .no { color: var(--muted); font-weight: 400; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 : COVER ============ -->
+<div class="page cover">
+  <div class="logo-row">
+    <img class="logo" src="../public/logo.png" alt="Creditax.ai">
+  </div>
+  <div class="meta">Working Paper · 2026 · Version 1.0</div>
+  <h1>Creditax.ai</h1>
+  <h2 class="sub">Bridging Nigerian Tax Compliance and Creditworthiness: a grounded tax assistant, deterministic calculators, a compliance-based credit health score, and a verified tax professional marketplace</h2>
+  <div class="byline">
+    <b>MissionCTRL Creative Tech Research Labs</b>
+    Lagos, Nigeria · September 2026
+  </div>
+  <div style="margin-top: 14mm;" class="small">This working paper distils the Creditax research foundation (product, pricing, security, legal, roles, feature and roadmap documents, September 2026). It is written for prospective investors, partners, and clients. All figures trace to the foundation documents; projections are labelled as scenarios in the companion financial document.</div>
+  <div class="runfoot">
+    <span class="lab">CREDITAX.AI</span>
+    <span>WORKING PAPER 2026</span>
+    <span class="num">1</span>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 : ABSTRACT ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">ABSTRACT</span></div>
+  <div class="body">
+    <div class="kicker">Abstract</div>
+    <p class="lead">Creditax.ai is a free-to-start platform that bridges Nigerian tax compliance and creditworthiness. A user signs up, asks tax questions and receives answers grounded in published Nigerian law (the Nigeria Tax Act 2023, the Nigeria Tax Administration Act 2023, and FIRS guides), calculates PAYE, VAT, withholding and company income tax with citable figures, sees a credit health score built from compliance and financial data, and, when human help is needed, is referred to a verified tax professional inside our own marketplace.</p>
+    <p>The founding insight: timely filing and consistent tax payment are among the strongest signals of financial reliability, yet no credit product in the Nigerian market treats compliance as a scoring signal. Bank-statement scoring misses the taxpayer whose paperwork is clean but whose banking history is thin. Creditax closes that gap, and in doing so manufactures a proprietary dataset no competitor holds: verifiable compliance behaviour, linked across tax types, languages, and professions.</p>
+    <p>The product ships in four languages (English, Yoruba, Hausa, Igbo) across a four-tier, Naira-only pricing model with tight free limits and a conversion target of one paid conversion per ten active free users within ninety days. Ten guided Skills (from withholding-tax credit recovery to employer compliance badges) grow revenue without growing interface complexity. A six-month, ₦10,000,000 Phase 1 delivers the core platform; a 24-week, six-phase roadmap ends in public launch.</p>
+    <div class="stats">
+      <div class="stat accent"><div class="fig">₦10M</div><div class="lab">Phase 1 Budget</div></div>
+      <div class="stat"><div class="fig">4</div><div class="lab">Pricing Tiers</div></div>
+      <div class="stat"><div class="fig">6</div><div class="lab">Phases · 24 Weeks</div></div>
+      <div class="stat"><div class="fig">10</div><div class="lab">Guided Skills</div></div>
+      <div class="stat"><div class="fig">4</div><div class="lab">Languages</div></div>
+    </div>
+    <p class="small" style="margin-top:4mm;"><b>Keywords:</b> tax compliance; credit scoring; Nigeria; financial inclusion; verified marketplace; Naira-only pricing; Yoruba · Hausa · Igbo · English; NDPA compliance.</p>
+
+    <div class="docctl">
+      <div class="kicker" style="margin-top:6mm;">Document Control</div>
+      <table>
+        <tbody>
+          <tr><td>Title</td><td>Creditax.ai: Bridging Nigerian Tax Compliance and Creditworthiness, a working paper</td></tr>
+          <tr><td>Version</td><td>1.0 (September 2026)</td></tr>
+          <tr><td>Status</td><td>Living document. The research foundation docs remain the source of truth for every build decision.</td></tr>
+          <tr><td>Prepared by</td><td>MissionCTRL Creative Tech Research Labs</td></tr>
+          <tr><td>Sources</td><td>product-foundation, pricing-and-access, security-foundation, legal-compliance, roles-and-experience, feature-specs, mvp-demo-plan, project-roadmap, API-Research (all September 2026 unless dated)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>ABSTRACT</span><span class="num">2</span></div>
+</div>
+
+<!-- ============ PAGE 3 : CONTENTS ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">CONTENTS</span></div>
+  <div class="body">
+    <div class="kicker">Contents</div>
+    <h1 style="font-size:19pt;">Table of Contents</h1>
+
+    <div class="toc-line"><span class="no">I</span><span class="t">PART I: CONTEXT</span><span class="d">Where the idea came from, the market, and the problem it names</span></div>
+    <div class="toc-sub">
+      <div class="toc-line"><span class="no">1</span><span class="t">Introduction and Origins</span></div>
+      <div class="toc-line"><span class="no">2</span><span class="t">The Global Tax-Technology Landscape</span></div>
+      <div class="toc-line"><span class="no">3</span><span class="t">The Nigerian Compliance and Credit Gap</span></div>
+    </div>
+
+    <div class="toc-line"><span class="no">II</span><span class="t">PART II: THE PRODUCT</span><span class="d">Tax assistant, calculators, credit score, Skills, marketplace, knowledge base</span></div>
+    <div class="toc-sub">
+      <div class="toc-line"><span class="no">4</span><span class="t">The Tax Assistant</span></div>
+      <div class="toc-line"><span class="no">5</span><span class="t">The Calculators</span></div>
+      <div class="toc-line"><span class="no">6</span><span class="t">The Credit Health Score and the Compliance Flywheel</span></div>
+      <div class="toc-line"><span class="no">7</span><span class="t">The Skills Engine</span></div>
+      <div class="toc-line"><span class="no">8</span><span class="t">The Knowledge Base and the Verified Marketplace</span></div>
+    </div>
+
+    <div class="toc-line"><span class="no">III</span><span class="t">PART III: THE SIX-PHASE PLAN</span><span class="d">24 weeks from scaffold to public launch</span></div>
+    <div class="toc-sub">
+      <div class="toc-line"><span class="no">9</span><span class="t">Objective and Scope</span></div>
+      <div class="toc-line"><span class="no">10</span><span class="t">Phase 0-1: Foundation and Core API (Weeks 1-5)</span></div>
+      <div class="toc-line"><span class="no">11</span><span class="t">Phase 2-3: Tax Assistant and Document Pipeline (Weeks 6-12)</span></div>
+      <div class="toc-line"><span class="no">12</span><span class="t">Phase 4-5: Credit Engine and Developer Platform (Weeks 13-20)</span></div>
+      <div class="toc-line"><span class="no">13</span><span class="t">Phase 5.5-6: Marketplace and Launch (Weeks 19-24+)</span></div>
+    </div>
+
+    <div class="toc-line"><span class="no">IV</span><span class="t">PART IV: BUSINESS</span><span class="d">Pricing, unit economics, go-to-market, regulation, capital, risk, KPIs</span></div>
+    <div class="toc-sub">
+      <div class="toc-line"><span class="no">14</span><span class="t">Pricing and Access Tiers</span></div>
+      <div class="toc-line"><span class="no">15</span><span class="t">Unit Economics</span></div>
+      <div class="toc-line"><span class="no">16</span><span class="t">Revenue Model</span></div>
+      <div class="toc-line"><span class="no">17</span><span class="t">Go-To-Market</span></div>
+      <div class="toc-line"><span class="no">18</span><span class="t">Regulatory and Compliance</span></div>
+      <div class="toc-line"><span class="no">19</span><span class="t">Security and Trust</span></div>
+      <div class="toc-line"><span class="no">20</span><span class="t">Capital Plan</span></div>
+      <div class="toc-line"><span class="no">21</span><span class="t">Risk Register</span></div>
+      <div class="toc-line"><span class="no">22</span><span class="t">Key Performance Indicators and Glossary</span></div>
+    </div>
+
+    <div class="toc-line"><span class="no">A</span><span class="t">APPENDIX A: PRICING TABLES</span></div>
+    <div class="toc-line"><span class="no">B</span><span class="t">APPENDIX B: OPEN DECISIONS</span></div>
+    <div class="toc-line"><span class="no">R</span><span class="t">REFERENCES</span></div>
+
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>CONTENTS</span><span class="num">3</span></div>
+</div>
+
+<!-- ============ PAGE 4 : PART I / S1 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART I · CONTEXT</span></div>
+  <div class="body">
+    <div class="partband">
+      <div class="pn">PART I: CONTEXT</div>
+      <div class="pt">Where the idea came from</div>
+      <div class="pd">The 2024 reform created the questions; the credit market left the answers unpriced. At a glance: the 2023 reform acts, 7.5% VAT, 5-30% withholding, 17 income tax bands, and a compliance-to-credit bridge that exists nowhere in the market today.</div>
+    </div>
+
+    <h2>1 · Introduction and Origins</h2>
+    <p>Creditax began with two observations made in the same quarter of 2026.</p>
+    <p><b>First, the reform.</b> Nigeria's 2023-2024 tax reform package (the Nigeria Tax Act 2023, the Nigeria Tax Administration Act 2023, and Capital Gains Tax amendments) rewrote brackets, rates, and filing procedure. Every employee, freelancer, trader, and small business owner woke up to questions the old materials no longer answered: what do I owe now, by when, and on what authority. Public guidance exists (FIRS publishes guides and circulars), but it is written for practitioners, not for the nurse in Surulere or the POS-agent in Kano.</p>
+    <p><b>Second, the scoring blind spot.</b> Nigerian credit scoring runs on bank transaction data. That data captures spending and income flow, but it never sees the tax file. A trader with six years of clean filings and zero bank debt is scored thin; a salaried worker who has never filed is scored on salary alone. Compliance behaviour, the single most legible and verifiable signal of financial discipline a Nigerian adult generates, is simply not priced.</p>
+    <p>Creditax exists to fix both at once: make tax legible to the person who owes it, and make that person legible to the lender who serves them.</p>
+
+    <h3>What Creditax keeps, and what it replaces</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>The old way (2026 status quo)</th><th>The Creditax way</th></tr></thead>
+      <tbody>
+        <tr><td>Generic chatbots that answer world-tax questions with no source</td><td>Answers restricted to published Nigerian law, with a citation on every response</td></tr>
+        <tr><td>Spreadsheets and accountant memory for PAYE, VAT, WHT</td><td>Deterministic calculators tied to the exact section of the NTA or FIRS guide</td></tr>
+        <tr><td>Credit scored on bank statements alone</td><td>Compliance history weighted into a credit health score alongside bank data</td></tr>
+        <tr><td>Finding a tax pro by word of mouth or street-sign ads</td><td>A verified marketplace with CAC-checked businesses and proximity search</td></tr>
+        <tr><td>English-only tax materials</td><td>Full experience and answers in English, Yoruba, Hausa, and Igbo</td></tr>
+      </tbody>
+    </table>
+
+    <div class="quote">Encode, do not lecture: make the simple parts instant, and hand the hard parts to a verified human.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART I · CONTEXT</span><span class="num">4</span></div>
+</div>
+
+<!-- ============ PAGE 5 : PART I / S2 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART I · CONTEXT</span></div>
+  <div class="body">
+    <h2>2 · The Global Tax-Technology Landscape</h2>
+    <p>Tax software at global scale has proven one thing: when guidance is authoritative and calculation is deterministic, consumers pay for it. TurboTax serves tens of millions of filers a year. Stripe Tax prices billions in cross-border transactions. Intuit, H&amp;R Block, and a generation of fintech rails were built on the same recipe: rules maintained centrally, answers users can trust, filing that finishes in an afternoon.</p>
+    <p>None of that machinery has landed on the compliance-credit bridge, and none of it is built for Nigeria.</p>
+
+    <table>
+      <thead><tr><th>Need</th><th>What exists today</th><th>What is missing</th></tr></thead>
+      <tbody>
+        <tr><td>Consumer tax guidance</td><td>Generic assistants; practitioner-only FIRS materials</td><td>Cited, Nigeria-only answers at consumer scale</td></tr>
+        <tr><td>Tax calculation</td><td>Hand-coded PAYE/VAT rules inside payroll tools</td><td>Versioned rules with legal references, exposed for reuse</td></tr>
+        <tr><td>Credit scoring</td><td>Bank-statement data via open-banking providers</td><td>Compliance behaviour as a scoring factor</td></tr>
+        <tr><td>Professional supply</td><td>Word-of-mouth, unverified directories</td><td>CAC-verified profiles with proximity search</td></tr>
+        <tr><td>Language access</td><td>English-only government guidance</td><td>Yoruba, Hausa, Igbo across the whole experience</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Why the gap persists</h3>
+    <p>Tax content is jurisdictional, perishable, and high-stakes. A generic assistant that answers a Lagos VAT question with foreign or outdated rules is worse than no assistant at all, because the user cannot tell the difference until it costs them a penalty. Maintaining correct Nigerian rules is expensive, which is exactly why it is defensible: the platform that does it owns the moat.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="fig">7.5%</div><div class="lab">Standard VAT Rate</div><div class="sub">FIRS VAT Guide, Schedule 2 exemptions</div></div>
+      <div class="stat"><div class="fig">5-30%</div><div class="lab">WHT Rate Band</div><div class="sub">By payment type and recipient status</div></div>
+      <div class="stat"><div class="fig">17</div><div class="lab">PAYE Bands</div><div class="sub">NTA 2023, Schedule 1</div></div>
+      <div class="stat"><div class="fig">10%</div><div class="lab">Capital Gains (Individual)</div><div class="sub">CGT amendments, 2024 reform</div></div>
+    </div>
+
+    <p>Creditax's position is deliberately narrow: Nigeria only, published law only, cited answers only. Depth is the moat; breadth is the trap.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART I · CONTEXT</span><span class="num">5</span></div>
+</div>
+
+<!-- ============ PAGE 6 : PART I / S3 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART I · CONTEXT</span></div>
+  <div class="body">
+    <h2>3 · The Nigerian Compliance and Credit Gap</h2>
+    <p>Every actor in the chain is either a beneficiary of this product or a reason it has not been built yet.</p>
+
+    <table>
+      <thead><tr><th>Actor</th><th>What they want</th><th>What the status quo costs them</th></tr></thead>
+      <tbody>
+        <tr><td><b>Employee</b></td><td>Correct PAYE, a TCC when a visa or loan needs one, no surprises</td><td>Guesswork between reform-era brackets; TCC assembled by paper chase</td></tr>
+        <tr><td><b>Freelancer / trader</b></td><td>Income documented so lenders take them seriously</td><td>"Invisible income": real earnings, zero verifiable footprint</td></tr>
+        <tr><td><b>SME owner</b></td><td>VAT, WHT, and CAC obligations met without a retainer</td><td>Over- or under-remittance; WHT credits deducted by clients but never claimed</td></tr>
+        <tr><td><b>Tax professional</b></td><td>Verified clients, faster practice tooling</td><td>Client acquisition by street ads; manual bulk calculations</td></tr>
+        <tr><td><b>Lender / fintech</b></td><td>Repayment signals that survive thin bank files</td><td>Compliance history invisible in scoring</td></tr>
+        <tr><td><b>Regulator (FIRS, NDPC)</b></td><td>Voluntary filing up; lawful data handling</td><td>Education gap; unverified advice spreading in the informal channel</td></tr>
+      </tbody>
+    </table>
+
+    <h3>The unclaimed-credit problem (the wedge)</h3>
+    <p>Clients deduct withholding tax from vendor payments. Vendors who never claim the credit notes forfeit real money, amounts sitting on the books of firms that paid them. Skill 01 (Section 7) turns that forfeited balance into the platform's highest-revenue-first bet: a 5% success fee on recovered credits, filed through verified professionals.</p>
+
+    <div class="quote">The wedge is not "file your taxes." The wedge is: there is money you already earned that was withheld and never credited back to you. Here is the schedule to recover it.</div>
+
+    <h3>Design posture</h3>
+    <ul class="dash">
+      <li>Consumer platform first; APIs are a distribution channel, not the pitch</li>
+      <li>Nigeria-only depth before any regional breadth</li>
+      <li>Free delivers one genuine result, then quotas convert; BVN is never free at steady state</li>
+      <li>Every price in Naira, everywhere, including pitch materials</li>
+    </ul>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART I · CONTEXT</span><span class="num">6</span></div>
+</div>
+
+<!-- ============ PAGE 7 : PART II / S4-S5 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART II · THE PRODUCT</span></div>
+  <div class="body">
+    <div class="partband">
+      <div class="pn">PART II: THE PRODUCT</div>
+      <div class="pt">Answers you can defend</div>
+      <div class="pd">A tax assistant restricted to published law, calculators tied to sections of the statute, a credit health score fed by compliance, guided Skills, and a verified marketplace. Every surface cites its source.</div>
+    </div>
+
+    <h2>4 · The Tax Assistant</h2>
+    <p>The assistant answers questions by retrieving relevant passages from the knowledge base of Nigerian tax law and assembling a response that names its sources. The system is built on a discipline, not a trick: <b>an answer without a citation is not shipped.</b> Responses that fall below the confidence bar carry a low-confidence flag and route the user to a verified professional instead of guessing.</p>
+    <ul class="dash">
+      <li>Single conversational thread per topic, in the user's chosen language</li>
+      <li>Every answer cites NTA, NTAA, FIRS guide, or circular material</li>
+      <li>High-stakes matters (audit, objection, appeal) trigger mandatory referral</li>
+      <li>Answers carry the user's locale, so money phrasing and citations follow the language</li>
+    </ul>
+
+    <h2>5 · The Calculators</h2>
+    <p>Four deterministic engines produce the figures. They never free-associate: the same inputs produce the same outputs, and each result carries the legal reference that produced it.</p>
+    <table>
+      <thead><tr><th>Calculator</th><th>Computes</th><th>Legal basis on every response</th></tr></thead>
+      <tbody>
+        <tr><td><b>PAYE</b></td><td>Employment income tax across 17 bands, reliefs applied</td><td>NTA 2023, Schedule 1</td></tr>
+        <tr><td><b>VAT</b></td><td>7.5% standard rate, input/output reconciliation, exemptions</td><td>FIRS VAT Guide</td></tr>
+        <tr><td><b>WHT</b></td><td>Withholding by payment type and recipient status, 5-30%</td><td>NTA 2023, s.15; FIRS circulars</td></tr>
+        <tr><td><b>CIT</b></td><td>Company income tax; small-company relief rates</td><td>NTA 2023</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Identical inputs cached 24h do not re-charge credits. Rules are versioned; when circulars change, the knowledge base re-indexes and citations move with it.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART II · THE PRODUCT</span><span class="num">7</span></div>
+</div>
+
+<!-- ============ PAGE 8 : PART II / S6 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART II · THE PRODUCT</span></div>
+  <div class="body">
+    <h2>6 · The Credit Health Score and the Compliance Flywheel</h2>
+    <p>The score is an <b>indicative Credit Health Score for education and self-improvement</b>, labelled as such on every screen. It is not a licensed bureau report, and the platform never holds itself out as one. Official bureau data (CRC, FirstCentral) enters only through partnership and is presented as the bureau's report, never ours.</p>
+
+    <table>
+      <thead><tr><th>Factor</th><th class="c">Weight</th><th>Sourced from</th></tr></thead>
+      <tbody>
+        <tr><td>Income stability</td><td class="c">30%</td><td>Bank data via read-only open-banking connection (Mono)</td></tr>
+        <tr><td>Compliance history</td><td class="c">30%</td><td>Filing calculations, payment records, platform activity</td></tr>
+        <tr><td>Savings rate</td><td class="c">25%</td><td>Statement analysis</td></tr>
+        <tr><td>Debt burden</td><td class="c">15%</td><td>Existing loan payments visible in statements</td></tr>
+      </tbody>
+    </table>
+
+    <h3>The flywheel</h3>
+    <ol class="flow">
+      <li><b>Compliance generates signal.</b> Every calculation, filing estimate, and verified document is a data point about behaviour.</li>
+      <li><b>Signal strengthens the score.</b> Consistent filing and timely payment move the number.</li>
+      <li><b>Better score improves access.</b> Lenders and partners read the factor breakdown, not just the number.</li>
+      <li><b>Access drives usage.</b> Users return to keep the streak; cooperative and employer Skills manufacture verifiable income for the whole group.</li>
+    </ol>
+
+    <div class="stats">
+      <div class="stat"><div class="fig">30%</div><div class="lab">Compliance Weight</div><div class="sub">The factor no competitor scores</div></div>
+      <div class="stat"><div class="fig">Daily</div><div class="lab">Refresh on Plus</div><div class="sub">Score + simulator included</div></div>
+      <div class="stat"><div class="fig">1</div><div class="lab">Starter Snapshot (Free)</div><div class="sub">Preview locked after first view</div></div>
+    </div>
+
+    <p>The proprietary asset is the dataset: compliance behaviour linked to identity rails (BVN, NIN, TIN, CAC) across tax types and languages. Every platform interaction manufactures it; nobody else is collecting it.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART II · THE PRODUCT</span><span class="num">8</span></div>
+</div>
+
+<!-- ============ PAGE 9 : PART II / S7 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART II · THE PRODUCT</span></div>
+  <div class="body">
+    <h2>7 · The Skills Engine</h2>
+    <p>A Skill is a guided mini-workflow surfaced as a chip above the assistant's text box. Each has a fixed input, a defined output card, a credit cost, and a tier gate. Skills are how the platform grows revenue without growing interface complexity.</p>
+
+    <h3>MVP Skills (build in Phase 1-2, demo on camera)</h3>
+    <table>
+      <thead><tr><th>#</th><th>Skill</th><th>Output</th><th>Money</th></tr></thead>
+      <tbody>
+        <tr><td class="c">01</td><td><b>WHT Credit Recovery</b></td><td>Dated claim schedule from contracts and payment advices, pinned to canvas</td><td>5% success fee on recovered credits via pro filing: the highest-revenue-first bet</td></tr>
+        <tr><td class="c">02</td><td><b>TCC Readiness Pack</b></td><td>Live readiness tracker, missing-document checklist, assembled bundle</td><td class="money">₦2,500 per pack, renews yearly</td></tr>
+        <tr><td class="c">03</td><td><b>Ajo / Cooperative Ledger</b></td><td>Group ledger with weekly entries; per-member verifiable income certificate</td><td class="money">₦100-200 / member / month</td></tr>
+        <tr><td class="c">04</td><td><b>Employer Compliance Badge</b></td><td>Monthly PAYE audit pass, dated badge card, regulator-ready report</td><td class="money">₦200-500 / employee / month</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Wave-two Skills (ship in waves after adoption)</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>#</th><th>Skill</th><th>Money</th></tr></thead>
+      <tbody>
+        <tr><td class="c">05</td><td>Rent WHT Autopilot: tenancy tracking, 10% WHT computed per rent payment</td><td>Per-unit annual fee (property managers)</td></tr>
+        <tr><td class="c">06</td><td>Salary Structure Optimizer: lawful relief modelling, compliant payslip template</td><td class="money">₦1,500 / report</td></tr>
+        <tr><td class="c">07</td><td>Notice Translator: FIRS or state notice explained in plain or local language</td><td>Free 1/month, Plus unlimited</td></tr>
+        <tr><td class="c">08</td><td>Invoice WHT Checker: instant "deduct X, remit by date" verdict before payment</td><td>Free 3/day teaser, Plus feature</td></tr>
+        <tr><td class="c">09</td><td>BN or Ltd? Quiz: registration decision guide, CAC fee estimate</td><td>Free acquisition magnet; pro referral on intent</td></tr>
+        <tr><td class="c">10</td><td>Payslip Decoder: every line explained, under-claimed relief flags</td><td>Free 2/month, Plus unlimited</td></tr>
+      </tbody>
+    </table>
+
+    <p class="small">Future bets (Filing Rooms, Diaspora Tax Desk, Score-Gated Offers) wait until their stated prerequisites are true: marketplace supply, double-taxation depth, score credibility. Options, not promises.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART II · THE PRODUCT</span><span class="num">9</span></div>
+</div>
+
+<!-- ============ PAGE 10 : PART II / S8 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART II · THE PRODUCT</span></div>
+  <div class="body">
+    <h2>8 · The Knowledge Base and the Verified Marketplace</h2>
+
+    <h3>Knowledge base</h3>
+    <p>The knowledge base is a structured library of Nigerian tax material, maintained in a format that non-engineers can edit and that re-indexes when a document changes:</p>
+    <ul class="dash">
+      <li><b>P0 (launch-critical):</b> Nigeria Tax Act 2023; Tax Administration Act 2023; FIRS VAT Guide; personal income tax schedules</li>
+      <li><b>P1:</b> Withholding tax circulars; Capital Gains Tax material; latest FIRS public rulings</li>
+      <li><b>P2:</b> State IRS guides (Lagos first); tax appeal tribunal decisions; industry guides</li>
+    </ul>
+    <p>Every article ships only after review by a licensed tax practitioner and a Content Editor. The admin console tracks version history, publish state, and re-indexing, with an audit log of every change.</p>
+
+    <h3>The marketplace</h3>
+    <p>There is no official public CAC API. Verification is therefore layered, not single-source:</p>
+    <ol class="flow">
+      <li>The professional enters their CAC registration number.</li>
+      <li>Mono's Lookup API validates the business name and status.</li>
+      <li>The professional uploads the CAC certificate as documentary proof.</li>
+      <li>An administrator reviews the queue and approves or rejects.</li>
+      <li>Approved profiles appear in the marketplace with the verified badge.</li>
+    </ol>
+    <p>Discovery combines a browsable grid (filter by city, service, rating; sorted by distance when the user shares location) with natural-language matching through the assistant ("I need a VAT expert near Lagos Island"). Contact details (phone, email, WhatsApp) render only to logged-in users and are excluded from public pages, so the directory cannot be scraped.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="fig">CAC + Cert</div><div class="lab">Verification Layers</div><div class="sub">Registry check + document + human review</div></div>
+      <div class="stat"><div class="fig">Login-gated</div><div class="lab">Contact Details</div><div class="sub">Anti-scrape by design</div></div>
+      <div class="stat"><div class="fig">Pro Portal</div><div class="lab">Supply-Side Tools</div><div class="sub">Clients, bulk calc, white-label reports</div></div>
+    </div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART II · THE PRODUCT</span><span class="num">10</span></div>
+</div>
+
+<!-- ============ PAGE 11 : PART III / S9-S10 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART III · THE PLAN</span></div>
+  <div class="body">
+    <div class="partband">
+      <div class="pn">PART III: THE SIX-PHASE PLAN</div>
+      <div class="pt">24 weeks, scaffold to launch</div>
+      <div class="pd">Software first, adoption before scale, and a legal gate before any real user data. The demo track proves the experience; the production track hardens it. Both run to the same design.</div>
+    </div>
+
+    <h2>9 · Objective and Scope</h2>
+    <p>Phase 1's objective is a working platform that demonstrates the full loop (ask, calculate, score, refer) before deeper capital is committed. Two tracks run in parallel and are never confused:</p>
+    <table>
+      <thead><tr><th>Track</th><th>What it is</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td><b>A: MVP Demo</b></td><td>A fast, fully behaved build on a lightweight backend with clearly labelled seeded data, used for the 4-5 client pitches and the investor deck</td><td>Nothing in Track A is presented as production. It exists to sell.</td></tr>
+        <tr><td><b>B: Main build</b></td><td>The production architecture on managed Postgres with the real integrations (identity, bank data, payments, jobs)</td><td>Real user data flows only after NDPC registration and the impact assessment complete.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>10 · Phase 0-1: Foundation and Core API (Weeks 1-5)</h2>
+    <p><b>Phase 0 (Weeks 1-2).</b> Brand finalised, CAC company registration started, repository and environment stood up (hosting, managed database, background jobs, secrets management).</p>
+    <p><b>Phase 1 (Weeks 3-5).</b> The API skeleton with key management, rate limiting, and the first calculators:</p>
+    <table>
+      <thead><tr><th>Capability</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>API key lifecycle</td><td>Generate, list, revoke; keys stored hashed; per-key usage metering</td></tr>
+        <tr><td>Tax calculation endpoints</td><td>Income tax (PAYE) and bracket lookup, first shipping calculators</td></tr>
+        <tr><td>Rate limiting</td><td>100 requests/minute per key, enforced server-side</td></tr>
+        <tr><td>Developer documentation</td><td>OpenAPI spec and a basic developer portal with sandbox</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Phase 1 exit criteria: a partner can sign up, take a key, calculate a PAYE liability from the docs alone, and be rate-limited, all on the sandbox.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART III · THE PLAN</span><span class="num">11</span></div>
+</div>
+
+<!-- ============ PAGE 12 : PART III / S11 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART III · THE PLAN</span></div>
+  <div class="body">
+    <h2>11 · Phase 2-3: Tax Assistant and Document Pipeline (Weeks 6-12)</h2>
+
+    <h3>Phase 2 (Weeks 6-8): the tax assistant</h3>
+    <ul class="dash">
+      <li>Knowledge base ingested: NTA, NTAA, FIRS VAT Guide (P0 set)</li>
+      <li>Chat endpoint returns grounded answers with citations</li>
+      <li>Confidence threshold and mandatory professional referral for high-stakes topics</li>
+      <li>Webhook callbacks for long-running questions</li>
+      <li>Language switcher live on landing, auth, dashboard shell, and chat (four-language framework, core flows translated)</li>
+    </ul>
+
+    <h3>Phase 3 (Weeks 9-12): the document pipeline</h3>
+    <ul class="dash">
+      <li>Upload for receipts, invoices, payslips; library storage with extraction previews</li>
+      <li>Extraction of amounts, dates, tax identifiers, vendor descriptions</li>
+      <li>Report generation (expense and tax summaries) as an async job with webhook</li>
+      <li>Bulk upload on the professional tier</li>
+    </ul>
+
+    <table>
+      <thead><tr><th>Capability</th><th>Phase 2 ships</th><th>Phase 3 ships</th></tr></thead>
+      <tbody>
+        <tr><td>Cited answers</td><td>Core NTA/NTAA/VAT set</td><td>WHT circulars, CGT, rulings added</td></tr>
+        <tr><td>Documents</td><td>Not yet</td><td>Upload, extract, attach into conversation</td></tr>
+        <tr><td>Reports</td><td>Not yet</td><td>Expense and tax summary PDFs</td></tr>
+        <tr><td>Languages</td><td>Framework + core flows in four languages</td><td>Agent answers follow user locale end to end</td></tr>
+      </tbody>
+    </table>
+
+    <div class="quote">The demo script is eight minutes: hook, signup, cited answer, invoice to calculation, credit snapshot, referral, admin views, quota wall. Every beat is a Phase 2-3 deliverable.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART III · THE PLAN</span><span class="num">12</span></div>
+</div>
+
+<!-- ============ PAGE 13 : PART III / S12-S13 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART III · THE PLAN</span></div>
+  <div class="body">
+    <h2>12 · Phase 4-5: Credit Engine and Developer Platform (Weeks 13-20)</h2>
+
+    <h3>Phase 4 (Weeks 13-16): the credit engine</h3>
+    <ul class="dash">
+      <li>Tax compliance history endpoint; rule-based credit score v1 (model upgrade later)</li>
+      <li>Credit health dashboard: score, factors, simulator, refresh jobs</li>
+      <li>BVN and NIN verification via Mono (teaser: 2 free within 60 days, then paid)</li>
+      <li>Infrastructure-as-code and monitoring</li>
+    </ul>
+
+    <h3>Phase 5 (Weeks 17-20): the developer platform</h3>
+    <ul class="dash">
+      <li>Developer dashboard: keys, usage per key, webhook management</li>
+      <li>Sandbox environment mirroring production endpoints</li>
+      <li>Usage analytics and limit alerts</li>
+      <li>Public OpenAPI specification</li>
+    </ul>
+
+    <h2>13 · Phase 5.5-6: Marketplace and Launch (Weeks 19-24+)</h2>
+
+    <h3>Phase 5.5 (Weeks 19-22): the tax professional marketplace</h3>
+    <ul class="dash">
+      <li>Professional application with CAC verification (registry, certificate, admin review)</li>
+      <li>Marketplace listing, profile pages, proximity search with map view</li>
+      <li>Professionals embedded into assistant search so natural queries find them</li>
+    </ul>
+
+    <table style="font-size:8pt;">
+      <thead><tr><th>Phase</th><th class="c">Weeks</th><th>Exit criterion</th></tr></thead>
+      <tbody>
+        <tr><td>0: Foundation</td><td class="c">1-2</td><td>Repo, brand, CAC filing started</td></tr>
+        <tr><td>1: Core API</td><td class="c">3-5</td><td>PAYE from docs alone; rate limiting live</td></tr>
+        <tr><td>2: Assistant</td><td class="c">6-8</td><td>Cited VAT answer in four languages, on camera</td></tr>
+        <tr><td>3: Documents</td><td class="c">9-12</td><td>Invoice to extraction to report, end to end</td></tr>
+        <tr><td>4: Credit</td><td class="c">13-16</td><td>Starter score, factors, BVN teaser live</td></tr>
+        <tr><td>5: Developer platform</td><td class="c">17-20</td><td>Sandbox, webhooks, analytics live</td></tr>
+        <tr><td>5.5: Marketplace</td><td class="c">19-22</td><td>First verified pro live in the directory</td></tr>
+        <tr><td>6: Launch</td><td class="c">21-24+</td><td>Public launch; first paying conversions</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART III · THE PLAN</span><span class="num">13</span></div>
+</div>
+
+<!-- ============ PAGE 14 : PART IV / S14 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <div class="partband">
+      <div class="pn">PART IV: BUSINESS</div>
+      <div class="pt">Naira-only, quota-enforced, compliance-gated</div>
+      <div class="pd">Tight free limits, BVN as the paid hook, margins documented per tier, and a regulatory gate the product treats as a feature: no real user data moves until registration and impact assessment complete.</div>
+    </div>
+
+    <h2>14 · Pricing and Access Tiers</h2>
+    <p>All customer-facing pricing is in Naira. Free delivers one genuine result and then requires a plan; paywalls trigger on value, not curiosity. The full tier table is reproduced in Appendix A; the shape:</p>
+    <table>
+      <thead><tr><th></th><th>Free</th><th>Plus</th><th>Professional</th><th>Enterprise</th></tr></thead>
+      <tbody>
+        <tr><td><b>Price</b></td><td class="money">₦0</td><td class="money">₦5,000/mo</td><td class="money">₦25,000/mo</td><td>Custom</td></tr>
+        <tr><td><b>Annual (save 20%)</b></td><td>-</td><td class="money">₦4,000/mo</td><td class="money">₦20,000/mo</td><td>Contracted</td></tr>
+        <tr><td><b>Assistant messages</b></td><td>5/day, 60 lifetime cap</td><td>100/day</td><td>Fair-use unlimited</td><td>Pooled / contracted</td></tr>
+        <tr><td><b>Calculations</b></td><td>5/day</td><td>50/day</td><td>Fair-use unlimited</td><td>Contracted volume</td></tr>
+        <tr><td><b>Document uploads</b></td><td>2/day, 10/month</td><td>20/day</td><td>100/day + client docs</td><td>Contracted</td></tr>
+        <tr><td><b>Credit score</b></td><td>1 starter snapshot</td><td>Full + daily refresh + simulator</td><td>Full + client scores</td><td>Portfolio scoring</td></tr>
+        <tr><td><b>BVN checks</b></td><td>0 (2-teaser / 60 days)</td><td>5/mo included</td><td>20/mo included</td><td>Contracted rate</td></tr>
+        <tr><td><b>Extra BVN</b></td><td class="money">₦350</td><td class="money">₦350</td><td class="money">₦300</td><td>Contracted</td></tr>
+        <tr><td><b>API access</b></td><td>100 sandbox calls/mo</td><td>5,000 calls/mo</td><td>50,000 calls/mo</td><td>Custom + SLA</td></tr>
+        <tr><td><b>Seats</b></td><td>Single user</td><td>Single user</td><td>3 seats included</td><td>SSO + custom</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Quotas are enforced in code, server-side, with daily resets at 00:00 WAT and monthly resets on the billing anniversary. Hard stop at cap with an upgrade card naming the exact limit. Admin overrides exist and every one is audit-logged.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">14</span></div>
+</div>
+
+<!-- ============ PAGE 15 : PART IV / S15 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>15 · Unit Economics</h2>
+    <p>Every metered action has a documented unit cost, revalidated monthly against provider bills. If any unit moves more than 20%, quotas are re-cut before prices change.</p>
+
+    <table>
+      <thead><tr><th>Action</th><th class="c">Unit cost</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Grounded assistant message</td><td class="money">₦5</td><td>Budget serving + one embedding pass + retrieval</td></tr>
+        <tr><td>Tax calculation</td><td class="money">₦3</td><td>Rules engine + logging; identical inputs cached 24h, no re-charge</td></tr>
+        <tr><td>Document upload + extraction</td><td class="money">₦15</td><td>Parse + chunk + extract; failed extractions refund</td></tr>
+        <tr><td>Report-chart generation</td><td class="money">₦8</td><td>Render + data assembly</td></tr>
+        <tr><td>Credit score refresh</td><td class="money">₦5</td><td>Compute only</td></tr>
+        <tr><td>BVN verification</td><td class="money">₦90</td><td>Provider lookup incl. failure buffer; failures billed by provider</td></tr>
+        <tr><td>TIN / CAC-status lookup</td><td class="money">₦150</td><td>Provider blended range</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Acquisition and margin, per tier</h3>
+    <table>
+      <thead><tr><th>Tier</th><th class="c">Typical user / month</th><th class="c">Heavy (p90)</th><th>Margin read</th></tr></thead>
+      <tbody>
+        <tr><td><b>Free</b></td><td class="money">~₦370</td><td class="money">~₦900</td><td>Deliberate loss leader; max exposure ~₦1,500 (lifetime 60-message cap and daily caps bind) inside the ₦2,000 CAC envelope</td></tr>
+        <tr><td><b>Plus ₦5,000</b></td><td class="money">~₦2,250</td><td class="money">~₦4,000</td><td>~55% margin typical; ~20% on heavy users</td></tr>
+        <tr><td><b>Professional ₦25,000</b></td><td class="money">~₦6,700</td><td class="money">~₦12,000</td><td>~73% margin typical; ~50% heavy; fair-use and per-client sanity checks</td></tr>
+        <tr><td><b>Enterprise</b></td><td colspan="2" class="c">Cost-plus, contracted</td><td>Never below 60% margin, contract caps</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Payback logic</h3>
+    <div class="quote">One Plus conversion contributes roughly ₦2,750 after serving costs. At a ₦400 average free-user cost, that single conversion pays for about seven acquired free users. Target: at least one Plus conversion per ten active free users within ninety days. BVN pay-per-use (₦350 against a ₦90 cost) is the highest-margin line and is pushed at every identity-gated moment.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">15</span></div>
+</div>
+
+<!-- ============ PAGE 16 : PART IV / S16-S17 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>16 · Revenue Model</h2>
+    <table>
+      <thead><tr><th>#</th><th>Stream</th><th>Mechanism</th><th>Who pays</th><th class="c">Phase</th></tr></thead>
+      <tbody>
+        <tr><td class="c">1</td><td><b>Subscriptions</b></td><td>Plus and Professional tiers; annual discount pulls cash forward</td><td>Consumers, pros</td><td class="c">1</td></tr>
+        <tr><td class="c">2</td><td><b>Identity pay-per-use</b></td><td>BVN at ₦350 (₦90 cost), TIN/CAC lookups</td><td>Consumers, onboarding flows</td><td class="c">1</td></tr>
+        <tr><td class="c">3</td><td><b>Skills fees</b></td><td>WHT recovery 5% success fee; TCC packs ₦2,500; ajo ₦100-200/member; employer badge ₦200-500/employee</td><td>Users, employers, cooperatives</td><td class="c">1-2</td></tr>
+        <tr><td class="c">4</td><td><b>Marketplace</b></td><td>Contact reveal and priority placement; take-rate as scoped</td><td>Professionals</td><td class="c">2</td></tr>
+        <tr><td class="c">5</td><td><b>Partner API</b></td><td>Sandbox free; 5k and 50k call tiers; overage metering</td><td>Fintechs, payroll, ERP tools</td><td class="c">2</td></tr>
+        <tr><td class="c">6</td><td><b>Enterprise</b></td><td>White-label reports, portfolio scoring, SSO, SLA</td><td>Banks, institutions</td><td class="c">2-3</td></tr>
+        <tr><td class="c">7</td><td><b>Embedded rails (future)</b></td><td>Tax and verification rails for other platforms; not promised until scoped</td><td>Platforms</td><td class="c">3</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Composition shifts over time: Year 1 is subscription-heavy; Year 2 adds API volume and identity pay-per-use; Year 3 layers enterprise contracts and marketplace take-rate.</p>
+
+    <h2>17 · Go-To-Market</h2>
+    <ol class="flow">
+      <li><b>Prove it works, on camera.</b> Track A demo against the 8-minute script for 4-5 warm client leads: tax-reporting fintechs, government-adjacent projects, accountants.</li>
+      <li><b>Content as the top of funnel.</b> Blog and knowledge-base articles on the reform-era questions people actually search; every article is reviewed by a licensed practitioner before publishing.</li>
+      <li><b>Developer outreach.</b> Nigerian tech communities (Twitter/X, DevC) for the API surface; sandbox is free by design.</li>
+      <li><b>Professional supply first.</b> The marketplace only converts if verified pros exist; supply acquisition precedes consumer demand marketing.</li>
+      <li><b>The BVN moment.</b> Identity verification is where free users already have intent; the teaser creates the habit, pay-per-use captures the rest.</li>
+    </ol>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">16</span></div>
+</div>
+
+<!-- ============ PAGE 17 : PART IV / S18-S19 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>18 · Regulatory and Compliance</h2>
+    <p class="small">Compliance is a gate, not a backdrop. The demo track (seeded data only) proceeds while registrations run in parallel; <b>no real user BVN, bank link, or filing goes live before the gate items complete.</b></p>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>When</th><th>Item</th></tr></thead>
+      <tbody>
+        <tr><td>Now</td><td>CAC company registration; lawyer engaged</td></tr>
+        <tr><td>During demo build</td><td>DPIA-lite review (mock data only); draft privacy notice (English)</td></tr>
+        <tr><td>Before production</td><td>NDPC registration (data controller of major importance); full DPIA; Data Protection Officer appointed (may be outsourced, on paper); four-language notices; licensed-pro review live</td></tr>
+        <tr><td>Before bank/enterprise deals</td><td>Penetration test, residency answers, SLA and DPA templates</td></tr>
+      </tbody>
+    </table>
+
+    <h3>The two bright lines</h3>
+    <ul class="dash">
+      <li><b>The FIRS line.</b> No scraping or unofficial integration of any government system. All content derives from published law and guidance, cited per answer. The agent gives general information, never representation; high-stakes matters trigger referral.</li>
+      <li><b>The CBN line.</b> Not a licensed credit bureau, never presented as one. The score is indicative, for education and self-improvement. Bureau data enters only via partnership, as their report. No lending from our own balance sheet.</li>
+    </ul>
+
+    <h2>19 · Security and Trust</h2>
+    <p>Four data classifications govern everything the platform holds:</p>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Level</th><th>Examples</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td><b>Restricted</b></td><td>BVN, NIN, TIN, bank tokens, API secrets</td><td>Never stored raw unless unavoidable; encrypted; minimal access; full audit</td></tr>
+        <tr><td><b>Confidential</b></td><td>Statements, payslips, filings, credit factors, client lists</td><td>Encrypted at rest and in transit; owner plus explicitly granted roles only</td></tr>
+        <tr><td><b>Internal</b></td><td>Support tickets, verification docs under review, usage counters</td><td>Staff roles only</td></tr>
+        <tr><td><b>Public</b></td><td>Blog, docs, verified pro business profiles (name and services, not contacts)</td><td>Freely servable, still rate-limited</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Locked rules: raw BVN/NIN never persisted (verdict, provider reference, last-3 hint only); bank credentials never seen by us (read-only, revocable tokens); marketplace contacts render only to logged-in users; identifiers stripped before any processing. Breach response: assess, contain, notify NDPC and users within 72 hours.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">17</span></div>
+</div>
+
+<!-- ============ PAGE 18 : PART IV / S20 CAPITAL ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>20 · Capital Plan: the ₦10,000,000 Phase 1</h2>
+    <p>The Phase 1 budget is ₦10,000,000, sized for a six-month build that ships the demo track, hardens the production path, and pays the compliance gate. The full month-by-month burn and revenue scenarios are detailed in the companion document, <i>Creditax.ai: Financial Projections</i>.</p>
+
+    <table>
+      <thead><tr><th>Allocation</th><th class="c">Amount</th><th class="c">Share</th><th>What it buys</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Engineering and product</b></td><td class="money">₦4,000,000</td><td class="c">40%</td>
+          <td>Six months of build (lead developer plus contracted product design), the full demo surface, calculators, assistant, canvas workspace</td>
+        </tr>
+        <tr>
+          <td><b>Go-to-market</b></td><td class="money">₦2,500,000</td><td class="c">25%</td>
+          <td>Paid acquisition within the ₦2,000/user envelope, content production, demo video, professional-supply outreach</td>
+        </tr>
+        <tr>
+          <td><b>Infrastructure</b></td><td class="money">₦1,200,000</td><td class="c">12%</td>
+          <td>Hosting, managed Postgres with retrieval, background jobs, serving and extraction providers, identity lookups, maps, storage and image delivery at production scale from Month 1</td>
+        </tr>
+        <tr>
+          <td><b>Compliance and legal</b></td><td class="money">₦800,000</td><td class="c">8%</td>
+          <td>CAC registration, NDPC registration, full DPIA with counsel, four-language legal notices, licensed-practitioner review of knowledge-base content</td>
+        </tr>
+        <tr>
+          <td><b>Operations</b></td><td class="money">₦500,000</td><td class="c">5%</td>
+          <td>Corporate banking and payments setup, accounting tooling, monitoring and status infrastructure</td>
+        </tr>
+        <tr>
+          <td><b>Contingency</b></td><td class="money">₦1,000,000</td><td class="c">10%</td>
+          <td>Provider price movement, security review, and runway buffer</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="stats">
+      <div class="stat"><div class="fig">40%</div><div class="lab">Builds the product</div></div>
+      <div class="stat"><div class="fig">25%</div><div class="lab">Buys adoption</div></div>
+      <div class="stat"><div class="fig">12%</div><div class="lab">Runs the rails</div></div>
+      <div class="stat"><div class="fig">8%</div><div class="lab">Opens the legal road</div></div>
+      <div class="stat"><div class="fig">15%</div><div class="lab">Ops + buffer</div></div>
+    </div>
+
+    <p class="small">Stage discipline: hardware is not in scope at any price in Phase 1; the marketplace takes supply before demand spend; the production data gate is funded in this budget so it is never the excuse.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">18</span></div>
+</div>
+
+<!-- ============ PAGE 19 : PART IV / S21 RISK ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>21 · Risk Register</h2>
+    <table>
+      <thead><tr><th>Risk</th><th class="c">Severity</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><b>Incorrect or ungrounded tax answers</b></td><td class="c">CRITICAL</td><td>Citations mandatory; golden test set of Nigerian tax questions; confidence bar with mandatory professional referral; licensed-practitioner review of all knowledge-base content</td></tr>
+        <tr><td><b>NDPA / NDPC non-compliance</b></td><td class="c">HIGH</td><td>DPIA before production; NDPC registration as data controller of major importance; DPO on paper from day one; 72-hour breach workflow</td></tr>
+        <tr><td><b>Regulatory change (FIRS forms, rates)</b></td><td class="c">HIGH</td><td>Versioned rules and re-index jobs; circulars tracked as P1 documents; citation trail updates with every change</td></tr>
+        <tr><td><b>Free-tier cost blowout</b></td><td class="c">HIGH</td><td>Lifetime 60-message cap plus daily quotas enforced server-side; max exposure ₦1,500/user against a ₦2,000 envelope</td></tr>
+        <tr><td><b>Provider concentration (identity, bank data)</b></td><td class="c">MEDIUM</td><td>Provider pinned per environment; fail-closed demo path; multi-provider notes maintained (no reliance on defunct services)</td></tr>
+        <tr><td><b>Competition from generic assistants</b></td><td class="c">MEDIUM</td><td>The moat is Nigeria-only cited depth, the compliance-credit dataset, and the verified marketplace, none of which a generic product accrues</td></tr>
+        <tr><td><b>Marketplace supply stall</b></td><td class="c">MEDIUM</td><td>Supply acquisition precedes consumer spend; pro-side tooling (bulk calc, white-label) makes joining worth it even with few clients</td></tr>
+        <tr><td><b>Conversion below target</b></td><td class="c">MEDIUM</td><td>Quota walls name the exact limit; BVN teaser builds the habit; annual discount pulls cash forward; scenario bands (companion document) set expectations before spend</td></tr>
+        <tr><td><b>Solo / key-person risk</b></td><td class="c">MEDIUM</td><td>Docs-as-code foundation, runbooks, modular services; the working paper and foundation docs are the bus factor</td></tr>
+        <tr><td><b>Payment fraud on subscriptions</b></td><td class="c">LOW</td><td>Local PSP with 3-D Secure; webhook signature verification; no card data on platform servers</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Severity reflects impact on launch and licence to operate. The compliance rows are funded in the Phase 1 budget (Section 20) and gated in the roadmap (Part III).</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">19</span></div>
+</div>
+
+<!-- ============ PAGE 20 : PART IV / S22 KPI + GLOSSARY ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PART IV · BUSINESS</span></div>
+  <div class="body">
+    <h2>22 · Key Performance Indicators and Glossary</h2>
+
+    <h3>Six KPI layers</h3>
+    <table>
+      <thead><tr><th>Layer</th><th>Metrics</th></tr></thead>
+      <tbody>
+        <tr><td><b>Usage</b></td><td>Messages/day; calculations/day; documents extracted; report generations</td></tr>
+        <tr><td><b>Trust</b></td><td>Citation coverage on answers (target: 100%); referral rate on low confidence; professional verification turnaround</td></tr>
+        <tr><td><b>Money</b></td><td>MRR; free-to-paid conversion (target: 1 per 10 active free users / 90 days); BVN pay-per-use volume; ARPU per tier</td></tr>
+        <tr><td><b>Marketplace</b></td><td>Verified pros onboarded; contact reveals; referral-to-contact conversion</td></tr>
+        <tr><td><b>Compliance</b></td><td>DPIA milestones; NDPC registration status; knowledge-base review coverage; breach drill results</td></tr>
+        <tr><td><b>Product</b></td><td>Uptime (target 99.5%); p95 response under 500ms; API sandbox signups (target 100 in 6 months, 25 active)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Glossary of principal terms</h3>
+    <table>
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><b>Canvas</b></td><td>The persistent workspace where assistant answers render as cards (calculations, checklists, extracts) rather than chat bubbles</td></tr>
+        <tr><td><b>Skill</b></td><td>A guided mini-workflow with a fixed input, output card, credit cost, and tier gate</td></tr>
+        <tr><td><b>Credit</b></td><td>The internal unit of quota (message = 1, calculation = 2, upload = 3, BVN = 25)</td></tr>
+        <tr><td><b>Credit Health Score</b></td><td>The platform's indicative score for education and self-improvement; not a bureau report</td></tr>
+        <tr><td><b>DPIA</b></td><td>Data Protection Impact Assessment, required before high-risk processing goes live</td></tr>
+        <tr><td><b>NDPC</b></td><td>Nigeria Data Protection Commission; regulator under the Nigeria Data Protection Act 2023</td></tr>
+        <tr><td><b>TCC</b></td><td>Tax Clearance Certificate; unlocks contracts, visas, and loans; the object of Skill 02</td></tr>
+        <tr><td><b>WHT</b></td><td>Withholding tax; deducted at source by clients, claimable by vendors as credits</td></tr>
+        <tr><td><b>BVN</b></td><td>Bank Verification Number; the identity rail behind verification flows</td></tr>
+        <tr><td><b>Track A / Track B</b></td><td>The demo build (seeded data, for selling) and the production build (real integrations, gated)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PART IV · BUSINESS</span><span class="num">20</span></div>
+</div>
+
+<!-- ============ PAGE 21 : APPENDIX A ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">APPENDIX A</span></div>
+  <div class="body">
+    <div class="kicker">Appendix A</div>
+    <h1 style="font-size:19pt;">Pricing Tables</h1>
+    <p class="small">Reproduced from the pricing foundation (September 2026). Currency rule locked: Naira only, everywhere.</p>
+
+    <h3>Full tier comparison</h3>
+    <table style="font-size:8pt;">
+      <thead><tr><th></th><th>Free: ₦0</th><th>Plus: ₦5,000/mo (₦4,000 annual)</th><th>Professional: ₦25,000/mo (₦20,000 annual)</th><th>Enterprise: Custom</th></tr></thead>
+      <tbody>
+        <tr><td><b>Who</b></td><td>Consumers trying us out</td><td>Active consumers, freelancers, SMEs</td><td>Tax pros and firms</td><td>Lenders, fintechs, institutions</td></tr>
+        <tr><td><b>Assistant chat</b></td><td>5 msgs/day, 60 lifetime cap</td><td>100 msgs/day</td><td>Unlimited fair-use</td><td>Pooled / contracted</td></tr>
+        <tr><td><b>Calculations (PAYE/VAT/WHT)</b></td><td>5/day</td><td>50/day</td><td>Unlimited fair-use</td><td>Contracted volume</td></tr>
+        <tr><td><b>Document uploads</b></td><td>2/day, 10/month cap</td><td>20/day</td><td>100/day + client docs</td><td>Contracted</td></tr>
+        <tr><td><b>Report-chart generations</b></td><td>2/day</td><td>10/day</td><td>Unlimited fair-use</td><td>Contracted</td></tr>
+        <tr><td><b>Credit score</b></td><td>1 starter snapshot, preview locked after</td><td>Full + daily refresh + simulator</td><td>Full + client scores</td><td>Portfolio scoring</td></tr>
+        <tr><td><b>BVN verifications</b></td><td>0 (+ 2-teaser / 60 days)</td><td>5/mo included</td><td>20/mo included</td><td>Contracted</td></tr>
+        <tr><td><b>Extra BVN lookups</b></td><td class="money">₦350</td><td class="money">₦350</td><td class="money">₦300</td><td>Contracted rate</td></tr>
+        <tr><td><b>Marketplace contact reveal</b></td><td>Masked until login</td><td>Full</td><td>Full + priority placement</td><td>-</td></tr>
+        <tr><td><b>Team seats / invites</b></td><td>-</td><td>- (single user)</td><td>3 seats included</td><td>SSO + custom</td></tr>
+        <tr><td><b>Shared canvas links</b></td><td>-</td><td>-</td><td>Yes (view/comment)</td><td>Yes</td></tr>
+        <tr><td><b>Connected apps</b></td><td>2</td><td>10</td><td>Unlimited</td><td>Unlimited</td></tr>
+        <tr><td><b>Pro practice tools</b></td><td>-</td><td>-</td><td>Clients, bulk calc, white-label</td><td>Yes</td></tr>
+        <tr><td><b>API access</b></td><td>100 sandbox calls/mo</td><td>5,000 calls/mo</td><td>50,000 calls/mo</td><td>Custom + SLA</td></tr>
+        <tr><td><b>Support</b></td><td>Community</td><td>Email (48h)</td><td>Priority (24h)</td><td>Dedicated + SLA</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>APPENDIX A</span><span class="num">21</span></div>
+</div>
+
+<!-- ============ PAGE 22 : APPENDIX A CONT. + APPENDIX B ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">APPENDIX A · B</span></div>
+  <div class="body">
+    <h3>Internal credit accounting</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Action</th><th class="c">Credits</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Assistant message (grounded answer)</td><td class="c">1</td><td>Charged on reply, not on send</td></tr>
+        <tr><td>Tax calculation</td><td class="c">2</td><td>Identical inputs cached 24h do not re-charge</td></tr>
+        <tr><td>Document upload + extraction</td><td class="c">3</td><td>Failed extractions refund</td></tr>
+        <tr><td>Report-chart generation</td><td class="c">2</td><td></td></tr>
+        <tr><td>Credit score refresh</td><td class="c">2</td><td></td></tr>
+        <tr><td>BVN verification</td><td class="c">25</td><td>Always charged on provider call; teaser covers first 2</td></tr>
+        <tr><td>TIN / CAC-status lookup</td><td class="c">5</td><td></td></tr>
+        <tr><td>API call (partner)</td><td class="c">1</td><td>Webhook retries do not re-charge</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:6mm;">Appendix B: Open Decisions</h2>
+    <p class="small">Tracked in the foundation documents. Nothing below is promised in this paper; each resolves before the phase that depends on it.</p>
+    <table>
+      <thead><tr><th>#</th><th>Decision</th><th>Current state</th></tr></thead>
+      <tbody>
+        <tr><td class="c">1</td><td>Payments provider for subscriptions</td><td>Local PSP with 3-D Secure (Flutterwave or Paystack class); final pick at Phase 4</td></tr>
+        <tr><td class="c">2</td><td>Enterprise BaaS-style embedded rails</td><td>Under consideration as an Enterprise add-on; not promised until scoped</td></tr>
+        <tr><td class="c">3</td><td>Pilot site for the 8-minute demo</td><td>4-5 warm client leads; sequence locked behind demo stability</td></tr>
+        <tr><td class="c">4</td><td>Bureau partnership for official reports</td><td>CRC / FirstCentral presented as their report, never ours; terms open</td></tr>
+        <tr><td class="c">5</td><td>DPO arrangement</td><td>Outsourced or part-time acceptable at this stage; must exist on paper with published contact</td></tr>
+        <tr><td class="c">6</td><td>WHT recovery filing partner</td><td>Via verified marketplace pros; success-fee split open</td></tr>
+        <tr><td class="c">7</td><td>State-IRS expansion order</td><td>Lagos first; order of subsequent states open</td></tr>
+        <tr><td class="c">8</td><td>Filing Rooms / Diaspora Desk / Score-Gated Offers</td><td>Deferred until each stated prerequisite is true</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>APPENDIX A · B</span><span class="num">22</span></div>
+</div>
+
+<!-- ============ PAGE 23 : REFERENCES ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">REFERENCES</span></div>
+  <div class="body">
+    <div class="kicker" style="margin-top:6mm;">References</div>
+    <table>
+      <tbody>
+        <tr><td>National Assembly of Nigeria (2023). <i>Nigeria Tax Act; Nigeria Tax Administration Act;</i> Capital Gains Tax amendments (2024 reform).</td></tr>
+        <tr><td>Federal Inland Revenue Service (2023-2024). <i>VAT Guide; withholding tax circulars; public rulings and notices.</i></td></tr>
+        <tr><td>NITDA (2023). <i>Nigeria Data Protection Act.</i> Nigeria Data Protection Commission guidance.</td></tr>
+        <tr><td>Corporate Affairs Commission. <i>Company registration requirements</i> (no official public API exists; hybrid verification documented in Section 8).</td></tr>
+        <tr><td>Central Bank of Nigeria. <i>Licensing classes relevant to payments and consumer credit</i> (boundary documented in Section 18).</td></tr>
+        <tr><td>Creditax research foundation (September 2026): product-foundation, pricing-and-access, security-foundation, legal-compliance, roles-and-experience, feature-specs, mvp-demo-plan, project-roadmap, API-Research.</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 7mm;" class="quote">Prepared by MissionCTRL Creative Tech Research Labs, Lagos, September 2026. This paper distils the research foundation for prospective investors, partners, and clients. Figures trace to the foundation documents; projections in the companion financial document are scenario bands, not commitments.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>REFERENCES</span><span class="num">23</span></div>
+</div>
+
+</body>
+</html>

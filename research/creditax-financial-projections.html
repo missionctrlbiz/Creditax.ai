@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creditax.ai Financial Projections</title>
+<style>
+@page { size: A4; margin: 0; }
+:root {
+  --primary: #0D7377;
+  --primary-light: #14919B;
+  --accent: #32E875;
+  --bg-light: #F4F9F9;
+  --text: #1A2B3C;
+  --muted: #6B7B8C;
+  --border: rgba(13, 115, 119, 0.15);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-sans); color: var(--text); font-size: 10pt; line-height: 1.55; background: #fff; }
+
+.page {
+  width: 210mm; min-height: 296mm;
+  padding: 18mm 18mm 16mm;
+  position: relative;
+  page-break-after: always;
+  display: flex; flex-direction: column;
+}
+.page:last-child { page-break-after: avoid; }
+
+.runhead {
+  position: absolute; top: 9mm; left: 18mm; right: 18mm;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 2.5mm; border-bottom: 2px solid var(--primary);
+  background: #fff; z-index: 2;
+}
+.runhead .brand { font-weight: 700; font-size: 9pt; letter-spacing: 2px; color: var(--primary); }
+.runhead .section { font-family: var(--font-mono); font-size: 8pt; color: var(--muted); }
+
+.runfoot {
+  position: absolute; bottom: 7mm; left: 18mm; right: 18mm;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 2.5mm; border-top: 1px solid var(--border);
+  font-size: 8pt; color: var(--muted);
+  background: #fff; z-index: 2;
+}
+.runfoot .lab { font-weight: 600; color: var(--primary); letter-spacing: 1.5px; }
+.runfoot .num { font-family: var(--font-mono); }
+
+.body { flex: 1; margin-top: 11mm; margin-bottom: 10mm; }
+
+h1 { font-size: 22pt; font-weight: 700; line-height: 1.12; margin-bottom: 4mm; color: var(--text); }
+h2 { font-size: 15pt; font-weight: 700; line-height: 1.2; margin: 5mm 0 2.5mm; color: var(--text); }
+h3 { font-size: 11.5pt; font-weight: 600; margin: 3.5mm 0 1.8mm; color: var(--primary); }
+p  { margin-bottom: 2.4mm; }
+.lead { font-size: 11pt; line-height: 1.65; }
+.kicker { font-size: 8.5pt; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--primary); margin-bottom: 3mm; }
+.small { font-size: 8.5pt; color: var(--muted); }
+
+.stats { display: flex; gap: 3mm; flex-wrap: wrap; margin: 3mm 0; }
+.stat {
+  flex: 1; min-width: 30mm; background: var(--bg-light);
+  border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 2.5mm;
+  padding: 3.5mm 3mm; text-align: center;
+}
+.stat .fig { font-size: 14pt; font-weight: 700; color: var(--primary); line-height: 1.15; }
+.stat .lab { font-size: 7.5pt; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text); margin-top: 1.5mm; }
+.stat .sub { font-size: 8pt; color: var(--muted); margin-top: 1mm; }
+.stat.accent { border-left-color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; margin: 2.8mm 0; font-size: 9pt; }
+th {
+  background: var(--primary); color: #fff; text-align: left;
+  padding: 2mm 2.6mm; font-weight: 600; font-size: 8.5pt;
+}
+td { padding: 1.9mm 2.6mm; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:nth-child(even) { background: var(--bg-light); }
+td.money { font-family: var(--font-mono); font-weight: 600; color: var(--primary); white-space: nowrap; }
+td.money-strong { font-family: var(--font-mono); font-weight: 700; color: var(--text); white-space: nowrap; }
+th.c, td.c { text-align: center; }
+tr.total td { background: var(--primary); color: #fff; font-weight: 700; border-bottom: none; }
+tr.total td.money { color: var(--accent); }
+
+.quote {
+  border-left: 3px solid var(--primary-light); background: var(--bg-light);
+  padding: 2.5mm 4mm; margin: 2.8mm 0; font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+
+ol.flow { list-style: none; counter-reset: step; margin: 3.5mm 0; }
+ol.flow li { counter-increment: step; position: relative; padding-left: 10mm; margin-bottom: 2mm; page-break-inside: avoid; }
+ol.flow li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute; left: 0; top: 0.4mm;
+  font-family: var(--font-mono); font-size: 9.5pt; font-weight: 700; color: var(--primary);
+}
+ul.dash { list-style: none; margin: 2.5mm 0; }
+ul.dash li { position: relative; padding-left: 5.5mm; margin-bottom: 1.4mm; }
+ul.dash li::before { content: ""; position: absolute; left: 0; top: 2.2mm; width: 3mm; height: 1.5px; background: var(--primary-light); }
+
+.partband {
+  background: linear-gradient(135deg, #0D7377 0%, #14919B 100%);
+  color: #fff; border-radius: 2.5mm;
+  padding: 4.5mm 5.5mm; margin-bottom: 4mm;
+}
+.partband .pn { font-family: var(--font-mono); font-size: 8.5pt; color: #baf5d0; letter-spacing: 2px; }
+.partband .pt { font-size: 15pt; font-weight: 700; margin-top: 1.2mm; }
+.partband .pd { font-size: 9pt; color: #eafaf1; margin-top: 1.8mm; max-width: 155mm; }
+
+.logo { height: 13mm; }
+.cover { justify-content: center; }
+.cover .logo-row { display: flex; align-items: center; gap: 5mm; margin-bottom: 12mm; }
+.cover .meta { font-size: 9pt; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5mm; }
+.cover h1 { font-size: 30pt; color: var(--primary); margin-bottom: 4mm; }
+.cover h2.sub { font-size: 13.5pt; font-weight: 400; color: var(--text); margin: 0 0 14mm; max-width: 152mm; line-height: 1.45; }
+.cover .byline { margin-top: 8mm; font-size: 10pt; }
+.cover .byline b { display: block; color: var(--primary); font-size: 11pt; margin-bottom: 1mm; }
+
+/* Simple CSS bar chart */
+.chart { margin: 3.5mm 0; }
+.chart .row { display: flex; align-items: center; margin-bottom: 1.8mm; }
+.chart .row .clabel { width: 28mm; font-size: 8.5pt; font-weight: 600; color: var(--text); flex-shrink: 0; }
+.chart .row .cbar { height: 6mm; border-radius: 1.5mm; display: flex; align-items: center; padding-left: 2.5mm; font-family: var(--font-mono); font-size: 7.5pt; color: #fff; white-space: nowrap; overflow: hidden; }
+.b-teal { background: var(--primary); }
+.b-light { background: var(--primary-light); }
+.b-green { background: var(--accent); color: var(--text) !important; font-weight: 700; }
+.b-mid { background: #5ba8ad; }
+
+/* Stacked monthly burn chart */
+.burn { margin: 3.5mm 0; }
+.burn .mrow { display: flex; align-items: flex-end; gap: 3mm; height: 30mm; margin-bottom: 1.5mm; }
+.burn .mcol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; }
+.burn .seg { width: 100%; }
+.burn .mlab { text-align: center; font-family: var(--font-mono); font-size: 7.5pt; color: var(--muted); }
+.burn .mval { text-align: center; font-family: var(--font-mono); font-size: 7.5pt; color: var(--text); font-weight: 700; margin-bottom: 1mm; }
+.s-eng { background: var(--primary); }
+.s-gtm { background: var(--primary-light); }
+.s-infra { background: var(--accent); }
+.s-comp { background: #0f5e61; }
+.s-ops { background: #9fc4c7; }
+.legend { display: flex; gap: 4mm; flex-wrap: wrap; margin-top: 2.5mm; }
+.legend .li { display: flex; align-items: center; gap: 1.8mm; font-size: 8pt; color: var(--muted); }
+.legend .sw { width: 3.5mm; height: 3.5mm; border-radius: 1mm; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 : COVER ============ -->
+<div class="page cover">
+  <div class="logo-row">
+    <img class="logo" src="../public/logo.png" alt="Creditax.ai">
+  </div>
+  <div class="meta">Financial Projections · 2026 · Version 1.0</div>
+  <h1>Creditax.ai</h1>
+  <h2 class="sub">Financial Projections: unit economics, the ₦10,000,000 Phase 1 budget, and revenue scenarios across three phases</h2>
+  <div class="byline">
+    <b>MissionCTRL Creative Tech Research Labs</b>
+    Lagos, Nigeria · September 2026
+  </div>
+  <div style="margin-top: 14mm;" class="small">Companion to the Creditax.ai Working Paper. Unit costs, prices, and margins trace to the pricing foundation document (September 2026). Infrastructure estimates trace to the API research document. Revenue figures are scenario bands built on documented conversion mechanics, with every assumption stated. Nothing in this document is a commitment.</div>
+  <div class="runfoot">
+    <span class="lab">CREDITAX.AI</span>
+    <span>FINANCIAL PROJECTIONS 2026</span>
+    <span class="num">1</span>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 : EXEC SUMMARY ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">EXECUTIVE SUMMARY</span></div>
+  <div class="body">
+    <div class="kicker">Executive Summary</div>
+    <h1>The numbers behind the flywheel</h1>
+    <p class="lead">Creditax monetises through four tiers of Naira-only subscriptions, identity verification charged per use, guided Skills with fixed prices and success fees, a developer API, and enterprise contracts. Every metered action carries a documented unit cost; every tier has a documented margin band; every acquisition sits inside a documented cost envelope. This document assembles those facts into a Phase 1 budget of ₦10,000,000 and three-phase revenue scenarios.</p>
+
+    <div class="stats">
+      <div class="stat accent"><div class="fig">₦10M</div><div class="lab">Phase 1 Budget</div><div class="sub">6 months + contingency</div></div>
+      <div class="stat"><div class="fig">~73%</div><div class="lab">Professional Margin</div><div class="sub">Typical user</div></div>
+      <div class="stat"><div class="fig">₦350</div><div class="lab">BVN Price</div><div class="sub">₦90 cost · highest-margin line</div></div>
+      <div class="stat"><div class="fig">1:10</div><div class="lab">Conversion Target</div><div class="sub">Plus per active free user / 90 days</div></div>
+    </div>
+
+    <h3>What the documented facts establish</h3>
+    <ul class="dash">
+      <li>The free tier is a deliberately funded acquisition channel: typical cost about ₦370 per user per month, hard-capped near ₦1,500 by the 60-message lifetime limit and daily quotas, inside a ₦2,000 envelope.</li>
+      <li>Paid tiers are gross-margin positive from day one: Plus around 55% typical, Professional around 73% typical, Enterprise floored at 60%.</li>
+      <li>One Plus conversion contributes roughly ₦2,750 after serving costs and pays for about seven acquired free users.</li>
+      <li>BVN verification is the highest-margin line item in the product: ₦350 against a ₦90 cost.</li>
+    </ul>
+
+    <h3>What the scenarios show</h3>
+    <p>Two Phase 1 (Month 6) scenarios are modelled on the documented conversion mechanic, differing only in how much of the ₦2.5M go-to-market allocation converts into activated users:</p>
+    <table>
+      <thead><tr><th>Scenario</th><th class="c">Activated free users</th><th class="c">Plus</th><th class="c">Professional</th><th class="c">Month 6 MRR</th></tr></thead>
+      <tbody>
+        <tr><td><b>A: Conservative</b></td><td class="c">200</td><td class="c">20</td><td class="c">2</td><td class="money-strong">~₦252,500</td></tr>
+        <tr><td><b>B: GTM-funded</b></td><td class="c">800</td><td class="c">80</td><td class="c">8</td><td class="money-strong">~₦930,000</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Both scenarios assume the documented 1:10 conversion of active free users to Plus, a 10% Plus-to-Professional uplift, and BVN pay-per-use at the documented price. Full assumptions on pages 7 and 8. The working paper's roadmap targets (100 API signups, 25 active, first revenue by Month 6) sit inside Scenario A.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>EXECUTIVE SUMMARY</span><span class="num">2</span></div>
+</div>
+
+<!-- ============ PAGE 3 : UNIT ECONOMICS ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">UNIT ECONOMICS</span></div>
+  <div class="body">
+    <div class="kicker">Section 1</div>
+    <h1>Unit Economics: the documented costs</h1>
+    <p class="small">Source: pricing foundation (v1.2, Sept 2026). Unit costs revalidated monthly; any unit moving 20%+ triggers a quota re-cut before prices change.</p>
+
+    <h3>Per-action unit costs</h3>
+    <table>
+      <thead><tr><th>Action</th><th class="c">Unit cost</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td>Grounded assistant message</td><td class="money">₦5</td><td>Budget serving (2-4k tokens) + embedding + vector search</td></tr>
+        <tr><td>Tax calculation</td><td class="money">₦3</td><td>Rules engine + logging; cached identical inputs free for 24h</td></tr>
+        <tr><td>Document upload + extraction</td><td class="money">₦15</td><td>Parse + chunk + embed + extract</td></tr>
+        <tr><td>Report-chart generation</td><td class="money">₦8</td><td>Render + data assembly</td></tr>
+        <tr><td>Credit score refresh</td><td class="money">₦5</td><td>Compute only; bank pulls billed separately on paid tiers</td></tr>
+        <tr><td>BVN verification</td><td class="money">₦90</td><td>Provider lookup + OTP steps + failure buffer (failures billed)</td></tr>
+        <tr><td>TIN / CAC-status lookup</td><td class="money">₦150</td><td>Provider blended range</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Cost and margin per tier</h3>
+    <table>
+      <thead><tr><th>Tier</th><th class="c">Price / month</th><th class="c">Typical user cost</th><th class="c">Heavy (p90)</th><th class="c">Max exposure</th><th>Margin read</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Free</b></td><td class="money">₦0</td><td class="money">~₦370</td><td class="money">~₦900</td><td class="money">~₦1,500</td>
+          <td>Acquisition channel. The 60-message lifetime cap and daily caps bind before the ₦2,000 envelope is breached.</td>
+        </tr>
+        <tr>
+          <td><b>Plus</b></td><td class="money">₦5,000</td><td class="money">~₦2,250</td><td class="money">~₦4,000</td><td class="money">Fair-use backstop</td>
+          <td>~55% margin typical; ~20% on heavy users.</td>
+        </tr>
+        <tr>
+          <td><b>Professional</b></td><td class="money">₦25,000</td><td class="money">~₦6,700</td><td class="money">~₦12,000</td><td class="money">Fair-use + client checks</td>
+          <td>~73% margin typical; ~50% heavy.</td>
+        </tr>
+        <tr>
+          <td><b>Enterprise</b></td><td class="money">Contracted</td><td colspan="2" class="c">Cost-plus, floor margin contractual</td><td class="money">Contract caps</td>
+          <td>Never below 60% margin.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>UNIT ECONOMICS</span><span class="num">3</span></div>
+</div>
+
+<!-- ============ PAGE 3B : UNIT ECONOMICS CONT. ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">UNIT ECONOMICS · CONT.</span></div>
+  <div class="body">
+    <div class="kicker">Section 1 · Continued</div>
+    <h1 style="font-size:19pt;">Payback and Price Anchors</h1>
+    <h3>The payback identity</h3>
+    <div class="quote">
+      One Plus conversion at ₦5,000 with a ~55% margin contributes about ₦2,750 per month. At a ₦400 average free-user cost, that contribution pays for roughly seven acquired free users. The target, set in the pricing foundation: at least one Plus conversion per ten active free users within ninety days.
+    </div>
+
+    <h3>Price anchors (customer-facing)</h3>
+    <table>
+      <thead><tr><th>Line</th><th class="c">Price</th><th class="c">Cost</th><th class="c">Gross margin</th></tr></thead>
+      <tbody>
+        <tr><td>BVN verification (pay-per-use)</td><td class="money">₦350</td><td class="money">₦90</td><td class="money">74%</td></tr>
+        <tr><td>TCC Readiness Pack (Skill 02)</td><td class="money">₦2,500</td><td class="money">~₦390*</td><td class="money">~84%</td></tr>
+        <tr><td>WHT Credit Recovery (Skill 01)</td><td class="money">5% success fee</td><td class="money">Scan cost ₦50**</td><td class="money">Variable, high</td></tr>
+        <tr><td>Salary Optimizer (Skill 06)</td><td class="money">₦1,500</td><td class="money">~₦300*</td><td class="money">~80%</td></tr>
+      </tbody>
+    </table>
+    <p class="small">* Estimated from per-action unit costs (assessment and bundle compute only; excludes support and acquisition). ** Skill 01 scan = 5 credits at the ₦5 message equivalent plus extraction. Success-fee economics depend on recovery volume, modelled in the Skills line of the scenarios.</p>
+
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>UNIT ECONOMICS · CONT.</span><span class="num">4</span></div>
+</div>
+
+<!-- ============ PAGE 4 : INFRASTRUCTURE ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">INFRASTRUCTURE</span></div>
+  <div class="body">
+    <div class="kicker">Section 2</div>
+    <h1>Infrastructure Cost Model</h1>
+    <p class="small">Source: API-Research infrastructure requirements (v1.3, June 2026), priced at current provider rates. USD figures converted at ₦1,500/USD. This is the production-scale envelope the Phase 1 infrastructure allocation funds from Month 3.</p>
+
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Service</th><th>Purpose</th><th class="c">Growth tier (USD/mo)</th><th class="c">Growth tier (NGN/mo)</th></tr></thead>
+      <tbody>
+        <tr><td>Hosting and edge network</td><td>Web app and API hosting</td><td class="money">$20</td><td class="money">₦30,000</td></tr>
+        <tr><td>Managed Postgres + retrieval + auth</td><td>Database, auth, background storage</td><td class="money">$25</td><td class="money">₦37,500</td></tr>
+        <tr><td>Background jobs</td><td>Workflows, scheduled re-indexing, reports</td><td class="money">$49</td><td class="money">₦73,500</td></tr>
+        <tr><td>Language model serving</td><td>Assistant answers</td><td class="money">$50</td><td class="money">₦75,000</td></tr>
+        <tr><td>Embedding service</td><td>Knowledge-base indexing and query encoding</td><td class="money">$50</td><td class="money">₦75,000</td></tr>
+        <tr><td>Document extraction</td><td>Receipts, invoices, payslips</td><td class="money">$50</td><td class="money">₦75,000</td></tr>
+        <tr><td>Identity and bank-data provider</td><td>BVN/NIN verification, account linking, income analysis</td><td class="money">$100</td><td class="money">₦150,000</td></tr>
+        <tr><td>Maps and geocoding</td><td>Marketplace proximity search (100k free requests/mo)</td><td class="money">$50</td><td class="money">₦75,000</td></tr>
+        <tr><td>Object storage</td><td>Documents, generated reports</td><td class="money">$5</td><td class="money">₦7,500</td></tr>
+        <tr><td>Image CDN</td><td>Media delivery and optimisation</td><td class="money">$20</td><td class="money">₦30,000</td></tr>
+        <tr class="total"><td>Total at growth scale</td><td></td><td class="money">~$419</td><td class="money">~₦628,500</td></tr>
+      </tbody>
+    </table>
+
+    <h3>How this scales inside the budget</h3>
+    <ul class="dash">
+      <li><b>Months 1-2 (build):</b> free tiers and sandbox credentials carry development; provider credits absorb early usage.</li>
+      <li><b>Months 3-6 (demo and pilot):</b> paid tiers engaged progressively; blended run rate of ₦300,000-500,000 per month.</li>
+      <li><b>Identity spend is demand-driven:</b> the ₦90 cost is only incurred when a paying flow triggers it, recovered at ₦350 per check.</li>
+      <li><b>The ₦1.2M allocation</b> covers the six-month envelope at documented rates, with contingency headroom for price movement.</li>
+    </ul>
+
+    <p class="small">Provider concentration risk is mitigated by per-environment pinning and a fail-closed demo path. The knowledge-base approach avoids document-parsing infrastructure for the tax corpus entirely.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>INFRASTRUCTURE</span><span class="num">5</span></div>
+</div>
+
+<!-- ============ PAGE 5 : PHASE 1 BUDGET ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PHASE 1 BUDGET</span></div>
+  <div class="body">
+    <div class="partband">
+      <div class="pn">SECTION 3</div>
+      <div class="pt">The ₦10,000,000 Phase 1 Budget</div>
+      <div class="pd">Six months: build the demo track, harden the production path, pay the compliance gate, buy adoption inside the documented envelope, and hold a contingency that is never raided for scope creep.</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Allocation</th><th class="c">Amount</th><th class="c">Share</th><th>What it buys</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Engineering and product</b></td><td class="money">₦4,000,000</td><td class="c">40%</td>
+          <td>Lead developer (6 months), contracted product design, the full demo surface (48 routes), calculators, assistant, canvas workspace, admin and pro portals, Skills 01-04</td>
+        </tr>
+        <tr>
+          <td><b>Go-to-market</b></td><td class="money">₦2,500,000</td><td class="c">25%</td>
+          <td>Paid acquisition inside the ₦2,000/user envelope, content production (reform-era guides), demo video for the 8-minute script, professional-supply outreach for the marketplace</td>
+        </tr>
+        <tr>
+          <td><b>Infrastructure</b></td><td class="money">₦1,200,000</td><td class="c">12%</td>
+          <td>All ten managed services at documented growth rates from Month 3 (Section 2), provider credits absorbing Months 1-2 build usage</td>
+        </tr>
+        <tr>
+          <td><b>Compliance and legal</b></td><td class="money">₦800,000</td><td class="c">8%</td>
+          <td>CAC company registration, NDPC registration, full DPIA with counsel, four-language legal notices (human-translated, editor-signed), licensed-practitioner review of knowledge-base content</td>
+        </tr>
+        <tr>
+          <td><b>Operations</b></td><td class="money">₦500,000</td><td class="c">5%</td>
+          <td>Corporate banking and PSP onboarding, accounting tooling, monitoring and status infrastructure, insurance</td>
+        </tr>
+        <tr>
+          <td><b>Contingency</b></td><td class="money">₦1,000,000</td><td class="c">10%</td>
+          <td>Provider price movement (re-cut triggers at 20%), security review before bank partnerships, runway buffer</td>
+        </tr>
+        <tr class="total"><td>Total</td><td class="money">₦10,000,000</td><td class="c">100%</td><td></td></tr>
+      </tbody>
+    </table>
+
+    <div class="chart">
+      <div class="row"><div class="clabel">Engineering</div><div class="cbar b-teal" style="width: 78%;">₦4.0M · 40%</div></div>
+      <div class="row"><div class="clabel">Go-to-market</div><div class="cbar b-light" style="width: 49%;">₦2.5M · 25%</div></div>
+      <div class="row"><div class="clabel">Infrastructure</div><div class="cbar b-green" style="width: 24%;">₦1.2M</div></div>
+      <div class="row"><div class="clabel">Compliance</div><div class="cbar b-mid" style="width: 16%;">₦0.8M</div></div>
+      <div class="row"><div class="clabel">Operations</div><div class="cbar b-light" style="width: 10%;"></div></div>
+      <div class="row"><div class="clabel">Contingency</div><div class="cbar b-mid" style="width: 20%;">₦1.0M · 10%</div></div>
+    </div>
+
+    <div class="quote">Two-fifths builds the product; a quarter buys adoption; the legal road is funded at 8% so the production gate is never the excuse; a tenth is held back because provider prices move and scope creep is real.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PHASE 1 BUDGET</span><span class="num">6</span></div>
+</div>
+
+<!-- ============ PAGE 6 : MONTHLY BURN ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">MONTHLY BURN</span></div>
+  <div class="body">
+    <div class="kicker">Section 4</div>
+    <h1>Month-by-Month Burn</h1>
+    <p class="small">All figures in millions of Naira. Engineering and go-to-market ramp with the roadmap: build-heavy Months 1-4, launch-heavy Months 5-6. Infrastructure engages paid tiers from Month 3. Compliance concentrates in Months 1-2 (registrations) and Month 6 (production gate). The contingency is released only against the listed triggers.</p>
+
+    <div class="burn">
+      <div class="mrow">
+        <div class="mcol"><div class="mval">1.45</div>
+          <div class="seg s-eng" style="height: 42%;"></div><div class="seg s-gtm" style="height: 7%;"></div><div class="seg s-infra" style="height: 2%;"></div><div class="seg s-comp" style="height: 12%;"></div><div class="seg s-ops" style="height: 3%;"></div>
+        </div>
+        <div class="mcol"><div class="mval">1.60</div>
+          <div class="seg s-eng" style="height: 42%;"></div><div class="seg s-gtm" style="height: 16%;"></div><div class="seg s-infra" style="height: 6%;"></div><div class="seg s-comp" style="height: 10%;"></div><div class="seg s-ops" style="height: 3%;"></div>
+        </div>
+        <div class="mcol"><div class="mval">1.65</div>
+          <div class="seg s-eng" style="height: 40%;"></div><div class="seg s-gtm" style="height: 22%;"></div><div class="seg s-infra" style="height: 12%;"></div><div class="seg s-comp" style="height: 6%;"></div><div class="seg s-ops" style="height: 3%;"></div>
+        </div>
+        <div class="mcol"><div class="mval">1.70</div>
+          <div class="seg s-eng" style="height: 40%;"></div><div class="seg s-gtm" style="height: 26%;"></div><div class="seg s-infra" style="height: 14%;"></div><div class="seg s-comp" style="height: 4%;"></div><div class="seg s-ops" style="height: 4%;"></div>
+        </div>
+        <div class="mcol"><div class="mval">1.75</div>
+          <div class="seg s-eng" style="height: 36%;"></div><div class="seg s-gtm" style="height: 34%;"></div><div class="seg s-infra" style="height: 15%;"></div><div class="seg s-comp" style="height: 3%;"></div><div class="seg s-ops" style="height: 4%;"></div>
+        </div>
+        <div class="mcol"><div class="mval">1.85</div>
+          <div class="seg s-eng" style="height: 34%;"></div><div class="seg s-gtm" style="height: 38%;"></div><div class="seg s-infra" style="height: 15%;"></div><div class="seg s-comp" style="height: 5%;"></div><div class="seg s-ops" style="height: 4%;"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap: 3mm;">
+        <div class="mlab" style="flex:1;">M1</div><div class="mlab" style="flex:1;">M2</div><div class="mlab" style="flex:1;">M3</div><div class="mlab" style="flex:1;">M4</div><div class="mlab" style="flex:1;">M5</div><div class="mlab" style="flex:1;">M6</div>
+      </div>
+      <div class="legend">
+        <div class="li"><span class="sw s-eng"></span>Engineering and product</div>
+        <div class="li"><span class="sw s-gtm"></span>Go-to-market</div>
+        <div class="li"><span class="sw s-infra"></span>Infrastructure</div>
+        <div class="li"><span class="sw s-comp"></span>Compliance and legal</div>
+        <div class="li"><span class="sw s-ops"></span>Operations</div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Month</th><th class="c">Eng.</th><th class="c">GTM</th><th class="c">Infra</th><th class="c">Comp.</th><th class="c">Ops</th><th class="c">Total</th><th class="c">Cumulative</th></tr></thead>
+      <tbody>
+        <tr><td><b>M1</b> · scaffold, brand, CAC filing</td><td class="money">0.60</td><td class="money">0.10</td><td class="money">0.03</td><td class="money">0.60</td><td class="money">0.12</td><td class="money-strong">1.45</td><td class="money">1.45</td></tr>
+        <tr><td><b>M2</b> · API skeleton + key management</td><td class="money">0.60</td><td class="money">0.40</td><td class="money">0.10</td><td class="money">0.42</td><td class="money">0.08</td><td class="money-strong">1.60</td><td class="money">3.05</td></tr>
+        <tr><td><b>M3</b> · assistant + knowledge base live</td><td class="money">0.60</td><td class="money">0.55</td><td class="money">0.20</td><td class="money">0.22</td><td class="money">0.08</td><td class="money-strong">1.65</td><td class="money">4.70</td></tr>
+        <tr><td><b>M4</b> · documents + credit engine</td><td class="money">0.60</td><td class="money">0.65</td><td class="money">0.24</td><td class="money">0.12</td><td class="money">0.09</td><td class="money-strong">1.70</td><td class="money">6.40</td></tr>
+        <tr><td><b>M5</b> · marketplace + developer platform</td><td class="money">0.55</td><td class="money">0.85</td><td class="money">0.26</td><td class="money">0.05</td><td class="money">0.04</td><td class="money-strong">1.75</td><td class="money">8.15</td></tr>
+        <tr><td><b>M6</b> · launch + production gate</td><td class="money">0.55</td><td class="money">0.95</td><td class="money">0.26</td><td class="money">0.05</td><td class="money">0.04</td><td class="money-strong">1.85</td><td class="money">10.00</td></tr>
+      </tbody>
+    </table>
+
+    <p class="small"><b>Contingency triggers (₦1.0M held back):</b> any provider unit cost moving more than 20% (re-cut quotas first, then draw); security review before a bank or enterprise contract; demand spike on identity verification that outpaces the teaser budget; extension of runway into Month 7 if conversion is below Scenario A. The contingency is never used to add scope.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>MONTHLY BURN</span><span class="num">7</span></div>
+</div>
+
+<!-- ============ PAGE 7 : SCENARIO A ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">SCENARIO A</span></div>
+  <div class="body">
+    <div class="kicker">Section 5 · Revenue Scenarios</div>
+    <h1>Scenario A: Conservative</h1>
+    <p class="small">Every assumption is stated. The funnel applies the documented conversion mechanic (one Plus per ten active free users within ninety days) to a modest activation of the base; go-to-market treated as content- and partnership-led.</p>
+
+    <h3>Assumptions</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Assumption</th><th class="c">Value</th><th>Source / basis</th></tr></thead>
+      <tbody>
+        <tr><td>Signups by Month 6</td><td class="c">1,000</td><td>Content-led; implied blended CAC of ₦2,500 across GTM spend</td></tr>
+        <tr><td>Activation rate (signup to active free user)</td><td class="c">20%</td><td>The first-session win (question, upload, starter score) is designed to activate</td></tr>
+        <tr><td>Free to Plus conversion</td><td class="c">10%</td><td>Documented target: 1 per 10 active users / 90 days</td></tr>
+        <tr><td>Plus to Professional uplift</td><td class="c">10%</td><td>Prudent default for firms upgrading from Plus</td></tr>
+        <tr><td>BVN pay-per-use volume</td><td class="c">150 checks/mo</td><td>Identity-gated moments across the paid base</td></tr>
+        <tr><td>Skills revenue (TCC packs, ajo, badges)</td><td class="c">₦50,000/mo</td><td>Early adoption only; WHT recovery excluded (fees recognised on recovery)</td></tr>
+        <tr><td>API revenue</td><td class="c">₦0</td><td>Sandbox free by design; volume tiers excluded</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Month 6 run rate</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Line</th><th class="c">Volume</th><th class="c">Price / unit</th><th class="c">Monthly revenue</th></tr></thead>
+      <tbody>
+        <tr><td>Plus subscriptions</td><td class="c">20</td><td class="money">₦5,000</td><td class="money">₦100,000</td></tr>
+        <tr><td>Professional subscriptions</td><td class="c">2</td><td class="money">₦25,000</td><td class="money">₦50,000</td></tr>
+        <tr><td>BVN pay-per-use</td><td class="c">150</td><td class="money">₦350</td><td class="money">₦52,500</td></tr>
+        <tr><td>Skills fees (early)</td><td class="c">-</td><td class="money">-</td><td class="money">₦50,000</td></tr>
+        <tr class="total"><td>Month 6 MRR</td><td></td><td></td><td class="money">~₦252,500</td></tr>
+        <tr><td colspan="3">Less: serving + identity costs on the paid base</td><td class="money">~₦78,000</td></tr>
+        <tr class="total"><td>Month 6 contribution</td><td></td><td></td><td class="money">~₦174,500</td></tr>
+      </tbody>
+    </table>
+
+    <p class="small"><b>Read:</b> the roadmap's six-month targets (100 API signups, 25 active, first revenue) sit inside Scenario A. It does not reach break-even in Phase 1; it validates the funnel and the conversion mechanic, which is what Phase 1 capital is for.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>SCENARIO A</span><span class="num">8</span></div>
+</div>
+
+<!-- ============ PAGE 8 : SCENARIO B ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">SCENARIO B</span></div>
+  <div class="body">
+    <div class="kicker">Section 5 · Revenue Scenarios</div>
+    <h1>Scenario B: GTM-Funded</h1>
+    <p class="small">Same documented conversion mechanic; go-to-market deploys paid acquisition at the full envelope. The upside band for Phase 1, not a forecast.</p>
+
+    <h3>Assumptions</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Assumption</th><th class="c">Value</th><th>Source / basis</th></tr></thead>
+      <tbody>
+        <tr><td>Signups by Month 6</td><td class="c">4,000</td><td>₦2.5M GTM at a blended ₦625 per signup (content + referral + paid mix)</td></tr>
+        <tr><td>Activation rate</td><td class="c">20%</td><td>Same prudent default as Scenario A</td></tr>
+        <tr><td>Free to Plus conversion</td><td class="c">10%</td><td>Documented target</td></tr>
+        <tr><td>Plus to Professional uplift</td><td class="c">10%</td><td>80 Plus imply 8 firm upgrades</td></tr>
+        <tr><td>BVN pay-per-use volume</td><td class="c">600 checks/mo</td><td>Scales with the paid base</td></tr>
+        <tr><td>Skills revenue</td><td class="c">₦120,000/mo</td><td>TCC packs, ajo groups, employer badges</td></tr>
+        <tr><td>API revenue</td><td class="c">₦0</td><td>Sandbox remains free in Phase 1</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Month 6 run rate</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Line</th><th class="c">Volume</th><th class="c">Price / unit</th><th class="c">Monthly revenue</th></tr></thead>
+      <tbody>
+        <tr><td>Plus subscriptions</td><td class="c">80</td><td class="money">₦5,000</td><td class="money">₦400,000</td></tr>
+        <tr><td>Professional subscriptions</td><td class="c">8</td><td class="money">₦25,000</td><td class="money">₦200,000</td></tr>
+        <tr><td>BVN pay-per-use</td><td class="c">600</td><td class="money">₦350</td><td class="money">₦210,000</td></tr>
+        <tr><td>Skills fees</td><td class="c">-</td><td class="money">-</td><td class="money">₦120,000</td></tr>
+        <tr class="total"><td>Month 6 MRR</td><td></td><td></td><td class="money">~₦930,000</td></tr>
+        <tr><td colspan="3">Less: serving and identity costs on the paid base</td><td class="money">~₦190,000</td></tr>
+        <tr class="total"><td>Month 6 contribution</td><td></td><td></td><td class="money">~₦740,000</td></tr>
+      </tbody>
+    </table>
+
+    <p class="small"><b>Read:</b> Scenario B reaches ~₦880,000 cumulative contribution against ₦10,000,000 deployed. Phase 1 does not pay for itself, by design: it buys the dataset, marketplace supply, and a proven conversion mechanic that Phase 2 monetises.</p>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>SCENARIO B</span><span class="num">9</span></div>
+</div>
+
+<!-- ============ PAGE 9 : PHASE 2-3 ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">PHASES 2-3</span></div>
+  <div class="body">
+    <div class="kicker">Section 6</div>
+    <h1>Phases 2 and 3: the widening bands</h1>
+    <p class="small">Phases 2 and 3 are described as ranges, not forecasts. Each new stream enters only when its stated prerequisite is true. Ranges below extend the same per-unit economics to larger bases and new lines.</p>
+
+    <h2>Phase 2: deepening (Months 7-12)</h2>
+    <ul class="dash">
+      <li><b>Subscriptions compound</b> on the Phase 1 base: Plus and Professional bases grow with retention; annual plans pull cash forward at the documented 20% discount.</li>
+      <li><b>Identity pay-per-use scales</b> linearly with the paid base; at 2,500 BVN checks the line alone contributes ₦875,000 per month in gross revenue (₦610,000 after unit costs).</li>
+      <li><b>Marketplace opens:</b> contact reveal and priority placement monetise the professional supply built in Phase 1; take-rate scoped before any spend.</li>
+      <li><b>API volume tiers begin converting:</b> sandbox graduates to the 5,000 and 50,000 call tiers for fintech and payroll partners.</li>
+      <li><b>WHT recovery (Skill 01)</b> begins recognising success fees as filings complete through marketplace professionals.</li>
+    </ul>
+
+    <h2>Phase 3: widening (Months 13-18)</h2>
+    <ul class="dash">
+      <li><b>Enterprise contracts:</b> white-label reports, portfolio scoring for lenders, SSO and SLAs; floored at 60% margin, contracted volumes.</li>
+      <li><b>The compliance-credit dataset becomes licensable:</b> aggregated, anonymised scoring factors for partners, the asset no competitor accrues.</li>
+      <li><b>Embedded rails (if scoped):</b> tax and verification rails for other platforms, as an Enterprise add-on. Not promised until scoped (Appendix B of the working paper).</li>
+      <li><b>Future bets stay gated:</b> Filing Rooms need marketplace supply; Diaspora Desk needs disclaimers and double-taxation depth; Score-Gated Offers need score credibility and a partner pipeline.</li>
+    </ul>
+
+    <h3>Revenue composition shift</h3>
+    <div class="chart">
+      <div class="row"><div class="clabel">Phase 1 (M6)</div><div class="cbar b-teal" style="width: 55%;">Subscriptions ~65%</div><div class="cbar b-green" style="width: 20%;"></div><div class="cbar b-mid" style="width: 12%;"></div></div>
+      <div class="row"><div class="clabel">Phase 2 (M12)</div><div class="cbar b-teal" style="width: 40%;">Subs</div><div class="cbar b-green" style="width: 27%;">Identity + Skills</div><div class="cbar b-mid" style="width: 22%;">API + Mkt</div></div>
+      <div class="row"><div class="clabel">Phase 3 (M18)</div><div class="cbar b-teal" style="width: 32%;">Subs</div><div class="cbar b-green" style="width: 24%;">Identity + Skills</div><div class="cbar b-mid" style="width: 34%;">Enterprise + API + data</div></div>
+    </div>
+    <div class="legend">
+      <div class="li"><span class="sw s-eng"></span>Subscriptions</div>
+      <div class="li"><span class="sw s-infra"></span>Identity pay-per-use + Skills fees</div>
+      <div class="li"><span class="sw s-comp"></span>API, marketplace, enterprise, data</div>
+    </div>
+
+    <div class="quote">Year 1 proves the funnel. Year 2 proves the streams. Year 3 proves the moat: the compliance-credit dataset and the verified marketplace are the two assets a well-funded competitor cannot shortcut.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>PHASES 2-3</span><span class="num">10</span></div>
+</div>
+
+<!-- ============ PAGE 10 : SENSITIVITY ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">SENSITIVITY</span></div>
+  <div class="body">
+    <div class="kicker">Section 7</div>
+    <h1>Sensitivity and Break-Even</h1>
+
+    <h3>What moves the model</h3>
+    <table style="font-size:8pt;">
+      <thead><tr><th>Variable</th><th>Direction of risk</th><th>Response, in order</th></tr></thead>
+      <tbody>
+        <tr><td><b>Provider unit costs</b> (serving, identity, extraction)</td><td>+20% on any unit re-opens the quota model</td><td>Re-cut quotas before touching prices; contingency bridges</td></tr>
+        <tr><td><b>Activation rate</b></td><td>Each point below 20% removes ~5% of Scenario B MRR</td><td>First-session win redesign; onboarding is the cheapest lever</td></tr>
+        <tr><td><b>Free-to-Plus conversion</b></td><td>Below 1:10, payback stretches past 90 days</td><td>Quota walls name the exact limit; annual discount pulls cash forward</td></tr>
+        <tr><td><b>Blended CAC</b></td><td>Above ₦2,000 breaches the envelope</td><td>Mix shifts to content and referral; paid volume throttled; hard guardrail</td></tr>
+        <tr><td><b>Naira cost of USD services</b></td><td>Infrastructure is partly USD-denominated</td><td>Contingency draw; annual pre-payment where discounted</td></tr>
+        <tr><td><b>WHT recovery volume</b></td><td>Success fees are lumpy, not monthly</td><td>Recognised only on completed filings; never budgeted as baseline MRR</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Contribution break-even, monthly view</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th>Path to ~₦1.4M monthly contribution (steady-state burn beyond Phase 1)</th><th class="c">Plus users</th><th class="c">Professional users</th><th class="c">BVN checks/mo</th></tr></thead>
+      <tbody>
+        <tr><td>Subscriptions only</td><td class="c">~360</td><td class="c">-</td><td class="c">-</td></tr>
+        <tr><td>Subscriptions + identity</td><td class="c">~250</td><td class="c">~25</td><td class="c">~1,500</td></tr>
+        <tr><td>Balanced mix (all lines)</td><td class="c">~200</td><td class="c">~20</td><td class="c">~1,200</td></tr>
+      </tbody>
+    </table>
+    <p class="small">Reads: Scenario B's Month 6 paid base reaches roughly half of balanced-mix break-even inside Phase 1; Phase 2 closes the gap. Scenario A treats Phase 1 as validated learning, not self-funding.</p>
+
+    <h3>Guardrails (locked in the pricing foundation)</h3>
+    <ul class="dash">
+      <li>Eleven-digit BVN format validated before any provider call; credits charged only on provider success; retries throttled; no silent overages except contracted Enterprise</li>
+      <li>Fair-use on all unlimited quotas with abuse monitoring; overrides audit-logged</li>
+      
+      <li>Unit costs revalidated monthly; a 20% move triggers quota re-cut before price change</li>
+    </ul>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>SENSITIVITY</span><span class="num">11</span></div>
+</div>
+
+<!-- ============ PAGE 11 : SUMMARY ============ -->
+<div class="page">
+  <div class="runhead"><span class="brand">CREDITAX.AI</span><span class="section">SUMMARY</span></div>
+  <div class="body">
+    <div class="kicker">Section 8</div>
+    <h1>Summary Dashboard</h1>
+
+    <h3>The ask, and what it buys</h3>
+    <table style="font-size:8pt;">
+      <thead><tr><th>Deliverable at Month 6</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>A demo-stable product across 48 routes</td><td>8-minute script runs end to end: signup, cited answer, calculation, score, referral, quota wall</td></tr>
+        <tr><td>The production gate cleared</td><td>CAC registered; NDPC filed; DPIA complete; DPO on paper; four-language notices</td></tr>
+        <tr><td>Verified marketplace supply</td><td>First cohort of CAC-verified professionals live, contacts login-gated</td></tr>
+        <tr><td>A proven conversion mechanic</td><td>Documented 1:10 conversion measured on the real base, not assumed</td></tr>
+        <tr><td>The proprietary dataset seeded</td><td>Compliance behaviour linked to identity rails, four languages</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Scenario summary, Month 6</h3>
+    <table style="font-size:8.5pt;">
+      <thead><tr><th></th><th class="c">A: Conservative</th><th class="c">B: GTM-funded</th></tr></thead>
+      <tbody>
+        <tr><td>Signups</td><td class="c">1,000</td><td class="c">4,000</td></tr>
+        <tr><td>Active free users</td><td class="c">200</td><td class="c">800</td></tr>
+        <tr><td>Plus / Professional</td><td class="c">20 / 2</td><td class="c">80 / 8</td></tr>
+        <tr><td>Month 6 MRR</td><td class="money">~₦252,500</td><td class="money">~₦930,000</td></tr>
+        <tr><td>Month 6 contribution</td><td class="money">~₦174,500</td><td class="money">~₦740,000</td></tr>
+        <tr><td>Phase 1 reading</td><td>Funnel validated; conversion proven</td><td>Half of break-even; Phase 2 closes the gap</td></tr>
+      </tbody>
+    </table>
+
+    <h3>What is deliberately not in these numbers</h3>
+    <ul class="dash">
+      <li>API revenue (sandbox free by design in Phase 1)</li>
+      <li>WHT recovery success fees (recognised on completed filings; lumpy)</li>
+      <li>Enterprise contracts (Phase 2-3; 60% margin floor)</li>
+      <li>Embedded rails (unscoped) and hardware of any kind (out of scope for Phase 1)</li>
+    </ul>
+
+    <div class="quote">The honest summary: ₦10,000,000 buys a working product, a cleared legal gate, marketplace supply, a proven conversion mechanic, and the seed of a dataset nobody else holds. Everything here is documented.</div>
+  </div>
+  <div class="runfoot"><span class="lab">CREDITAX.AI</span><span>SUMMARY</span><span class="num">12</span></div>
+</div>
+
+</body>
+</html>

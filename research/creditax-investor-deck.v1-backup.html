@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creditax.ai · Investor Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  @page{size:297mm 210mm;margin:0}
+  html,body{margin:0;padding:0;background:#CBDADA}
+  *{box-sizing:border-box}
+  :root{
+    --paper:#FFFFFF; --tint:#F1F7F7; --line:#E3ECEC; --line2:rgba(13,115,119,.16);
+    --teal:#0D7377; --teal-lt:#14919B; --green:#32E875;
+    --ink:#12232E; --slate:#46606B; --faint:#7A8F98;
+    --dark:#0A0F14; --panel-d:#111A21;
+    --ok:#0E9F6E; --warn:#D97706; --bad:#DC2626; --info:#2563EB;
+  }
+  body{font-family:'Source Sans 3','Segoe UI',sans-serif;color:var(--ink);
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;font-variant-numeric:tabular-nums}
+
+  .page{width:297mm;height:210mm;background:var(--paper);position:relative;
+    display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
+  .page.last{page-break-after:always}
+
+  /* ---------- header band ---------- */
+  .band{background:var(--teal);color:#fff;flex:0 0 25mm;display:flex;align-items:center;
+    gap:5mm;padding:0 13mm}
+  .bicon{width:13mm;height:13mm;border-radius:3.5mm;background:#fff;display:flex;
+    align-items:center;justify-content:center;flex:0 0 auto}
+  .bicon svg{width:7.5mm;height:7.5mm;stroke:var(--teal)}
+  .btxt{flex:1;min-width:0}
+  .beyebrow{font-family:'Source Code Pro',monospace;font-size:8pt;font-weight:700;
+    letter-spacing:.24em;text-transform:uppercase;color:var(--green);margin-bottom:1mm}
+  .band h1{font-family:'Lexend',sans-serif;font-size:19pt;font-weight:700;line-height:1.15;margin:0;letter-spacing:-.01em;color:#fff}
+  .bmeta{text-align:right;flex:0 0 auto}
+  .bmeta .pg{font-family:'Source Code Pro',monospace;font-size:9pt;font-weight:700;color:#fff}
+  .bmeta .pg small{color:rgba(255,255,255,.55);font-weight:400}
+  .bmeta .br{font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:1mm}
+
+  /* ---------- content ---------- */
+  .wrap{flex:1;min-height:0;padding:7mm 13mm 4mm;display:flex;flex-direction:column;gap:4mm}
+  .grid{display:flex;gap:4.5mm;min-height:0}
+  .wrap>.grid{flex:1}
+  .grow{flex:1;min-width:0}
+  .colv{display:flex;flex-direction:column;gap:4mm;min-height:0}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:5mm 5.5mm;min-width:0;display:flex;flex-direction:column;box-shadow:0 0 0 4px var(--tint), 0 1px 3px rgba(10,40,44,.05)}
+  .grid>.card.grow,.colv>.card.grow{justify-content:space-between;gap:3.2mm}
+  .grid>.card.grow>table.ledger,.colv>.card.grow>table.ledger{flex:1}
+  .grid>.card.grow>table.ledger td,.colv>.card.grow>table.ledger td{padding:3.2mm 2mm;vertical-align:middle}
+  .flag.grow{display:flex;flex-direction:column;justify-content:space-between;gap:3.4mm;padding:6mm 5.5mm}
+  .flag.grow p{font-size:12.6pt;line-height:1.85}
+  .flag.grow h5{font-size:9.6pt;margin-bottom:3mm}
+    .flag.grow p{font-size:12.6pt;line-height:1.85}
+  #s13 .flag.blue.grow p, #s14 .flag.grow p, #s17 .flag.blue.grow p{font-size:13pt;line-height:1.95}
+  #s13 .flag.blue.grow h5, #s14 .flag.grow h5, #s17 .flag.blue.grow h5{font-size:10.2pt;margin-bottom:3.4mm}
+  .grid>.card>.kv{flex:1}
+  #s16 .card{justify-content:space-between}
+  #s16 .find{padding:3.4mm 0}
+  .card.white{background:#fff;box-shadow:0 1px 4px rgba(10,40,44,.07)}
+  .card h3{font-family:'Lexend',sans-serif;font-size:13.4pt;font-weight:700;margin:0 0 3.2mm;display:flex;align-items:center;gap:2.6mm}
+  .card h3 svg{width:5.4mm;height:5.4mm;stroke:var(--teal);flex:0 0 auto}
+  p{font-size:12.4pt;line-height:1.72;margin:0 0 3.2mm}
+  p:last-child{margin-bottom:0}
+  p.sm{font-size:11pt;line-height:1.58}
+  .mut{color:var(--slate)}
+  b{font-weight:700;color:inherit}
+  strong{font-weight:700}
+  .hl{color:var(--teal);font-weight:700}
+
+  .ifact{display:flex;gap:3.8mm;align-items:flex-start;margin-bottom:4.2mm}
+  .ifact:last-child{margin-bottom:0}
+  .ifact .ic{width:9mm;height:9mm;border-radius:2.6mm;background:#fff;border:1px solid var(--line2);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .ifact .ic svg{width:5mm;height:5mm;stroke:var(--teal)}
+  .ifact .tx{min-width:0}
+  .ifact .tt{font-family:'Lexend',sans-serif;font-size:12.4pt;font-weight:700;margin:0 0 .6mm}
+  .ifact .td{font-size:11.6pt;line-height:1.65;color:var(--slate);margin:0}
+  .ifact .td b{color:var(--ink)}
+
+  .metrics{display:flex;gap:4.5mm}
+  .metric{flex:1;background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:3.6mm 4mm;border-top:3px solid var(--teal)}
+  .metric.m2{border-top-color:var(--teal-lt)}
+  .metric.m3{border-top-color:var(--ok)}
+  .metric.m4{border-top-color:var(--warn)}
+  .metric .mv{font-family:'Source Code Pro',monospace;font-size:22pt;font-weight:700;
+    line-height:1;color:var(--ink);letter-spacing:-.01em}
+  .metric .mv small{font-size:11pt;color:var(--slate);font-weight:500}
+  .metric .ml{font-size:9.6pt;line-height:1.45;color:var(--slate);margin-top:1.4mm;line-height:1.35}
+
+  .ledger{width:100%;border-collapse:collapse}
+  .ledger th{font-family:'Source Code Pro',monospace;font-size:7.8pt;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--slate);text-align:left;
+    padding:0 2mm 1.6mm;border-bottom:2px solid var(--teal)}
+  .ledger td{font-size:11.2pt;padding:3mm 2mm;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.4}
+  .ledger tr:last-child td{border-bottom:none}
+  .ledger .amt{font-family:'Source Code Pro',monospace;text-align:right;font-weight:600;white-space:nowrap}
+  .ledger .amt b{font-weight:700}
+  .ledger tr.total td{border-top:2px solid var(--teal);border-bottom:3px double var(--teal);font-weight:700}
+  .ledger td.lab{color:var(--slate)}
+
+  .tiers{display:flex;gap:4mm;flex:1;min-height:0}
+  .tier{flex:1;border:1px solid var(--line);border-radius:12px;padding:5mm 4.5mm;
+    display:flex;flex-direction:column;background:#fff;min-width:0;box-shadow:0 0 0 4px var(--tint)}
+  .tier.hot{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 4px rgba(13,115,119,.14)}
+  .tier.hot .tp,.tier.hot .tv{color:#fff}
+  .tier.hot .tf{color:rgba(255,255,255,.85)}
+  .tier.hot .tf li::before{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
+  .tier .tft{margin-top:auto;padding-top:3mm;border-top:1px solid var(--line);font-family:'Source Code Pro',monospace;font-size:7.2pt;letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+  .tier.hot .tft{color:rgba(255,255,255,.65);border-top-color:rgba(255,255,255,.25)}
+  .tier .tp{font-family:'Source Code Pro',monospace;font-size:7.4pt;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--slate);margin-bottom:1.6mm}
+  .tier .tv{font-family:'Source Code Pro',monospace;font-size:18pt;font-weight:700;line-height:1;margin-bottom:2.6mm}
+  .tier .tv small{font-size:9pt;font-weight:400;opacity:.7}
+  .tier .tf{font-size:10.2pt;line-height:1.65;flex:1;color:var(--slate);margin:0;list-style:none;padding:0}
+  .tier .tf li{position:relative;padding-left:5.4mm;margin-bottom:3.2mm}
+  .tier .tf li::before{content:"";position:absolute;left:0;top:1.5mm;width:3.2mm;height:3.2mm;
+    border-radius:1px;background:var(--tint);border:1px solid var(--line2)}
+
+  .check{list-style:none;margin:0;padding:0}
+  .check li{position:relative;padding-left:8mm;margin-bottom:3.6mm;font-size:11.4pt;line-height:1.58}
+  .check li svg{position:absolute;left:0;top:.8mm;width:4.6mm;height:4.6mm;stroke:var(--ok)}
+  .check li.wait svg{stroke:var(--warn)}
+  .check li b{color:var(--ink)}
+
+  .steps{display:flex;gap:4mm}
+  .step{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4.6mm 4.8mm;min-width:0;box-shadow:0 0 0 4px var(--tint)}
+  .step .sn{display:flex;align-items:center;gap:2.6mm;margin-bottom:2mm}
+  .step .sn .n{width:8mm;height:8mm;border-radius:50%;background:var(--teal);color:#fff;
+    font-family:'Source Code Pro',monospace;font-size:10pt;font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .step .sn .t{font-family:'Lexend',sans-serif;font-size:11pt;font-weight:700}
+  .step p{font-size:11pt;line-height:1.6;color:var(--slate);margin:0}
+  .step p b{color:var(--ink)}
+
+  .personas{display:flex;gap:4mm;flex:1;min-height:0}
+  .persona{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:4mm;display:flex;flex-direction:column;min-width:0;box-shadow:0 0 0 4px var(--tint)}
+  .persona .pic{width:100%;height:30mm;object-fit:cover;object-position:center 20%;
+    border-radius:8px;margin-bottom:2.8mm}
+  .persona .who{font-family:'Lexend',sans-serif;font-size:11.5pt;font-weight:700;margin:0 0 .8mm}
+  .persona .role{display:flex;align-items:center;gap:1.8mm;font-family:'Source Code Pro',monospace;
+    font-size:6.8pt;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:2mm}
+  .persona .role svg{width:3.4mm;height:3.4mm;stroke:var(--teal)}
+  .persona .need{font-size:10.6pt;line-height:1.58;color:var(--slate);margin:0}
+  .persona .need b{color:var(--ink)}
+
+  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;
+    padding:3mm 0;border-bottom:1px solid var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv .k{font-size:11pt;color:var(--slate)}
+  .kv .k b{color:var(--ink)}
+  .kv .v{font-family:'Source Code Pro',monospace;font-size:10.8pt;font-weight:700;text-align:right;white-space:nowrap}
+  .kv .v.g{color:var(--ok)}
+
+  .snap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .snap img{width:100%;height:100%;object-fit:cover;display:block}
+  .snap .cap{position:absolute;left:0;right:0;bottom:0;padding:5mm 4mm 2.4mm;
+    background:linear-gradient(0deg,rgba(255,255,255,.96) 40%,rgba(255,255,255,0));
+    font-size:9.2pt;color:var(--slate)}
+  .snap .cap a{color:var(--teal);text-decoration:none;font-weight:600}
+  .snap .cap svg{width:3.2mm;height:3.2mm;stroke:var(--teal);vertical-align:-.4mm}
+
+  .find{display:flex;gap:3.2mm;align-items:flex-start;padding:3.6mm 0;border-bottom:1px solid var(--line)}
+  .find:last-child{border-bottom:none}
+  .sev{font-family:'Source Code Pro',monospace;font-size:6.6pt;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;border-radius:4px;padding:.8mm 2.2mm;white-space:nowrap;margin-top:.5mm}
+  .sev.a{background:#FEE2E2;color:var(--bad)}
+  .sev.b{background:#FEF3C7;color:var(--warn)}
+  .sev.c{background:#DBEAFE;color:var(--info)}
+  .sev.d{background:#D1FAE5;color:var(--ok)}
+  .find .fx{font-size:11pt;line-height:1.55;min-width:0}
+  .find .fx b{display:block;font-size:11.6pt;margin-bottom:.3mm}
+  .find .fx .watch{color:var(--slate);font-size:9.3pt}
+  .find .fx .watch svg{width:3mm;height:3mm;stroke:var(--faint);vertical-align:-.4mm}
+
+  .flag{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);
+    border-radius:8px;padding:3.4mm 4mm}
+  .flag h5{font-size:8pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);margin:0 0 1.4mm;display:flex;align-items:center;gap:2mm}
+  .flag h5 svg{width:4mm;height:4mm;stroke:var(--teal)}
+  .flag p{font-size:11pt;line-height:1.6;margin:0}
+  .flag p b{color:var(--ink)}
+  .flag.red{border-left-color:var(--bad)}
+  .flag.red h5{color:var(--bad)}
+  .flag.red h5 svg{stroke:var(--bad)}
+  .flag.blue{border-left-color:var(--info)}
+  .flag.blue h5{color:var(--info)}
+  .flag.blue h5 svg{stroke:var(--info)}
+  .flag.green{border-left-color:var(--ok)}
+  .flag.green h5{color:var(--ok)}
+  .flag.green h5 svg{stroke:var(--ok)}
+
+  .ft{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:6mm;
+    padding:2.6mm 13mm 0;border-top:1px solid var(--line);height:9.5mm;
+    font-size:8.2pt;color:var(--faint)}
+  .ft b{color:var(--slate);font-weight:700}
+  .ft .mid{flex:1;text-align:center}
+  .ft a{color:var(--teal);text-decoration:none;font-weight:600}
+  .ft a svg{width:3mm;height:3mm;stroke:var(--teal);vertical-align:-.5mm}
+
+  .dark{background:var(--dark);color:#fff}
+  .cvwrap{flex:1;display:flex;flex-direction:column;padding:10mm 13mm 6mm;min-height:0}
+  .cvtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:4mm}
+  .cvtop .lg{height:10.5mm;width:auto}
+  .cvtop .conf{font-family:'Source Code Pro',monospace;font-size:7pt;letter-spacing:.22em;
+    text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .cvmid{flex:1;display:flex;gap:8mm;min-height:0;align-items:stretch}
+  .cvl{flex:1.15;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .cvkick{font-family:'Source Code Pro',monospace;font-size:8.4pt;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--green);margin-bottom:3.5mm}
+  .cvtitle{font-family:'Lexend',sans-serif;font-size:33pt;font-weight:700;letter-spacing:-.02em;line-height:1.04;margin:0 0 5mm;color:#fff}
+  .cvtitle .g{color:var(--green)}
+  .cvsub{font-size:12.5pt;line-height:1.55;color:rgba(255,255,255,.82);max-width:136mm;margin:0 0 7mm}
+  .cvsub b{color:#fff}
+  .cvstats{display:flex;border-top:1px solid rgba(255,255,255,.18)}
+  .cvstats .s{flex:1;padding:4mm 4mm 0 0}
+  .cvstats .s .ic2{display:flex;align-items:center;gap:2mm;margin-bottom:1.6mm}
+  .cvstats .s .ic2 svg{width:4.4mm;height:4.4mm;stroke:var(--green)}
+  .cvstats .s .ic2 span{font-family:'Source Code Pro',monospace;font-size:6.6pt;letter-spacing:.18em;
+    text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .cvstats .s .v{font-family:'Source Code Pro',monospace;font-size:15pt;font-weight:700;color:#fff}
+  .cvstats .s .l{font-size:8.2pt;color:rgba(255,255,255,.6);margin-top:.8mm;line-height:1.35}
+  .cvr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4mm}
+  .cvr .snap{flex:1;min-height:0;border-color:rgba(255,255,255,.18)}
+  .cvindex{background:var(--panel-d);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+    padding:4mm 4.5mm;flex:0 0 auto}
+  .cvindex .ih{font-family:'Source Code Pro',monospace;font-size:6.6pt;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--green);margin-bottom:2.2mm}
+  .cvindex .cols{display:grid;grid-template-columns:1fr 1fr;gap:.6mm 6mm}
+  .cvindex a{display:flex;justify-content:space-between;color:rgba(255,255,255,.82);
+    text-decoration:none;font-size:8.4pt;padding:.7mm 0;border-bottom:1px dotted rgba(255,255,255,.14)}
+  .cvindex a span{font-family:'Source Code Pro',monospace;color:rgba(255,255,255,.45)}
+  .dark .ft{border-top-color:rgba(255,255,255,.14);color:rgba(255,255,255,.5)}
+  .dark .ft b{color:rgba(255,255,255,.8)}
+  .dark .ft a{color:var(--green)}
+
+  @media screen{
+    html{background:#B9CFCF}
+    body{zoom:.72}
+    .page{margin:16px auto;box-shadow:0 14px 50px rgba(6,40,44,.28);border-radius:2px}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+    <symbol id="i-landmark" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-checkc" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-banknote" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></symbol>
+    <symbol id="i-brief" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================= 01 COVER ================= -->
+<div class="page dark" id="s01">
+  <div class="cvwrap">
+    <div class="cvtop">
+      <img class="lg" src="../public/logo-dark.png" alt="Creditax.ai">
+      <span class="conf">SEED BRIEF · CONFIDENTIAL · SEPT 2026</span>
+    </div>
+    <div class="cvmid">
+      <div class="cvl">
+        <div class="cvkick">Creditax.ai · Nigeria</div>
+        <div class="cvtitle">Where tax filing becomes <span class="g">credit standing</span>.</div>
+        <p class="cvsub">A platform where Nigerians <b>ask tax questions and get the statute cited</b>, calculate PAYE, VAT and withholding to the section, and build a <b>compliance-backed credit health score</b> lenders can actually read, with CAC-verified professionals one tap away when it matters.</p>
+        <div class="cvstats">
+          <div class="s"><div class="ic2"><svg><use href="#i-banknote"/></svg><span>Raising</span></div><div class="v">N10,000,000</div><div class="l">seed · six-month plan</div></div>
+          <div class="s"><div class="ic2"><svg><use href="#i-flag"/></svg><span>Market</span></div><div class="v">Nigeria</div><div class="l">consumer-first · NGN only</div></div>
+          <div class="s"><div class="ic2"><svg><use href="#i-layers"/></svg><span>Stack</span></div><div class="v">4 surfaces</div><div class="l">consumer · pro · API · admin</div></div>
+          <div class="s"><div class="ic2"><svg><use href="#i-globe"/></svg><span>Reach</span></div><div class="v">4 languages</div><div class="l">EN · YO · HA · IG</div></div>
+        </div>
+      </div>
+      <div class="cvr">
+        <div class="snap"><img src="../assets/deck-art/art-cover-hero.jpg" alt=""><div class="cap" style="color:var(--slate)">The compliance layer between what Nigeria earns and what it can borrow.</div></div>
+        <div class="cvindex">
+          <div class="ih">Index</div>
+          <div class="cols">
+            <a href="#s02"><b>The gap</b><span>02</span></a>
+            <a href="#s11"><b>On the shelf</b><span>11</span></a>
+            <a href="#s03"><b>Who files</b><span>03</span></a>
+            <a href="#s12"><b>Client pipeline</b><span>12</span></a>
+            <a href="#s04"><b>The reform</b><span>04</span></a>
+            <a href="#s13"><b>The moat</b><span>13</span></a>
+            <a href="#s05"><b>The missed signal</b><span>05</span></a>
+            <a href="#s14"><b>Delivery schedule</b><span>14</span></a>
+            <a href="#s06"><b>The product</b><span>06</span></a>
+            <a href="#s15"><b>Use of funds</b><span>15</span></a>
+            <a href="#s07"><b>Service schedule</b><span>07</span></a>
+            <a href="#s16"><b>Audit log</b><span>16</span></a>
+            <a href="#s08"><b>The network</b><span>08</span></a>
+            <a href="#s17"><b>Licence ladder</b><span>17</span></a>
+            <a href="#s09"><b>The tariff</b><span>09</span></a>
+            <a href="#s18"><b>Data handling</b><span>18</span></a>
+            <a href="#s10"><b>Unit economics</b><span>10</span></a>
+            <a href="#s19"><b>The instrument</b><span>19</span></a>
+            <a href="#s20"><b>Closing</b><span>20</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Prepared by MissionCTRL Creative Tech Research Labs · Lagos</span><span>01 / 20</span></div>
+</div>
+
+<!-- ================= 02 THE GAP ================= -->
+<div class="page" id="s02">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-alert"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 02 · The Gap</div><h1>The law changed. The answers didn't.</h1></div>
+    <div class="bmeta"><div class="pg">02 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-file"/></svg>What the law changed</h3>
+        <div class="ifact"><div class="ic"><svg><use href="#i-scale"/></svg></div><div class="tx"><p class="tt">NTA &amp; NTAA 2023</p><p class="td">New consolidated acts replaced the old framework: <b>17 PAYE bands</b>, redrawn withholding schedules, and changed filing procedure.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-banknote"/></svg></div><div class="tx"><p class="tt">CGT amendments</p><p class="td">Capital gains treatment for individuals changed alongside, catching freelancers and small investors off guard.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-clock"/></svg></div><div class="tx"><p class="tt">Deadlines did not get softer</p><p class="td">Every obligation kept its date. The penalty for guessing wrong arrives by letter, with interest.</p></div></div>
+      </div>
+      <div class="card white grow">
+        <h3><svg><use href="#i-msg"/></svg>How people actually cope</h3>
+        <div class="ifact"><div class="ic"><svg><use href="#i-users"/></svg></div><div class="tx"><p class="tt">One accountant, if they are lucky</p><p class="td">Trusted, expensive, concentrated in cities. The informal majority has no access at all.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-search"/></svg></div><div class="tx"><p class="tt">Search engines and AI chat</p><p class="td">Confident, fluent, and <b>unmoored from jurisdiction</b>. Foreign or stale rules look identical to correct ones until they cost a penalty.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-file"/></svg></div><div class="tx"><p class="tt">FIRS publishes, but for practitioners</p><p class="td">The authoritative source exists: guides, circulars, the statute itself. It is simply <b>not written for the nurse in Surulere or the POS agent in Kano</b>.</p></div></div>
+      </div>
+    </div>
+    <div class="flag green">
+      <h5><svg><use href="#i-receipt"/></svg>Where Creditax enters</h5>
+      <p>Not "file your taxes." The wedge is money <b>already earned and already withheld</b> by a client, sitting unclaimed. Skill 01 matches the deductions to the missing credit notes, assembles the claim schedule, and a verified professional files it. <b>Creditax keeps 5% of what comes back.</b></p>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 · Part I · NTA 2023 · FIRS VAT Guide</span><span>02 / 20</span></div>
+</div>
+
+<!-- ================= 03 WHO FILES ================= -->
+<div class="page" id="s03">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-users"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 03 · Who Files</div><h1>Four taxpayers. Four open files.</h1></div>
+    <div class="bmeta"><div class="pg">03 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="personas">
+      <div class="persona">
+        <img class="pic" src="../assets/deck-people/people-a.jpg" alt="">
+        <div class="who">The Employee</div>
+        <div class="role"><svg><use href="#i-brief"/></svg>PAYE · TCC</div>
+        <p class="need">Taxed at source, still unsure the payroll figure is right. When a <b>visa or loan</b> needs a Tax Clearance Certificate, the assembly is a paper chase across employers and banks.</p>
+      </div>
+      <div class="persona">
+        <img class="pic" src="../assets/deck-people/people-b.jpg" alt="">
+        <div class="who">The Trader</div>
+        <div class="role"><svg><use href="#i-store"/></svg>INFORMAL INCOME</div>
+        <p class="need">Real earnings, zero paperwork. The bank sees the account, not the trade. The result is a <b>thin file</b>: no credit history, no pricing power, no record a lender will read.</p>
+      </div>
+      <div class="persona">
+        <img class="pic" src="../assets/deck-people/people-c.jpg" alt="">
+        <div class="who">The SME Owner</div>
+        <div class="role"><svg><use href="#i-building"/></svg>VAT · WHT · CIT</div>
+        <p class="need">Three obligations, one operator, no retainer. Withholding is <b>deducted by clients and rarely reclaimed</b>; VAT is remitted by feel; CAC filings lapse.</p>
+      </div>
+      <div class="persona">
+        <img class="pic" src="../assets/deck-people/people-d.jpg" alt="">
+        <div class="who">The Professional</div>
+        <div class="role"><svg><use href="#i-badge"/></svg>SUPPLY SIDE</div>
+        <p class="need">The expertise exists; clients arrive <b>by street sign</b>. Bulk calculations are manual, verification is manual, and the people who need help most cannot tell a real pro from a card in the market.</p>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="flag grow">
+        <h5><svg><use href="#i-db"/></svg>What they share</h5>
+        <p>Every one of them produces the same missing artifact: a <b>verifiable record of compliance</b>. The employee's filing streak, the trader's declared income, the SME's remittance history, the professional's standing: none exists today in a form a lender, client or regulator can read.</p>
+      </div>
+      <div class="flag green grow">
+        <h5><svg><use href="#i-eye"/></svg>Why the platform sees it</h5>
+        <p>Each persona already does the behaviour on Creditax: asks the question, runs the calculation, uploads the document, claims the credit. The record <b>assembles as a by-product of the work</b>. Nobody fills in a form to build it.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 · Part I · roles-and-experience v1.0</span><span>03 / 20</span></div>
+</div>
+
+<!-- ================= 04 REFORM ================= -->
+<div class="page" id="s04">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-scale"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 04 · The Reform in Numbers</div><h1>The numbers moved.</h1></div>
+    <div class="bmeta"><div class="pg">04 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="metrics">
+      <div class="metric"><div class="mv">17</div><div class="ml">PAYE bands under NTA 2023 Schedule 1: the ladder every salary now sits on</div></div>
+      <div class="metric m2"><div class="mv">7.5<small>%</small></div><div class="ml">standard VAT, with a Schedule 2 exemption list most filers cannot name</div></div>
+      <div class="metric m3"><div class="mv">5-30<small>%</small></div><div class="ml">withholding range by payment type and recipient status</div></div>
+      <div class="metric m4"><div class="mv">10<small>%</small></div><div class="ml">capital gains for individuals under the 2024 amendments</div></div>
+    </div>
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-scale"/></svg>What the platform cites, provision by provision</h3>
+        <table class="ledger">
+          <thead><tr><th>Provision</th><th class="amt">Where it lives</th></tr></thead>
+          <tbody>
+            <tr><td>Personal income tax bands and reliefs</td><td class="amt">NTA 2023, Sch 1</td></tr>
+            <tr><td>VAT standard rate and exemptions</td><td class="amt">FIRS VAT Guide</td></tr>
+            <tr><td>Withholding by payment type</td><td class="amt">NTA 2023, s.15</td></tr>
+            <tr><td>Company income tax, small-company relief</td><td class="amt">NTA 2023</td></tr>
+            <tr><td>Capital gains, individual disposal</td><td class="amt">CGT amendments 2024</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="colv" style="flex:0 0 92mm">
+        <div class="card grow">
+          <h3><svg><use href="#i-layers"/></svg>Versioned, not vibes</h3>
+          <p>The knowledge base <b>re-indexes when a circular changes</b>, and the citation trail moves with it. When FIRS publishes, the platform updates. When FIRS is silent, the platform does not improvise. Maintaining that discipline is expensive. <strong>Expensive to maintain is the barrier.</strong></p>
+        </div>
+        <div class="flag blue">
+          <h5><svg><use href="#i-alert"/></svg>What Creditax will not do</h5>
+          <p>No scraping, no unofficial government-system access, no answering from general model memory. <b>Published law only, cited per answer.</b> The legal posture is the product's foundation, not a compliance afterthought.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 · Part I · API Research v1.3 §4</span><span>04 / 20</span></div>
+</div>
+
+<!-- ================= 05 THE SIGNAL ================= -->
+<div class="page" id="s05">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-trend"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 05 · The Missed Signal</div><h1>Lenders read statements. Not filings.</h1></div>
+    <div class="bmeta"><div class="pg">05 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="colv grow">
+        <div class="card white grow">
+          <h3><svg><use href="#i-db"/></svg>Two records, one person, zero connection</h3>
+          <p>Open-banking statements show <b>flow</b>: money in, money out. They never show whether the person behind the account <strong>files, pays, or keeps records</strong>. Yet consistency of filing is among the most legible discipline signals an adult produces, and it is generated as a by-product of behaviour the platform already hosts.</p>
+          <p>Creditax scores it. A <span class="hl">compliance-weighted credit health score</span> sits beside the bank-signal factors, labelled plainly: <b>indicative, for education and self-improvement</b>. Not a bureau report. Bureau data enters only through partnership, presented as the bureau's own.</p>
+        </div>
+        <div class="flag green">
+          <h5><svg><use href="#i-db"/></svg>The dataset argument</h5>
+          <p>Every interaction manufactures a record no competitor holds: <b>verified compliance behaviour, linked to identity rails, across tax types and four languages</b>. Money cannot shortcut a year of live filing data. It has to be earned in operation.</p>
+        </div>
+      </div>
+      <div class="colv" style="flex:0 0 92mm">
+        <div class="card white">
+          <h3><svg><use href="#i-chart"/></svg>How the score is built</h3>
+          <div class="kv"><span class="k"><b>Income stability</b>, from bank data</span><span class="v">30%</span></div>
+          <div class="kv"><span class="k"><b>Compliance history</b>, filings, payments, activity</span><span class="v">30%</span></div>
+          <div class="kv"><span class="k"><b>Savings rate</b>, statement analysis</span><span class="v">25%</span></div>
+          <div class="kv"><span class="k"><b>Debt burden</b>, existing loan payments</span><span class="v">15%</span></div>
+        </div>
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-art/art-whynow-map.jpg" alt="">
+          <div class="cap">Identity rails (BVN · NIN · TIN · CAC) plus mobile reach make the signal linkable for the first time.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 §6 · product-foundation v1.2</span><span>05 / 20</span></div>
+</div>
+
+<!-- ================= 06 THE PRODUCT ================= -->
+<div class="page" id="s06">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-layers"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 06 · The Product</div><h1>A file that builds itself.</h1></div>
+    <div class="bmeta"><div class="pg">06 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-msg"/></svg>The loop, end to end</h3>
+        <div class="ifact"><div class="ic"><svg><use href="#i-msg"/></svg></div><div class="tx"><p class="tt">1 · Ask in your language</p><p class="td"><b>English, Yoruba, Hausa, Igbo</b>: the interface and the answers. Every reply is grounded in published Nigerian law and <b>names its section</b>.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-calc"/></svg></div><div class="tx"><p class="tt">2 · Calculate, then cite</p><p class="td">Four engines: <b>PAYE, VAT, withholding, CIT</b>: return the same figure for the same inputs, every time. Each result names its section of the Act. <b>No black boxes.</b></p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-file"/></svg></div><div class="tx"><p class="tt">3 · Upload and extract</p><p class="td">Receipts, invoices, payslips land in the library with <b>structured extraction previews</b>, attachable into the conversation as context.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-trend"/></svg></div><div class="tx"><p class="tt">4 · Score and refer</p><p class="td">The compliance-weighted score updates with behaviour. Below the confidence bar, the platform <b>refuses to answer and books a verified human</b>.</p></div></div>
+      </div>
+      <div class="colv" style="flex:0 0 94mm">
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-screens/landing-hero.png" alt="">
+          <div class="cap"><svg><use href="#i-eye"/></svg> Live product · <a href="https://creditax.missionctrl.com.ng/en">creditax.missionctrl.com.ng</a></div>
+        </div>
+        <div class="card white" style="flex:0 0 auto">
+          <h3><svg><use href="#i-layers"/></svg>Four surfaces, one engine</h3>
+          <div class="kv"><span class="k"><b>Consumer</b>, canvas, uploads, score</span><span class="v">FREE TO START</span></div>
+          <div class="kv"><span class="k"><b>Pro portal</b>, clients, bulk calc, white-label</span><span class="v">N25,000/MO</span></div>
+          <div class="kv"><span class="k"><b>Developer API</b>, keys, sandbox, metering</span><span class="v">USAGE-BASED</span></div>
+          <div class="kv"><span class="k"><b>Admin</b>, approvals, KB, audit</span><span class="v">INTERNAL</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 · Part II §4-5 · <a href="https://creditax.missionctrl.com.ng/en">live product</a></span><span>06 / 20</span></div>
+</div>
+
+<!-- ================= 07 SERVICES ================= -->
+<div class="page" id="s07">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-receipt"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 07 · Service Schedule</div><h1>Services, priced like a tariff.</h1></div>
+    <div class="bmeta"><div class="pg">07 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-receipt"/></svg>Each with a fixed input, output and price</h3>
+        <table class="ledger">
+          <thead><tr><th>Service</th><th>What the user gets</th><th class="amt">Fee</th></tr></thead>
+          <tbody>
+            <tr><td><b>WHT Credit Recovery</b></td><td>Deductions matched to missing credit notes; claim schedule filed by a pro</td><td class="amt">5% of recovery</td></tr>
+            <tr><td><b>TCC Readiness</b></td><td>Live tracker, missing-document list, assembled bundle with countdown</td><td class="amt">N2,500 / pack</td></tr>
+            <tr><td><b>Ajo Ledger</b></td><td>Cooperative contributions logged; per-member income certificate</td><td class="amt">N100-200 / member</td></tr>
+            <tr><td><b>Employer Badge</b></td><td>Monthly PAYE audit, dated badge, regulator-ready report</td><td class="amt">N200-500 / employee</td></tr>
+            <tr><td><b>Notice Translator</b></td><td>Any FIRS or state notice explained in plain or local language</td><td class="amt">1 free / month</td></tr>
+            <tr><td><b>Invoice Checker</b></td><td>"Deduct this, remit by then", before the invoice is paid</td><td class="amt">3 free / day</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="colv" style="flex:0 0 88mm">
+        <div class="card grow">
+          <h3><svg><use href="#i-layers"/></svg>Services, not screens</h3>
+          <p>Each entry has a fixed input, a fixed output and a fixed price. The assistant <b>suggests them mid-conversation</b> when the question matches: the user never hunts a menu. Revenue grows by adding rows to this schedule, not screens to the product.</p>
+        </div>
+        <div class="flag blue">
+          <h5><svg><use href="#i-clock"/></svg>Wave two, already specced</h5>
+          <p>Rent withholding autopilot · salary-structure optimizer · payslip decoder · business-name quiz. Each ships <b>when its prerequisite is true</b>: marketplace supply, disclaimers, score credibility. Options, not promises.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: feature-specs v1.0 · Working Paper 2026 §7</span><span>07 / 20</span></div>
+</div>
+
+<!-- ================= 08 THE NETWORK ================= -->
+<div class="page" id="s08">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-badge"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 08 · The Network</div><h1>Verified humans, one tap away.</h1></div>
+    <div class="bmeta"><div class="pg">08 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-badge"/></svg>How the verified badge is earned</h3>
+        <div class="ifact"><div class="ic"><svg><use href="#i-search"/></svg></div><div class="tx"><p class="tt">1 · Registry check</p><p class="td">The CAC registration number is validated through <b>Mono's Lookup API</b>. No official public CAC API exists, so the registry hit is corroborated: never trusted alone.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-file"/></svg></div><div class="tx"><p class="tt">2 · Documentary proof</p><p class="td">The CAC certificate itself is uploaded and stored against the profile.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-users"/></svg></div><div class="tx"><p class="tt">3 · Human review</p><p class="td">An administrator approves or rejects from a queue. <b>No profile goes live unreviewed.</b></p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-lock"/></svg></div><div class="tx"><p class="tt">4 · Gated contact</p><p class="td">Phone, email and WhatsApp render <b>only to signed-in users</b> and are excluded from public pages entirely. Anti-scrape by design.</p></div></div>
+      </div>
+      <div class="colv" style="flex:0 0 92mm">
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-screens/marketplace-search.png" alt="">
+          <div class="cap"><svg><use href="#i-eye"/></svg> Live marketplace · <a href="https://creditax.missionctrl.com.ng/en/marketplace">browse the supply</a></div>
+        </div>
+        <div class="card" style="flex:0 0 auto">
+          <h3><svg><use href="#i-search"/></svg>Discovery that reads intent</h3>
+          <p class="sm">"I need a VAT expert near Lagos Island" returns the professionals whose services match, <b>sorted by distance</b> when location is shared. The referral fires at the exact moment the stakes are highest: audit, objection, appeal.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 §8 · API Research v1.3 §2.4, §3.7</span><span>08 / 20</span></div>
+</div>
+
+<!-- ================= 09 TARIFF ================= -->
+<div class="page" id="s09">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-banknote"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 09 · The Tariff</div><h1>Four tiers. All Naira.</h1></div>
+    <div class="bmeta"><div class="pg">09 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="tiers">
+      <div class="tier">
+        <div class="tp">Free</div><div class="tv">N0</div>
+        <ul class="tf">
+          <li>5 answers / day, 60 lifetime</li>
+          <li>5 calculations / day</li>
+          <li>2 uploads / day</li>
+          <li>Starter credit score</li>
+          <li>100 sandbox API calls</li>
+        </ul>
+        <div class="tft">No card required</div>
+      </div>
+      <div class="tier hot">
+        <div class="tp">Plus · Popular</div><div class="tv">N5,000 <small>/mo</small></div>
+        <ul class="tf">
+          <li>100 answers / day</li>
+          <li>50 calculations / day</li>
+          <li>20 uploads / day</li>
+          <li>Full score + simulator</li>
+          <li>5 BVN · 5,000 API calls</li>
+        </ul>
+        <div class="tft">N4,000/mo billed annually</div>
+      </div>
+      <div class="tier">
+        <div class="tp">Professional</div><div class="tv">N25,000 <small>/mo</small></div>
+        <ul class="tf">
+          <li>Fair-use unlimited</li>
+          <li>Client files · 3 seats</li>
+          <li>White-label reports</li>
+          <li>20 BVN checks</li>
+          <li>50,000 API calls</li>
+        </ul>
+        <div class="tft">3 seats included</div>
+      </div>
+      <div class="tier">
+        <div class="tp">Enterprise</div><div class="tv">Custom</div>
+        <ul class="tf">
+          <li>Pooled quotas</li>
+          <li>Portfolio scoring</li>
+          <li>SSO + SLA</li>
+          <li>Nigeria-region hosting</li>
+          <li>Dedicated support</li>
+        </ul>
+        <div class="tft">SLA-backed</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="flag grow">
+        <h5><svg><use href="#i-banknote"/></svg>Annual pulls cash forward</h5>
+        <p>Plus drops to <b>N4,000/month</b> and Professional to <b>N20,000/month</b> on annual billing: a documented 20% discount. Every price is Naira; <b>no dollar figure appears anywhere</b> in the product or this deck.</p>
+      </div>
+      <div class="flag blue grow">
+        <h5><svg><use href="#i-lock"/></svg>Enforced, not decorative</h5>
+        <p>Quotas live in server middleware: hard stop at the cap, the upgrade card <b>names the exact limit</b>, every admin override audit-logged. The 6th free answer of the day is the wall.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: pricing-and-access v1.2 · <a href="https://creditax.missionctrl.com.ng/en/pricing">live pricing</a></span><span>09 / 20</span></div>
+</div>
+
+<!-- ================= 10 UNIT ECONOMICS ================= -->
+<div class="page" id="s10">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-chart"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 10 · Unit Economics</div><h1>Costs to the Naira.</h1></div>
+    <div class="bmeta"><div class="pg">10 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="metrics">
+      <div class="metric"><div class="mv">N370</div><div class="ml">typical free-user cost per month (ceiling N1,500: the lifetime cap binds first)</div></div>
+      <div class="metric m3"><div class="mv">74<small>%</small></div><div class="ml">margin on BVN verification: N350 price against a N90 provider cost</div></div>
+      <div class="metric m2"><div class="mv">~55<small>%</small></div><div class="ml">Plus margin, typical user: Professional runs ~73%, Enterprise floored at 60%</div></div>
+      <div class="metric m4"><div class="mv">1:10</div><div class="ml">conversion target: one Plus per ten active free users within 90 days</div></div>
+    </div>
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-banknote"/></svg>Cost of service: documented unit costs</h3>
+        <table class="ledger">
+          <thead><tr><th>Action</th><th class="amt">Unit cost</th></tr></thead>
+          <tbody>
+            <tr><td>Grounded answer</td><td class="amt">N5</td></tr>
+            <tr><td>Tax calculation</td><td class="amt">N3</td></tr>
+            <tr><td>Document upload + extraction</td><td class="amt">N15</td></tr>
+            <tr><td>BVN verification (provider)</td><td class="amt">N90</td></tr>
+            <tr class="total"><td class="lab">Free-user ceiling</td><td class="amt">N1,500</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card white grow">
+        <h3><svg><use href="#i-trend"/></svg>What one conversion is worth</h3>
+        <table class="ledger">
+          <thead><tr><th>Line</th><th class="amt">Figure</th></tr></thead>
+          <tbody>
+            <tr><td>One Plus contributes / month</td><td class="amt"><b>~N2,750</b></td></tr>
+            <tr><td>That contribution pays for</td><td class="amt"><b>~7 users</b></td></tr>
+            <tr><td>Plus / Professional margin</td><td class="amt">55% / 73%</td></tr>
+            <tr><td>Enterprise floor</td><td class="amt">60%</td></tr>
+            <tr class="total"><td class="lab">Payback rule</td><td class="amt">&lt; 90 days</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="colv" style="flex:0 0 62mm">
+        <div class="card white grow">
+          <h3><svg><use href="#i-flag"/></svg>Month-6 scenarios</h3>
+          <div class="kv"><span class="k"><b>A</b> conservative MRR</span><span class="v">N252,500</span></div>
+          <div class="kv"><span class="k">contribution</span><span class="v g">N174,500</span></div>
+          <div class="kv" style="margin-top:1.5mm"><span class="k"><b>B</b> funded MRR</span><span class="v">N930,000</span></div>
+          <div class="kv"><span class="k">contribution</span><span class="v g">N740,000</span></div>
+        </div>
+        <div class="flag red">
+          <h5><svg><use href="#i-alert"/></svg>No number games</h5>
+          <p>Unit costs revalidate monthly. Any provider moving <b>20%</b> re-cuts quotas before prices change. Both scenarios shown; neither is a promise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Financial Projections 2026 §1, §5 · pricing-and-access v1.2</span><span>10 / 20</span></div>
+</div>
+
+<!-- ================= 11 ON THE SHELF ================= -->
+<div class="page" id="s11">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-checkc"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 11 · On the Shelf</div><h1>Built. In build. Gated.</h1></div>
+    <div class="bmeta"><div class="pg">11 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-checkc"/></svg>Shipped on the demo track</h3>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg><b>48 routes</b> across consumer, pro, admin and developer surfaces</li>
+          <li><svg><use href="#i-check"/></svg>Canvas chat with citation cards and extraction previews</li>
+          <li><svg><use href="#i-check"/></svg>Marketplace grid, profiles, admin approval queue</li>
+          <li><svg><use href="#i-check"/></svg>Naira-locked pricing, quota walls, usage counters</li>
+          <li><svg><use href="#i-check"/></svg>Four-language interface: EN · YO · HA · IG</li>
+          <li><svg><use href="#i-check"/></svg>Status surface, all services green</li>
+        </ul>
+        <h3 style="margin-top:3mm"><svg><use href="#i-clock"/></svg>On the production track</h3>
+        <ul class="check">
+          <li class="wait"><svg><use href="#i-check"/></svg>Managed Postgres with retrieval; real identity (BVN / NIN)</li>
+          <li class="wait"><svg><use href="#i-check"/></svg>Payments and metering against live providers</li>
+          <li class="wait"><svg><use href="#i-check"/></svg>Background jobs, re-indexing, monitoring</li>
+        </ul>
+      </div>
+      <div class="colv" style="flex:0 0 94mm">
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-screens/status-page.png" alt="">
+          <div class="cap"><svg><use href="#i-eye"/></svg> Live status surface · <a href="https://creditax.missionctrl.com.ng/en/status">creditax.missionctrl.com.ng/en/status</a></div>
+        </div>
+        <div class="flag blue">
+          <h5><svg><use href="#i-layers"/></svg>The two-track rule</h5>
+          <p>The demo track behaves correctly on <b>clearly labelled seeded data</b> and exists to sell. The production track carries real integrations. Nothing on the demo track is ever presented as production: this deck keeps that line.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: mvp-demo-plan v1.2 · <a href="https://creditax.missionctrl.com.ng/en/status">live status</a></span><span>11 / 20</span></div>
+</div>
+
+<!-- ================= 12 CLIENT PIPELINE ================= -->
+<div class="page" id="s12">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-flag"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 12 · Client Pipeline</div><h1>Show. Publish. Staff.</h1></div>
+    <div class="bmeta"><div class="pg">12 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="steps">
+      <div class="step"><div class="sn"><span class="n">1</span><span class="t">Show it on camera</span></div><p>An <b>eight-minute script</b> runs the product end to end for 4-5 warm leads: tax-reporting fintechs, government-adjacent projects, accountancy practices. <b>Nothing is pitched that cannot be demonstrated live.</b></p></div>
+      <div class="step"><div class="sn"><span class="n">2</span><span class="t">Publish the answers</span></div><p>Reform-era questions become <b>reviewed articles</b>, each signed off by a licensed practitioner before publication. The <b>developer surface ships free sandbox access</b> so fintechs and payroll tools build on the same engines.</p></div>
+      <div class="step"><div class="sn"><span class="n">3</span><span class="t">Staff the supply</span></div><p>Verified professionals are onboarded <b>before consumer spend</b>. Practice tooling: bulk calc, white-label reports: makes joining worthwhile even with few clients, so supply never stalls while demand builds.</p></div>
+    </div>
+    <div class="grid">
+      <div class="snap grow">
+        <img src="../assets/deck-screens/developers-portal.png" alt="">
+        <div class="cap"><svg><use href="#i-eye"/></svg> Developer surface · <a href="https://creditax.missionctrl.com.ng/en/developers">creditax.missionctrl.com.ng/en/developers</a></div>
+      </div>
+      <div class="card white" style="flex:0 0 88mm">
+        <h3><svg><use href="#i-chart"/></svg>The weekly KPI contract</h3>
+        <div class="kv"><span class="k"><b>Activation</b>, first-session win (ask, upload, score)</span><span class="v">20%</span></div>
+        <div class="kv"><span class="k"><b>Conversion</b>: within 90 days</span><span class="v">1 : 10</span></div>
+        <div class="kv"><span class="k"><b>Trust</b>, citation coverage on answers</span><span class="v">100%</span></div>
+        <div class="kv"><span class="k"><b>Economics</b>, blended CAC envelope</span><span class="v">N2,000</span></div>
+        <div class="kv"><span class="k"><b>Supply</b>, verified pros and contact reveals</span><span class="v">WEEKLY</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 §17 · <a href="https://creditax.missionctrl.com.ng/en/developers">developers</a></span><span>12 / 20</span></div>
+</div>
+
+<!-- ================= 13 THE MOAT ================= -->
+<div class="page" id="s13">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-lock"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 13 · The Moat</div><h1>Three locks competitors can't copy.</h1></div>
+    <div class="bmeta"><div class="pg">13 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="steps">
+      <div class="step"><div class="sn"><span class="n">1</span><span class="t">Cited Nigerian depth</span></div><p>Versioned rules, a golden test set of Nigerian tax questions, a confidence bar that <b>refuses to answer below it</b>. The barrier is not the technology. It is the maintenance discipline of keeping published law current, answer by answer.</p></div>
+      <div class="step"><div class="sn"><span class="n">2</span><span class="t">The compliance dataset</span></div><p>Bank statements show flow; nothing scores filing behaviour. Every calculation, estimate and verified document deepens an archive that <b>compounds monthly</b> and cannot be bought after the fact.</p></div>
+      <div class="step"><div class="sn"><span class="n">3</span><span class="t">The verified network</span></div><p>CAC-checked professionals, login-gated contacts, and practice tooling that makes supply stay. <b>A directory can be scraped. Trust infrastructure cannot.</b></p></div>
+    </div>
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-search"/></svg>Who else is near this problem</h3>
+        <table class="ledger">
+          <thead><tr><th>Player class</th><th>Why they miss</th></tr></thead>
+          <tbody>
+            <tr><td><b>Generic assistants</b></td><td>No citation contract; foreign or stale rules look identical to correct ones</td></tr>
+            <tr><td><b>Global tax suites</b></td><td>Built for home-market filing rails; no Nigerian depth, no compliance bridge</td></tr>
+            <tr><td><b>Banks &amp; bureaus</b></td><td>Compliance behaviour sits outside their scoring frames</td></tr>
+            <tr><td><b>Status quo</b></td><td>Zero records, zero scale, trust by proximity only</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flag blue grow">
+        <h5><svg><use href="#i-alert"/></svg>The honest caveat</h5>
+        <p>The moat is <b>earned in operation, not asserted in a deck</b>. It exists to the extent the citation contract holds, the data accrues, and the supply stays. Each is instrumented: see the audit log, section 16.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 §3, §13 · API Research v1.3 §1</span><span>13 / 20</span></div>
+</div>
+
+<!-- ================= 14 SCHEDULE ================= -->
+<div class="page" id="s14">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-clock"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 14 · Delivery Schedule</div><h1>24 weeks. Exits, not dates.</h1></div>
+    <div class="bmeta"><div class="pg">14 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="steps">
+      <div class="step"><div class="sn"><span class="n">I</span><span class="t">Weeks 1-5 · Foundation + Core API</span></div><p>Brand, CAC filing, repository. API keys, rate limiting, first calculators. <b>Exit: a partner computes PAYE from the documentation alone.</b></p></div>
+      <div class="step"><div class="sn"><span class="n">II</span><span class="t">Weeks 6-12 · Assistant + Documents</span></div><p>Knowledge base ingested; cited answers; uploads, extraction, reports. <b>Exit: invoice to extraction to report, end to end.</b></p></div>
+      <div class="step"><div class="sn"><span class="n">III</span><span class="t">Weeks 13-20 · Credit + Platform</span></div><p>Score v1, identity verification, sandbox, webhooks, usage analytics. <b>Exit: starter score and developer surface live.</b></p></div>
+      <div class="step"><div class="sn"><span class="n">IV</span><span class="t">Weeks 19-24+ · Marketplace + Launch</span></div><p>CAC verification, profiles, proximity search; public launch. <b>Exit: first verified professional live; first paying conversions measured.</b></p></div>
+    </div>
+    <div class="grid">
+      <div class="flag grow">
+        <h5><svg><use href="#i-flag"/></svg>The sequencing rule</h5>
+        <p>Every phase is gated on <b>measured KPIs, not the calendar</b>. Hardware is out of scope for Phase 1 at any price. The marketplace takes supply before demand spend. The production data gate is funded inside the budget: it is never the excuse for delay.</p>
+      </div>
+      <div class="flag green grow">
+        <h5><svg><use href="#i-banknote"/></svg>What the phases buy, in order</h5>
+        <p>Two-fifths builds the product. A quarter buys adoption. <b>12% runs the infrastructure. 8% opens the legal road.</b> The final 15% is operations and buffer, released only against listed triggers: detail in section 15.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 · Part III · project-roadmap v1.1</span><span>14 / 20</span></div>
+</div>
+
+<!-- ================= 15 USE OF FUNDS ================= -->
+<div class="page" id="s15">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-banknote"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 15 · Use of Funds</div><h1>Where the N10,000,000 goes.</h1></div>
+    <div class="bmeta"><div class="pg">15 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-banknote"/></svg>Appropriation schedule</h3>
+        <table class="ledger">
+          <thead><tr><th>Allocation</th><th class="amt">Amount</th><th class="amt">Share</th></tr></thead>
+          <tbody>
+            <tr><td>Engineering and product</td><td class="amt">N4,000,000</td><td class="amt">40%</td></tr>
+            <tr><td>Go-to-market</td><td class="amt">N2,500,000</td><td class="amt">25%</td></tr>
+            <tr><td>Infrastructure</td><td class="amt">N1,200,000</td><td class="amt">12%</td></tr>
+            <tr><td>Compliance and legal</td><td class="amt">N800,000</td><td class="amt">8%</td></tr>
+            <tr><td>Operations</td><td class="amt">N500,000</td><td class="amt">5%</td></tr>
+            <tr><td>Contingency</td><td class="amt">N1,000,000</td><td class="amt">10%</td></tr>
+            <tr class="total"><td class="lab">Total instrument</td><td class="amt">N10,000,000</td><td class="amt">100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card white grow">
+        <h3><svg><use href="#i-clock"/></svg>Monthly drawdown (N millions)</h3>
+        <table class="ledger">
+          <thead><tr><th>Month</th><th class="amt">Draw</th><th>Focus</th></tr></thead>
+          <tbody>
+            <tr><td>Month 1</td><td class="amt">1.45</td><td>Scaffold, brand, CAC filing</td></tr>
+            <tr><td>Month 2</td><td class="amt">1.60</td><td>API skeleton, key management</td></tr>
+            <tr><td>Month 3</td><td class="amt">1.65</td><td>Assistant and knowledge base live</td></tr>
+            <tr><td>Month 4</td><td class="amt">1.70</td><td>Documents and credit engine</td></tr>
+            <tr><td>Month 5</td><td class="amt">1.75</td><td>Marketplace and developer platform</td></tr>
+            <tr><td>Month 6</td><td class="amt">1.85</td><td>Launch and production gate</td></tr>
+            <tr class="total"><td class="lab">Cumulative</td><td class="amt">10.00</td><td>contingency trigger-gated</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="colv" style="flex:0 0 60mm">
+        <div class="flag red">
+          <h5><svg><use href="#i-alert"/></svg>What contingency covers</h5>
+          <p>Provider prices moving <b>more than 20%</b>. Security review before any bank contract. Identity demand outpacing the teaser budget. Runway into month seven if conversion runs light. <b>Never scope.</b></p>
+        </div>
+        <div class="flag green">
+          <h5><svg><use href="#i-checkc"/></svg>What it ends with</h5>
+          <p>A demo-stable product across <b>48 routes</b>, a cleared legal gate, verified marketplace supply, a measured conversion mechanic: and the first tranche of a dataset nobody else holds.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Financial Projections 2026 §3-§4</span><span>15 / 20</span></div>
+</div>
+
+<!-- ================= 16 AUDIT LOG ================= -->
+<div class="page" id="s16">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-alert"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 16 · Audit Log</div><h1>Every risk has a watcher.</h1></div>
+    <div class="bmeta"><div class="pg">16 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="card white" style="flex:1;min-height:0">
+      <div class="find"><span class="sev a">critical</span><div class="fx"><b>Ungrounded tax answers</b>Citations mandatory on every reply; a golden test set of Nigerian questions; the confidence bar routes to a verified human; every article practitioner-reviewed. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: citation coverage · referral rate</span></div></div>
+      <div class="find"><span class="sev b">high</span><div class="fx"><b>NDPA / NDPC non-compliance</b>Impact assessment before production; registration as data controller of major importance; DPO on paper from day one; 72-hour breach workflow. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: gate milestones</span></div></div>
+      <div class="find"><span class="sev b">high</span><div class="fx"><b>Regulatory change</b>Versioned rules with scheduled re-indexing; circulars tracked as priority documents; the citation trail moves with every amendment. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: re-index lag</span></div></div>
+      <div class="find"><span class="sev b">high</span><div class="fx"><b>Free-tier cost blowout</b>Lifetime 60-answer cap plus daily quotas server-side; worst case N1,500 per user against a N2,000 envelope. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: cost per active free user</span></div></div>
+      <div class="find"><span class="sev c">med</span><div class="fx"><b>Provider concentration</b>Provider pinned per environment; the demo path fails closed; multi-provider notes maintained. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: provider error rates</span></div></div>
+      <div class="find"><span class="sev c">med</span><div class="fx"><b>Conversion below target</b>Quota walls that name the exact limit; annual discount; the identity teaser builds the paid habit. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: cohort conversion curves</span></div></div>
+      <div class="find"><span class="sev c">med</span><div class="fx"><b>Marketplace supply stall</b>Supply acquisition precedes consumer spend; practice tooling pays for itself early. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: verified pros · reveals</span></div></div>
+      <div class="find"><span class="sev d">low</span><div class="fx"><b>Payment fraud</b>Local PSP with 3-D Secure; webhook signatures verified; no card data on platform servers. <span class="watch"><svg><use href="#i-eye"/></svg> Watch: chargeback rate</span></div></div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Working Paper 2026 §21 · security-foundation v1.0</span><span>16 / 20</span></div>
+</div>
+
+<!-- ================= 17 LADDER ================= -->
+<div class="page" id="s17">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-scale"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 17 · Licence Ladder</div><h1>The legal road, sequenced.</h1></div>
+    <div class="bmeta"><div class="pg">17 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="steps">
+      <div class="step"><div class="sn"><span class="n">1</span><span class="t">Now · Company</span></div><p>CAC registration of the operating company, counsel engaged, corporate account and the company's own TIN. <b>The platform files its own paperwork first.</b></p></div>
+      <div class="step"><div class="sn"><span class="n">2</span><span class="t">Demo · Assessment light</span></div><p>A DPIA-lite review on <b>mock data only</b>, plus the draft privacy notice in English. The demo proceeds while the gates run in parallel.</p></div>
+      <div class="step"><div class="sn"><span class="n">3</span><span class="t">Production · Full gate</span></div><p><b>NDPC registration</b> as a data controller of major importance, the complete impact assessment, a Data Protection Officer on paper, notices in four languages.</p></div>
+      <div class="step"><div class="sn"><span class="n">4</span><span class="t">Bank deals · Assurance</span></div><p>Penetration test, data-residency answers, SLA and DPA templates ready for institutional review.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-scale"/></svg>Two lines that never move</h3>
+        <div class="ifact"><div class="ic"><svg><use href="#i-landmark"/></svg></div><div class="tx"><p class="tt">The FIRS line</p><p class="td">No scraping or unofficial integration of any government system. <b>Published law and guidance only, cited per answer.</b> General information, never representation: high-stakes matters route to a verified human.</p></div></div>
+        <div class="ifact"><div class="ic"><svg><use href="#i-lock"/></svg></div><div class="tx"><p class="tt">The CBN line</p><p class="td">Not a licensed credit bureau, never presented as one. The score is <b>indicative, for education and self-improvement</b>. Bureau data enters only via partnership, as the bureau's report. No lending from our own balance sheet.</p></div></div>
+      </div>
+      <div class="flag blue grow">
+        <h5><svg><use href="#i-trend"/></svg>Why investors should like the gate</h5>
+        <p>A competitor that skips it carries <b>unbooked regulatory debt</b>. The launch date is honest because the gate is funded and sequenced inside the N10,000,000: compliance is a scheduled workstream, not a hope.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: legal-compliance v1.0 · Working Paper 2026 §18</span><span>17 / 20</span></div>
+</div>
+
+<!-- ================= 18 DATA ================= -->
+<div class="page" id="s18">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-lock"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 18 · Data Handling</div><h1>Four data classes. Four rules.</h1></div>
+    <div class="bmeta"><div class="pg">18 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-layers"/></svg>The classification</h3>
+        <div class="kv"><span class="k"><b>Restricted</b>, BVN, NIN, TIN, tokens, secrets</span><span class="v">NEVER RAW</span></div>
+        <div class="kv"><span class="k"><b>Confidential</b>, statements, filings, credit factors</span><span class="v">ENCRYPTED</span></div>
+        <div class="kv"><span class="k"><b>Internal</b>, tickets, counters, reviews</span><span class="v">STAFF ONLY</span></div>
+        <div class="kv"><span class="k"><b>Public</b>, blog, docs, pro profiles</span><span class="v">RATE-LIMITED</span></div>
+        <h3 style="margin-top:3.5mm"><svg><use href="#i-shield"/></svg>The locked rules</h3>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg><b>Raw BVN and NIN never persisted</b>: verdict, provider reference and last-three hint only; the number lives in request memory.</li>
+          <li><svg><use href="#i-check"/></svg><b>Bank credentials never seen by us</b>: read-only tokens, encrypted, revocable from the user's dashboard.</li>
+          <li><svg><use href="#i-check"/></svg><b>Contacts render only to signed-in users</b>: excluded from public pages entirely, anti-scrape by design.</li>
+          <li><svg><use href="#i-check"/></svg><b>Identifiers stripped before processing</b>: personal data never reaches logs or engines unredacted.</li>
+        </ul>
+      </div>
+      <div class="colv" style="flex:0 0 88mm">
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-art/art-product-answer.jpg" alt="">
+          <div class="cap">Consent is granular, receipts are logged, and export or delete is self-serve in four languages.</div>
+        </div>
+        <div class="card" style="flex:0 0 auto">
+          <h3><svg><use href="#i-clock"/></svg>When things go wrong</h3>
+          <div class="kv"><span class="k"><b>Breach response</b>, assess, contain, notify NDPC and users</span><span class="v">72 HOURS</span></div>
+          <div class="kv"><span class="k"><b>Cross-border processing</b>, lawful basis plus redaction</span><span class="v">GATED</span></div>
+          <div class="kv"><span class="k"><b>Data-subject rights</b>, export and delete</span><span class="v">SELF-SERVE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: security-foundation v1.0 · NDPA 2023</span><span>18 / 20</span></div>
+</div>
+
+<!-- ================= 19 INSTRUMENT ================= -->
+<div class="page" id="s19">
+  <div class="band">
+    <div class="bicon"><svg><use href="#i-banknote"/></svg></div>
+    <div class="btxt"><div class="beyebrow">Section 19 · The Instrument</div><h1>N10,000,000. Four checkpoints.</h1></div>
+    <div class="bmeta"><div class="pg">19 <small>/ 20</small></div><div class="br">Creditax.ai</div></div>
+  </div>
+  <div class="wrap">
+    <div class="metrics">
+      <div class="metric"><div class="mv">N10M</div><div class="ml">seed instrument: structure and branches open to discussion</div></div>
+      <div class="metric m2"><div class="mv">6 <small>mo</small></div><div class="ml">runway to launch and the production data gate</div></div>
+      <div class="metric m3"><div class="mv">4</div><div class="ml">checkpoints, each gated on a measured KPI</div></div>
+      <div class="metric m4"><div class="mv">0</div><div class="ml">unfunded compliance gates: the legal road is inside the budget</div></div>
+    </div>
+    <div class="grid">
+      <div class="card white grow">
+        <h3><svg><use href="#i-flag"/></svg>The checkpoints</h3>
+        <div class="kv"><span class="k"><b>Month 3</b>, demo stable: the eight-minute script runs end to end</span><span class="v">M3</span></div>
+        <div class="kv"><span class="k"><b>Month 4</b>, production gate: NDPC filed, DPIA complete, DPO on paper</span><span class="v">M4</span></div>
+        <div class="kv"><span class="k"><b>Month 6</b>, launch: first paying conversions measured, not modelled</span><span class="v">M6</span></div>
+        <div class="kv"><span class="k"><b>Month 6+</b>, supply proven: first verified professionals live in the marketplace</span><span class="v">M6+</span></div>
+      </div>
+      <div class="colv" style="flex:0 0 88mm">
+        <div class="snap" style="flex:1;min-height:0">
+          <img src="../assets/deck-art/art-ask-closing.jpg" alt="">
+          <div class="cap">The six-month instrument, sequenced against the delivery schedule in section 14.</div>
+        </div>
+        <div class="flag red">
+          <h5><svg><use href="#i-alert"/></svg>What this document does not claim</h5>
+          <p>No revenue yet. No pilot has run. No signed enterprise contracts. Hardware is out of scope. Every forward figure is a labelled scenario band. <b>The ask funds evidence, not aspiration.</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Source: Financial Projections 2026 §8</span><span>19 / 20</span></div>
+</div>
+
+<!-- ================= 20 CLOSING ================= -->
+<div class="page dark" id="s20">
+  <div class="cvwrap">
+    <div class="cvtop">
+      <img class="lg" src="../public/logo-dark.png" alt="Creditax.ai">
+      <span class="conf">SECTION 20 · FILED · 20 / 20</span>
+    </div>
+    <div class="cvmid">
+      <div class="cvl">
+        <div class="cvkick">Tax Smart. Borrow Smart.</div>
+        <div class="cvtitle">A record of what Nigeria earns, owes and <span class="g">files</span>.</div>
+        <p class="cvsub">Assembled where the filing happens. Priced where the credit is decided. Referred to a <b>verified human</b> when the stakes demand one. That is the whole product: and the whole moat.</p>
+        <div class="cvstats">
+          <div class="s"><div class="ic2"><svg><use href="#i-checkc"/></svg><span>Proven</span></div><div class="v">Demo build</div><div class="l">48 routes · 4 locales · live status</div></div>
+          <div class="s"><div class="ic2"><svg><use href="#i-clock"/></svg><span>Next</span></div><div class="v">6 months</div><div class="l">to launch and the production gate</div></div>
+          <div class="s"><div class="ic2"><svg><use href="#i-banknote"/></svg><span>Ask</span></div><div class="v">N10,000,000</div><div class="l">seed · terms open to discussion</div></div>
+        </div>
+      </div>
+      <div class="cvr">
+        <div class="snap"><img src="../assets/deck-art/art-ask-closing.jpg" alt=""><div class="cap" style="color:var(--slate)">MissionCTRL Creative Tech Research Labs · Lagos, Nigeria · September 2026</div></div>
+        <div class="cvindex">
+          <div class="ih">Live product · verified routes</div>
+          <div class="cols">
+            <a href="https://creditax.missionctrl.com.ng/en"><b>Home</b><span>/en</span></a>
+            <a href="https://creditax.missionctrl.com.ng/en/pricing"><b>Pricing</b><span>/en/pricing</span></a>
+            <a href="https://creditax.missionctrl.com.ng/en/marketplace"><b>Marketplace</b><span>/en/marketplace</span></a>
+            <a href="https://creditax.missionctrl.com.ng/en/developers"><b>Developers</b><span>/en/developers</span></a>
+            <a href="https://creditax.missionctrl.com.ng/en/status"><b>Status</b><span>/en/status</span></a>
+            <a href="https://creditax.missionctrl.com.ng/en/blog"><b>Research</b><span>/en/blog</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ft"><b>CREDITAX.AI</b><span class="mid">Sources: Working Paper 2026 · Financial Projections 2026 · research foundation (September 2026)</span><span>20 / 20</span></div>
+</div>
+
+</body>
+</html>
