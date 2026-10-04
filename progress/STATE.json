@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "none (p22 landing-cinematic complete + deployed; p21 backlog open)",
+  "current_phase": "p23c cleanup + VPS key verified; p21 backlog open (next pick)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -26,7 +26,11 @@
     "p18-canvas-chat-rework",
     "p19-quota-truth",
     "p20-ui-consistency",
-    "p21-demo-completeness"
+    "p21-demo-completeness",
+    "p22-landing-cinematic",
+    "p23-mobile-portal-ux",
+    "p23b-logo-restore",
+    "p23c-cleanup-skill-deploy"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -34,7 +38,11 @@
     "package.json has no `test` script; verification is `npm run build` + `npm run lint` via /usr/local/bin/node.",
     "GATE (2026-09-24): p13–p16 are all `gated_until_p12_complete`. DO NOT start any of them until the p12 session is fully finished and its tree is committed clean. The skill checks this gate at the start of any gated run and DEFERS (re-arms itself) if unmet. Keys are now live in .env (gitignored) — see env_keys_note; never commit .env or its values.",
     "P18 (2026-09-24, ZCode full-access): /dashboard/chat REBUILT per the user's direct spec — chat docks to a left sidebar after the first message; the canvas holds ARTIFACTS only (skill results, referrals, filing-intent actions, share links), auto-arranged in a grid with Turn badges; plain answers stay in the thread. Demo-screenshots B01/B02 (canvas) are now STALE — re-capture before the next deck/demo run.",
-    "P19+P20 (2026-09-24, ZCode full-access): full-plan audit (3 parallel sweeps: research docs vs code, UI consistency, backend truth) surfaced 4 false claims + 5 UI P0s + MVP-plan gaps. P19 closed the backend truth issues; P20 closed the UI/demo-path gaps. KNOWN LIMITATION (documented, Track B): /api/v1/admin/* routes have NO server-side auth — pb-auth sessions live in localStorage (client), so httpOnly-cookie session enforcement waits for Track B auth; the UI layouts gate, the API surface stays open (demo-only data)."
+    "P19+P20 (2026-09-24, ZCode full-access): full-plan audit (3 parallel sweeps: research docs vs code, UI consistency, backend truth) surfaced 4 false claims + 5 UI P0s + MVP-plan gaps. P19 closed the backend truth issues; P20 closed the UI/demo-path gaps. KNOWN LIMITATION (documented, Track B): /api/v1/admin/* routes have NO server-side auth — pb-auth sessions live in localStorage (client), so httpOnly-cookie session enforcement waits for Track B auth; the UI layouts gate, the API surface stays open (demo-only data).",
+    "P22 (2026-09-30, p22 closeout): landing page cinematic — gsap-web3gl-scrollytelling data-cx engine, stacked-card deck, pinned horizontal ritual stage, Lenis smooth scroll, magnetic CTAs + cursor spotlight. VPS deployment via scripts/deploy-vps.sh (orphan-snapshot deploy: tsc + build + commit-tree HEAD^{tree} force-push to vps:master).",
+    "P23 (2026-09-30): mobile/portal UX sweep — i18n Link nav fix, 1:1 mobile logo on the header, pro/admin tax-assistant integration, author blog workflow. Predecessor to p23b: had a separate mobile 1:1 icon alongside the desktop wordmark.",
+    "P23b (2026-09-30): restore full logo+wordmark on every screen — shortened mobile CTA gives the header row room, so the responsive split is no longer needed. Dropped unused 1:1 icon assets (public/icon.png + public/icon-dark.png zeroed in the commit).",
+    "P23c (2026-10-04): cleanup pass on ui-ux-refactor — (a) AppLogo simplified to a single wordmark on every screen (no more 1:1 icon split), (b) cold-email skill installed at .agents/skills/cold-email + symlinked from .claude/skills/cold-email (Claude Code CLI) and registered in skills-lock.json (source coreyhaines31/marketingskills v2.0.0, computedHash be0b73511a6244b8b8aa9126225844cfe9e492f4c1ee6bffc57344ce5ee2a6e8), (c) AUTHO research artifacts removed (research/documents/AUTHO-Investor-Pitch.pdf, AUTHO-Working-Paper.pdf — belonged to a different project), (d) VPS deploy key re-verified: ssh -i ~/Desktop/dev/ssh-key-2026-09-13.key -o IdentitiesOnly=yes authenticates opc@84.12.111.102 — scripts/deploy-vps.sh already passes the key explicitly, no script change required. STATE.json / CHANGELOG.md synced to git history (STATE was lagging behind git by ~6 phase-numbers)."
   ],
   "phases": [
     {
@@ -891,7 +899,39 @@
       "id": "p22-landing-cinematic",
       "status": "author_verified",
       "attempts": 1,
-      "scope": "Landing page cinematic motion per the gsap-web3gl-scrollytelling skill (distilled from ANIMATED GSAP WEB3GL WEBSITE DESIGN PROMPT-BANK.md, installed globally). CinematicFlow data-cx engine; stacked-card deck on Individuals→SMEs; pinned horizontal ritual stage; Lenis smooth scroll; magnetic CTAs + cursor spotlight. VPS deployment (creditax.missionctrl.com.ng) via bare-repo hook deploy."
+      "scope": "Landing page cinematic motion per the gsap-web3gl-scrollytelling skill (distilled from ANIMATED GSAP WEB3GL WEBSITE DESIGN PROMPT-BANK.md, installed globally). CinematicFlow data-cx engine; stacked-card deck on Individuals→SMEs; pinned horizontal ritual stage; Lenis smooth scroll; magnetic CTAs + cursor spotlight. VPS deployment (creditax.missionctrl.com.ng) via bare-repo hook deploy.",
+      "last_updated": "2026-09-30T18:00:00+01:00"
+    },
+    {
+      "id": "p23-mobile-portal-ux",
+      "status": "author_verified",
+      "attempts": 1,
+      "scope": "Mobile + portal UX sweep on the live demo tree: i18n Link nav fix (Link href without locale broke next-intl routing on the portal pages), 1:1 mobile logo (AppLogo branches sm:hidden icon / desktop wordmark), pro + admin tax-assistant integration into the canvas chat (filing intent surfaces the TCC bundle artifact), author blog workflow (KB publish + Audit live panels on the author scope).",
+      "last_updated": "2026-09-30T17:50:00+01:00"
+    },
+    {
+      "id": "p23b-logo-restore",
+      "status": "author_verified",
+      "attempts": 1,
+      "scope": "Restore the full Creditax wordmark on every screen. The shortened mobile CTA (header CTAs size=md from p20) gave the header row room, so the responsive 1:1 icon / desktop wordmark split is no longer needed. AppLogo collapsed to a single wordmark; public/icon.png + public/icon-dark.png zeroed (assets dropped).",
+      "last_updated": "2026-09-30T17:55:00+01:00"
+    },
+    {
+      "id": "p23c-cleanup-skill-deploy",
+      "status": "done",
+      "attempts": 1,
+      "scope": "Cleanup pass on ui-ux-refactor: (1) AppLogo further simplified (single wordmark, no mobile split, no icon-dark/icon light branching — post p23b asset drop), (2) cold-email skill installed (.agents/skills/cold-email + .claude/skills/cold-email symlink, skills-lock.json registered), (3) AUTHO research artifacts removed (research/documents/AUTHO-* — different project), (4) VPS SSH key re-verified (~/Desktop/dev/ssh-key-2026-09-13.key authenticates opc@84.12.111.102; scripts/deploy-vps.sh already uses explicit -i, no script change required), (5) STATE.json + CHANGELOG.md synced to git history (STATE lagged by ~6 phase-numbers).",
+      "items": {
+        "applogo-single-wordmark": "done",
+        "cold-email-skill-install": "done",
+        "autho-research-cleanup": "done",
+        "vps-ssh-key-verified": "done",
+        "state-changelog-sync": "done"
+      },
+      "live_probes": [
+        "ssh -i ~/Desktop/dev/ssh-key-2026-09-13.key -o IdentitiesOnly=yes opc@84.12.111.102 → Authentication succeeded (publickey)"
+      ],
+      "last_updated": "2026-10-04T16:20:00+01:00"
     }
   ],
   "cleaned_up": {
