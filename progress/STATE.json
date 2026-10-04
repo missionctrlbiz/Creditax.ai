@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "current_phase": "p23c cleanup + VPS key verified; p21 backlog open (next pick)",
+  "current_phase": "none (p24-investor-docs complete); p21 backlog open (next pick)",
   "order": [
     "core-api",
     "rag-pipeline",
@@ -30,7 +30,8 @@
     "p22-landing-cinematic",
     "p23-mobile-portal-ux",
     "p23b-logo-restore",
-    "p23c-cleanup-skill-deploy"
+    "p23c-cleanup-skill-deploy",
+    "p24-investor-docs"
   ],
   "notes": [
     "Branch ui-ux-refactor was snapshotted with a wip commit before the runner started; keep phase commits separate from UI work.",
@@ -42,7 +43,8 @@
     "P22 (2026-09-30, p22 closeout): landing page cinematic — gsap-web3gl-scrollytelling data-cx engine, stacked-card deck, pinned horizontal ritual stage, Lenis smooth scroll, magnetic CTAs + cursor spotlight. VPS deployment via scripts/deploy-vps.sh (orphan-snapshot deploy: tsc + build + commit-tree HEAD^{tree} force-push to vps:master).",
     "P23 (2026-09-30): mobile/portal UX sweep — i18n Link nav fix, 1:1 mobile logo on the header, pro/admin tax-assistant integration, author blog workflow. Predecessor to p23b: had a separate mobile 1:1 icon alongside the desktop wordmark.",
     "P23b (2026-09-30): restore full logo+wordmark on every screen — shortened mobile CTA gives the header row room, so the responsive split is no longer needed. Dropped unused 1:1 icon assets (public/icon.png + public/icon-dark.png zeroed in the commit).",
-    "P23c (2026-10-04): cleanup pass on ui-ux-refactor — (a) AppLogo simplified to a single wordmark on every screen (no more 1:1 icon split), (b) cold-email skill installed at .agents/skills/cold-email + symlinked from .claude/skills/cold-email (Claude Code CLI) and registered in skills-lock.json (source coreyhaines31/marketingskills v2.0.0, computedHash be0b73511a6244b8b8aa9126225844cfe9e492f4c1ee6bffc57344ce5ee2a6e8), (c) AUTHO research artifacts removed (research/documents/AUTHO-Investor-Pitch.pdf, AUTHO-Working-Paper.pdf — belonged to a different project), (d) VPS deploy key re-verified: ssh -i ~/Desktop/dev/ssh-key-2026-09-13.key -o IdentitiesOnly=yes authenticates opc@84.12.111.102 — scripts/deploy-vps.sh already passes the key explicitly, no script change required. STATE.json / CHANGELOG.md synced to git history (STATE was lagging behind git by ~6 phase-numbers)."
+    "P23c (2026-10-04): cleanup pass on ui-ux-refactor — (a) AppLogo simplified to a single wordmark on every screen (no more 1:1 icon split), (b) cold-email skill installed at .agents/skills/cold-email + symlinked from .claude/skills/cold-email (Claude Code CLI) and registered in skills-lock.json (source coreyhaines31/marketingskills v2.0.0, computedHash be0b73511a6244b8b8aa9126225844cfe9e492f4c1ee6bffc57344ce5ee2a6e8), (c) AUTHO research artifacts removed (research/documents/AUTHO-Investor-Pitch.pdf, AUTHO-Working-Paper.pdf — belonged to a different project), (d) VPS deploy key re-verified: ssh -i ~/Desktop/dev/ssh-key-2026-09-13.key -o IdentitiesOnly=yes authenticates opc@84.12.111.102 — scripts/deploy-vps.sh already passes the key explicitly, no script change required. STATE.json / CHANGELOG.md synced to git history (STATE was lagging behind git by ~6 phase-numbers).",
+    "P24 (2026-10-04): investor-docs pass (author_verified, ZCode full-access). Real ₦ glyph across all three investor docs (211 conversions), WP pages 22–23 corrupted markup repaired (tags only), deck s16 → two-column risk grid (copy untouched), full QA (static validator + complete reads + browser geometry audit: zero overflow on 55 pages), final headless-Chrome renders verified (20/23/12 pp, ₦ renders in mono fonts). research/investor-outreach-plan.md v1.0 created; v1.1 reverted (two-workflow rule: demo pipeline ≠ cold-email outreach). AUTHO files removal already landed in p23c. Research docs + deck assets committed to git (deploy hook excludes research/ from the web root). VPS was 4 commits behind (snapshot 2026-09-30); deploy pushed after this entry."
   ],
   "phases": [
     {
@@ -932,6 +934,20 @@
         "ssh -i ~/Desktop/dev/ssh-key-2026-09-13.key -o IdentitiesOnly=yes opc@84.12.111.102 → Authentication succeeded (publickey)"
       ],
       "last_updated": "2026-10-04T16:20:00+01:00"
+    },
+    {
+      "id": "p24-investor-docs",
+      "status": "author_verified",
+      "attempts": 1,
+      "items": {
+        "naira-conversion": "pass — 211 plain-N amounts → real ₦ glyph across deck (40) / working paper (59) / financial projections (112); acronyms untouched; v1 backup left as-is",
+        "wp-pages-22-23-repair": "pass — orphan </tbody></table>, duplicated References kicker + stray <table>, unclosed references table repaired; tags only, zero words changed; balance 26/26 tables 26/26 tbody 229/229 divs",
+        "deck-s16-two-column": "pass — CSS-only 2-col risk grid (10.4pt copy byte-identical); critical/high left, med/low right",
+        "full-corpus-qa": "pass — static validator + full 2,899-line read + browser geometry audit; zero clipped/overflowing elements across all 55 pages; deck Google-Fonts raw & → &amp;",
+        "final-renders": "pass — deck 20pp / working paper 23pp / projections 12pp, ₦ glyph visually verified in mono fonts",
+        "outreach-plan": "pass — research/investor-outreach-plan.md v1.0 (cold-email layout); v1.1 demo-led merge REVERTED by user — the demo pipeline and email outreach are separate workflows; founder holds real prospect names, undisclosed by choice",
+        "polarizz": "not_found — no repo/system/account named polarizz on this Mac, in 96 GitHub repos, or in the VPS inventory"
+      }
     }
   ],
   "cleaned_up": {
